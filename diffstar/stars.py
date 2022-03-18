@@ -1,163 +1,175 @@
 """
 """
-from collections import OrderedDict
-from jax import jit as jjit
 from jax import numpy as jnp
+from jax import jit as jjit
 from jax import vmap
 from jax import lax
-from jax import grad
-from .utils import _jax_get_dt_array
+from collections import OrderedDict
+import numpy as np
+from diffmah.individual_halo_assembly import _calc_halo_history
+from .quenching import quenching_function
+from .utils import _sigmoid, _inverse_sigmoid
 
 FB = 0.156
 TODAY = 13.8
 LGT0 = jnp.log10(TODAY)
-T_SFH_MIN = 0.1
-
-DEFAULT_MAH_PARAMS = OrderedDict(
-    mah_logt0=LGT0,
-    mah_logm0=12.0,
-    mah_logtc=0.8,
-    mah_k=3.5,
-    mah_early=1.5,
-    mah_late=0.5,
-)
-
-DEFAULT_MS_PARAMS = OrderedDict(
-    ms_lgmcrit=12.0,
-    ms_lgy_at_mcrit=-1.0,
-    ms_indx_k=9.0,
-    ms_indx_lo=2.0,
-    ms_indx_hi=-1.0,
-    ms_floor_low=1.1,
-    ms_tau_dep=2.3,
-)
-
-DEFAULT_Q_PARAMS = OrderedDict(lg_qt=0.9, lg_qs=-0.5, lg_drop=-2.0, lg_rejuv=-2.0)
 
 
-MS_PARAM_BOUNDS = OrderedDict(
-    ms_lgmcrit=(9.0, 13.5),
-    ms_lgy_at_mcrit=(-3.0, 0.5),
-    ms_indx_k=(1.0, 15.0),
-    ms_indx_lo=(0.0, 5.0),
-    ms_indx_hi=(-2.0, 0.0),
-    ms_floor_low=(0.5, 3.0),
-    ms_tau_dep=(0.0, 10.0),
-)
-Q_PARAM_BOUNDS = OrderedDict(
-    lg_qt=(0.1, 2.0), lg_qs=(-3.0, -0.01), lg_drop=(-3, 0.0), lg_rejuv=(-3, 0.0)
+DEFAULT_SFR_PARAMS = OrderedDict(
+    lgmcrit=12.0,
+    lgy_at_mcrit=-1.0,
+    indx_k=9.0,
+    indx_lo=1.0,
+    indx_hi=-1.0,
+    floor_low=1.0,
+    tau_dep=2.0,
 )
 
 
-@jjit
-def diffstar_sfh(t, mah_params, ms_params, q_params):
-    lgt = jnp.log10(t)
-    dt = _jax_get_dt_array(t)
-    logt0, logmp, logtc, mah_k, early, late = mah_params
-    dmhdt, log_mah = _calc_halo_history(lgt, logt0, logmp, logtc, mah_k, early, late)
+_SFR_PARAM_BOUNDS = OrderedDict(
+    lgmcrit=(9.0, 13.5),
+    lgy_at_mcrit=(-3.0, 0.0),
+    indx_k=(1.0, 15.0),
+    indx_lo=(0.0, 5.0),
+    indx_hi=(-5.0, 0.0),
+    floor_low=(0.5, 7.0),
+    tau_dep=(0.0, 20.0),
+)
 
-    lgmcrit, lgy_at_mcrit, indx_k, indx_lo, indx_hi, floor_low, tau_dep = ms_params
 
-    efficiency = _sfr_eff_plaw(
-        lgt, log_mah, lgmcrit, lgy_at_mcrit, indx_k, indx_lo, indx_hi, floor_low
-    )
+def calculate_sigmoid_bounds(param_bounds):
+    for key in param_bounds:
+        _bounds = (
+            float(np.mean(param_bounds[key])),
+            abs(float(4.0 / np.diff(param_bounds[key]))),
+        )
+        param_bounds[key] = _bounds + param_bounds[key]
+    return param_bounds
 
-    lag_matrix = _lag_kern(t, t, dt, tau_dep)
-    lag_matrix_inst = jnp.identity(len(lgt)) / dt
-    tau_w = jnp.where(tau_dep > 5.0 * jnp.mean(dt), 1.0, 0.0)
-    lag_matrix = tau_w * lag_matrix + (1.0 - tau_w) * lag_matrix_inst
 
-    main_sequence_sfr = FB * efficiency * dmhdt
-
-    integrand = main_sequence_sfr * lag_matrix * dt
-    lagged_sfr = jnp.sum(integrand, axis=1)
-
-    lg_qt, lg_qs, lg_drop, lg_rejuv = q_params
-    qfrac = _quenching_kern_rejuv(lgt, lg_qt, lg_qs, lg_drop, lg_rejuv)
-
-    sfr = qfrac * lagged_sfr
-    return sfr
+SFR_PARAM_BOUNDS = calculate_sigmoid_bounds(_SFR_PARAM_BOUNDS)
 
 
 @jjit
-def _calc_halo_history(logt, logt0, logmp, logtc, k, early, late):
-    log_mah = _rolling_plaw_vs_logt(logt, logt0, logmp, logtc, k, early, late)
-    d_log_mh_dt = _d_log_mh_dt(10.0 ** logt, logt0, logmp, logtc, k, early, late)
-    dmhdt = d_log_mh_dt * (10.0 ** (log_mah - 9.0)) / jnp.log10(jnp.e)
-    return dmhdt, log_mah
-
-
-@jjit
-def _rolling_plaw_vs_t(t, logt0, logmp, logtc, k, early, late):
-    logt = jnp.log10(t)
-    return _rolling_plaw_vs_logt(logt, logt0, logmp, logtc, k, early, late)
-
-
-_d_log_mh_dt = jjit(vmap(grad(_rolling_plaw_vs_t, argnums=0), in_axes=(0, *[None] * 6)))
-
-
-@jjit
-def _rolling_plaw_vs_logt(logt, logt0, logmp, logtc, k, early, late):
-    rolling_index = _power_law_index_vs_logt(logt, logtc, k, early, late)
-    log_mah = rolling_index * (logt - logt0) + logmp
-    return log_mah
-
-
-@jjit
-def _power_law_index_vs_logt(logt, logtc, k, early, late):
-    rolling_index = _sigmoid(logt, logtc, k, early, late)
-    return rolling_index
-
-
-@jjit
-def _quenching_kern_rejuv(lgt, lg_qt, lg_qs, lg_drop, lg_rejuv):
-    qs = 10 ** lg_qs
-    return 10 ** rejuvenated_quenching_func(lgt, lg_qt, qs, lg_drop, lg_rejuv)
-
-
-@jjit
-def rejuvenated_quenching_func(t, t_q, q_dt, q_drop, q_rejuv):
-    qs = q_dt / 12
-    f2 = q_drop - q_rejuv
-    return _jax_partial_u_tw_kern(t, t_q, qs, q_drop, f2)
-
-
-@jjit
-def _jax_partial_u_tw_kern(x, m, h, f1, f2):
-    y = (x - m) / h
-    z = f1 * _jax_tw(y + 3)
-    w = f1 - f2 * _jax_tw(y - 3)
-    return jnp.where(y < 0, z, w)
-
-
-@jjit
-def _jax_tw(y):
-    v = -5 * y ** 7 / 69984 + 7 * y ** 5 / 2592 - 35 * y ** 3 / 864 + 35 * y / 96 + 0.5
-    res = jnp.where(y < -3, 0, v)
-    res = jnp.where(y > 3, 1, res)
-    return res
-
-
-@jjit
-def _sfr_eff_plaw(
+def calculate_sm_sfr_fstar_history_from_mah(
     lgt,
-    lgm,
-    lgmcrit,
-    lgy_at_mcrit,
-    indx_k,
-    indx_lo,
-    indx_hi,
-    floor_low,
+    dt,
+    dmhdt,
+    log_mah,
+    sfr_ms_params,
+    q_params,
+    index_select,
+    index_high,
+    fstar_tdelay,
 ):
-    slope = _sigmoid(lgm, lgmcrit, indx_k, indx_lo, indx_hi)
-    eff = lgy_at_mcrit + slope * (lgm - lgmcrit)
-    eff_floor = sigmoid_poly(lgm, lgmcrit, 10.0, lgy_at_mcrit - floor_low, -5)
-    return 10 ** eff + 10 ** eff_floor
+    """Calculate individual galaxy star formation histories from precalculated
+    halo mass accretion histories. The accretion rate of gas is proportional to
+    the accretion rate of the halo; main sequence galaxies transform accreted
+    gas into stars over a time depletion timescale with an efficiency that
+    depends on the instantaneous halo mass; some galaxies experience a quenching
+    event and may subsequently experience a rejuvenated star formation.
+    Parameters
+    ----------
+    lgt : ndarray of shape (n_times, )
+        Base-10 log of cosmic time of each simulated snapshot in Gyr
+    dt : ndarray of shape (n_times, )
+        Cosmic time steps between each simulated snapshot in Gyr
+    dmhdt : ndarray of shape (n_times, )
+        Diffmah halo mass accretion rate in units of Msun/yr.
+    log_mah : ndarray of shape (n_times, )
+        Diffmah halo mass accretion history in units of Msun.
+    sfr_ms_params : ndarray of shape (6, )
+        Star formation efficiency model unbounded parameters. Includes
+        (u_lgm, u_lgy, u_k, u_l, u_h, u_emin, u_taudep)
+    q_params : ndarray of shape (4, )
+        Quenching model unbounded parameters. Includes (u_qt, u_qs, u_drop, u_rejuv)
+    index_select: ndarray of shape (n_times_fstar, )
+        Snapshot indices used in fstar computation.
+    index_high: ndarray of shape (n_times_fstar, )
+        Indices of np.searchsorted(t, t - fstar_tdelay)[index_select]
+    fstar_tdelay: float
+        Time interval in Gyr for fstar definition.
+        fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay[Gyr]
+    Returns
+    -------
+    mstar : ndarray of shape (n_times)
+        Cumulative stellar mass history in units of Msun/yr assuming h=1.
+    sfr : ndarray of shape (n_times)
+        Star formation rate history in units of Msun/yr assuming h=1.
+    fstar : ndarray of shape (n_times)
+        SFH averaged over timescale fstar_tdelay in units of Msun/yr assuming h=1.
+    """
+    sfr = _sfr_history_from_mah(lgt, dt, dmhdt, log_mah, sfr_ms_params, q_params)
+    mstar = _integrate_sfr(sfr, dt)
+    fstar = compute_fstar(10 ** lgt, mstar, index_select, index_high, fstar_tdelay)
+    return mstar, sfr, fstar
 
 
 @jjit
-def _sigmoid(x, x0, k, ymin, ymax):
-    return ymin + (ymax - ymin) / (1 + jnp.exp(-k * (x - x0)))
+def calculate_histories(
+    lgt,
+    dt,
+    mah_params,
+    sfr_ms_params,
+    q_params,
+    index_select,
+    index_high,
+    fstar_tdelay,
+):
+    """Calculate individual halo mass accretion histories and galaxy star
+    formation histories. The accretion rate of gas is proportional to
+    the accretion rate of the halo; main sequence galaxies transform accreted
+    gas into stars over a time depletion timescale with an efficiency that
+    depends on the instantaneous halo mass; some galaxies experience a quenching
+    event and may subsequently experience a rejuvenated star formation.
+    Parameters
+    ----------
+    lgt : ndarray of shape (n_times, )
+        Base-10 log of cosmic time of each simulated snapshot in Gyr
+    dt : ndarray of shape (n_times, )
+        Cosmic time steps between each simulated snapshot in Gyr
+    mah_params : ndarray of shape (6, )
+        Best fit diffmah halo parameters. Includes
+        (t0, logmp, logtc, k, early, late)
+    sfr_ms_params : ndarray of shape (6, )
+        Star formation efficiency model unbounded parameters. Includes
+        (u_lgm, u_lgy, u_k, u_l, u_h, u_emin, u_taudep)
+    q_params : ndarray of shape (4, )
+        Quenching model unbounded parameters. Includes
+        (u_qt, u_qs, u_drop, u_rejuv)
+    index_select: ndarray of shape (n_times_fstar, )
+        Snapshot indices used in fstar computation.
+    index_high: ndarray of shape (n_times_fstar, )
+        Indices of np.searchsorted(t, t - fstar_tdelay)[index_select]
+    fstar_tdelay: float
+        Time interval in Gyr for fstar definition.
+        fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay[Gyr]
+    Returns
+    -------
+    mstar : ndarray of shape (n_times)
+        Cumulative stellar mass history in units of Msun/yr assuming h=1.
+    sfr : ndarray of shape (n_times)
+        Star formation rate history in units of Msun/yr assuming h=1.
+    fstar : ndarray of shape (n_times)
+        SFH averaged over timescale fstar_tdelay in units of Msun/yr assuming h=1.
+    dmhdt : ndarray of shape (n_times)
+        Mass accretion rate in units of Msun/yr assuming h=1.
+    log_mah : ndarray of shape (n_times)
+        Base-10 log of cumulative peak halo mass in units of Msun assuming h=1.
+    """
+    dmhdt, log_mah = _calc_halo_history(lgt, *mah_params)
+    mstar, sfr, fstar = calculate_sm_sfr_fstar_history_from_mah(
+        lgt,
+        dt,
+        dmhdt,
+        log_mah,
+        sfr_ms_params,
+        q_params,
+        index_select,
+        index_high,
+        fstar_tdelay,
+    )
+    return mstar, sfr, fstar, dmhdt, log_mah
 
 
 @jjit
@@ -168,33 +180,226 @@ def sigmoid_poly(x, x0, k, ymin, ymax):
 
 
 @jjit
-def _gas_conversion_kern(t, t_acc, dt, tau_dep):
+def _get_bounded_sfr_params(
+    u_lgmcrit, u_lgy_at_mcrit, u_indx_k, u_indx_lo, u_indx_hi, u_floor_low, u_tau_dep,
+):
+    lgmcrit = _sigmoid(u_lgmcrit, *SFR_PARAM_BOUNDS["lgmcrit"])
+    lgy_at_mcrit = _sigmoid(u_lgy_at_mcrit, *SFR_PARAM_BOUNDS["lgy_at_mcrit"])
+    indx_k = _sigmoid(u_indx_k, *SFR_PARAM_BOUNDS["indx_k"])
+    indx_lo = _sigmoid(u_indx_lo, *SFR_PARAM_BOUNDS["indx_lo"])
+    indx_hi = _sigmoid(u_indx_hi, *SFR_PARAM_BOUNDS["indx_hi"])
+    floor_low = _sigmoid(u_floor_low, *SFR_PARAM_BOUNDS["floor_low"])
+    tau_dep = _sigmoid(u_tau_dep, *SFR_PARAM_BOUNDS["tau_dep"])
+    bounded_params = (
+        lgmcrit,
+        lgy_at_mcrit,
+        indx_k,
+        indx_lo,
+        indx_hi,
+        floor_low,
+        tau_dep,
+    )
+    return bounded_params
 
-    w = tau_dep / 3.0
-    m = t_acc
+
+@jjit
+def _get_unbounded_sfr_params(
+    lgmcrit, lgy_at_mcrit, indx_k, indx_lo, indx_hi, floor_low, tau_dep,
+):
+    u_lgmcrit = _inverse_sigmoid(lgmcrit, *SFR_PARAM_BOUNDS["lgmcrit"])
+    u_lgy_at_mcrit = _inverse_sigmoid(lgy_at_mcrit, *SFR_PARAM_BOUNDS["lgy_at_mcrit"])
+    u_indx_k = _inverse_sigmoid(indx_k, *SFR_PARAM_BOUNDS["indx_k"])
+    u_indx_lo = _inverse_sigmoid(indx_lo, *SFR_PARAM_BOUNDS["indx_lo"])
+    u_indx_hi = _inverse_sigmoid(indx_hi, *SFR_PARAM_BOUNDS["indx_hi"])
+    u_floor_low = _inverse_sigmoid(floor_low, *SFR_PARAM_BOUNDS["floor_low"])
+    u_tau_dep = _inverse_sigmoid(tau_dep, *SFR_PARAM_BOUNDS["tau_dep"])
+    bounded_params = (
+        u_lgmcrit,
+        u_lgy_at_mcrit,
+        u_indx_k,
+        u_indx_lo,
+        u_indx_hi,
+        u_floor_low,
+        u_tau_dep,
+    )
+    return bounded_params
+
+
+@jjit
+def _integrate_sfr(sfr, dt):
+    return jnp.cumsum(sfr * dt) * 1e9
+
+
+@jjit
+def compute_fstar(tarr, mstar, index_select, index_high, fstar_tdelay):
+    """Time averaged SFH. Star formation that has ocurred over some previous
+    time period.
+    fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay
+    Parameters
+    ----------
+    tarr : ndarray of shape (n_times, )
+        Cosmic time of each simulated snapshot in Gyr
+    mstar : ndarray of shape (n_times, )
+        Stellar mass history in Msun units.
+    index_select: ndarray of shape (n_times_fstar, )
+        Snapshot indices used in fstar computation.
+    index_high: ndarray of shape (n_times_fstar, )
+        Indices of np.searchsorted(t, t - fstar_tdelay)[index_select]
+    fstar_tdelay: float
+        Time interval in Gyr units for fstar definition.
+        fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay
+    Returns
+    -------
+    fstar : ndarray of shape (n_times)
+        SFH averaged over timescale fstar_tdelay in units of Msun/yr assuming h=1.
+    """
+    mstar_high = mstar[index_select]
+    mstar_low = jax_np_interp(
+        tarr[index_select] - fstar_tdelay, tarr, mstar, index_high
+    )
+    fstar = (mstar_high - mstar_low) / fstar_tdelay / 1e9
+    return fstar
+
+
+@jjit
+def _sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params, q_params):
+    """Star formation history of an individual galaxy.
+    SFH(t) = Quenching(t) x epsilon(Mhalo) int Depletion(t|t') x Mgas(t') dt'.
+    Mgas(t) = FB x dMhalo(t)/dt
+    Parameters
+    ----------
+    lgt : ndarray of shape (n_times, )
+        Base-10 log of cosmic time of each simulated snapshot in Gyr
+    dtarr : ndarray of shape (n_times, )
+        Cosmic time steps between each simulated snapshot in Gyr
+    dmhdt : ndarray of shape (n_times, )
+        Diffmah halo mass accretion rate in units of Msun/yr.
+    log_mah : ndarray of shape (n_times, )
+        Diffmah halo mass accretion history in units of Msun.
+    sfr_ms_params : ndarray of shape (6, )
+        Star formation efficiency model unbounded parameters. Includes
+        (u_lgm, u_lgy, u_k, u_l, u_h, u_emin, u_taudep)
+    q_params : ndarray of shape (4, )
+        Quenching model unbounded parameters. Includes
+        (u_qt, u_qs, u_drop, u_rejuv)
+    Returns
+    -------
+    sfr : ndarray of shape (n_times)
+        Star formation rate history in units of Msun/yr assuming h=1.
+    """
+    bounded_params = _get_bounded_sfr_params(*sfr_params)
+    sfr_ms_params = bounded_params[:6]
+    tau_dep = bounded_params[6]
+    efficiency = _sfr_eff_plaw(log_mah, *sfr_ms_params)
+
+    t_table = 10 ** lgt
+    depletion_matrix = _depletion_kernel(t_table, t_table, dtarr, tau_dep)
+    depletion_matrix_inst = jnp.identity(len(lgt)) / dtarr
+
+    tau_w = jnp.where(
+        tau_dep > 5.0 * jnp.mean(dtarr), jnp.ones(len(dtarr)), jnp.zeros(len(dtarr))
+    )
+    depletion_matrix = jnp.where(tau_w == 1, depletion_matrix, depletion_matrix_inst)
+
+    mgas = FB * dmhdt
+    integrand = mgas * depletion_matrix * dtarr
+    lagged_mgas = jnp.sum(integrand, axis=1)
+
+    lagged_sfr = lagged_mgas * efficiency
+
+    qfrac = quenching_function(lgt, *q_params)
+    sfr = qfrac * lagged_sfr
+    return sfr
+
+
+@jjit
+def _sfr_eff_plaw(
+    lgm, lgmcrit, lgy_at_mcrit, indx_k, indx_lo, indx_hi, floor_low,
+):
+    """Instantaneous baryon conversion efficiency of main sequence galaxies.
+    Depends on the instantanous host halo mass.
+    Main sequence efficiency kernel, epsilon(Mhalo).
+    Parameters
+    ----------
+    lgm : ndarray of shape (n_times, )
+        Diffmah halo mass accretion history in units of Msun.
+    lgmcrit : float
+        Base-10 log of the critical mass
+    lgy_at_mcrit : float
+        Base-10 log of the critical efficiency at critical mass.
+    indx_k : float
+        Transition speed.
+    indx_lo : float
+        Asymptotic value of the efficiency at low halo masses.
+    indx_hi : float
+        Asymptotic value of the efficiency at high halo masses.
+    floor_low : float
+        Asymptotic difference of the base-10 log efficiency floor at low masses
+        and the base-10 log of the critical efficiency
+    Returns
+    -------
+    efficiency : ndarray of shape (n_times)
+        Main sequence efficiency value at each snapshot.
+    """
+    slope = _sigmoid(lgm, lgmcrit, indx_k, indx_lo, indx_hi)
+    eff = lgy_at_mcrit + slope * (lgm - lgmcrit)
+    eff_floor = sigmoid_poly(lgm, lgmcrit, 10.0, lgy_at_mcrit - floor_low, -5)
+    return 10 ** eff + 10 ** eff_floor
+
+
+@jjit
+def _gas_conversion_kern(t_form, t_acc, dt, tau_dep):
+    """Gas depletion kernel:
+    For t_form >= t_acc -> Fdep ~ truncated triweight kernel
+    For t_form < t_acc -> Fdep = 0
+    Parameters
+    ----------
+    t_form : float
+        Cosmic time in Gyr when gas is transforming into stars.
+    t_acc : float
+        Cosmic time in Gyr when gas accreted by the halo.
+    dt : float
+        Cosmic time step in Gyr between the simulated snapshot at t_form
+        and the next one.
+    tau_dep : float
+        Cosmic time in Gyr when gas is transforming into stars.
+    Returns
+    -------
+    tri_kern : float
+        Fraction of gas accreted at time t_acc forming stars at t_form.
+    """
+    alpha = (tau_dep / 2.0) * (tau_dep / SFR_PARAM_BOUNDS["tau_dep"][3])
+    w = (tau_dep - alpha) / 3.0
+    m = t_acc + alpha
+
+    _norm = tw_bin_jax_kern(m, w, t_acc, t_acc + tau_dep)
+    _norm = 1.0 / jnp.clip(_norm, 0.01, jnp.inf)
 
     tri_kern = lax.cond(
-        t < t_acc,
+        t_form < t_acc,
         lambda x: 0.0,
-        lambda x: lax.cond(
-            x == t_acc,
-            lambda x: tw_bin_jax_kern(m, w, x - dt / 2.0, x + dt / 2.0) / dt,
-            lambda x: 2.0 * tw_bin_jax_kern(m, w, x - dt / 2.0, x + dt / 2.0) / dt,
-            x,
-        ),
-        t,
+        lambda x: _norm * tw_bin_jax_kern(m, w, x, x + dt) / dt,
+        t_form,
     )
-
     return tri_kern
 
 
 @jjit
-def tw_bin_jax_kern(m, h, L, H):
-    return tw_cuml_jax_kern(H, m, h) - tw_cuml_jax_kern(L, m, h)
-
-
-@jjit
 def tw_cuml_jax_kern(x, m, h):
+    """CDF of the triweight kernel.
+    Parameters
+    ----------
+    x : array-like or scalar
+        The value at which to evaluate the kernel.
+    m : array-like or scalar
+        The mean of the kernel.
+    h : array-like or scalar
+        The approximate 1-sigma width of the kernel.
+    Returns
+    -------
+    kern_cdf : array-like or scalar
+        The value of the kernel CDF.
+    """
     y = (x - m) / h
     return lax.cond(
         y < -3,
@@ -215,5 +420,55 @@ def tw_cuml_jax_kern(x, m, h):
     )
 
 
+@jjit
+def tw_bin_jax_kern(m, h, L, H):
+    """Integrated bin weight for the triweight kernel.
+    Parameters
+    ----------
+    m : array-like or scalar
+        The value at which to evaluate the kernel.
+    h : array-like or scalar
+        The approximate 1-sigma width of the kernel.
+    L : array-like or scalar
+        The lower bin limit.
+    H : array-like or scalar
+        The upper bin limit.
+    Returns
+    -------
+    bin_prob : array-like or scalar
+        The value of the kernel integrated over the bin.
+    """
+    return tw_cuml_jax_kern(H, m, h) - tw_cuml_jax_kern(L, m, h)
+
+
 _a, _b = (0, None, 0, None), (None, 0, None, None)
-_lag_kern = jjit(vmap(vmap(_gas_conversion_kern, in_axes=_b), in_axes=_a))
+_depletion_kernel = jjit(vmap(vmap(_gas_conversion_kern, in_axes=_b), in_axes=_a))
+
+
+@jjit
+def jax_np_interp(x, xt, yt, indx_hi):
+    """JAX-friendly implementation of np.interp.
+    Requires indx_hi to be precomputed, e.g., using np.searchsorted.
+    Parameters
+    ----------
+    x : ndarray of shape (n, )
+        Abscissa values in the interpolation
+    xt : ndarray of shape (k, )
+        Lookup table for the abscissa
+    yt : ndarray of shape (k, )
+        Lookup table for the ordinates
+    Returns
+    -------
+    y : ndarray of shape (n, )
+        Result of linear interpolation
+    """
+    indx_lo = indx_hi - 1
+    xt_lo = xt[indx_lo]
+    xt_hi = xt[indx_hi]
+    dx_tot = xt_hi - xt_lo
+    yt_lo = yt[indx_lo]
+    yt_hi = yt[indx_hi]
+    dy_tot = yt_hi - yt_lo
+    m = dy_tot / dx_tot
+    y = yt_lo + m * (x - xt_lo)
+    return y
