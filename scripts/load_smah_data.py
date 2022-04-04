@@ -4,7 +4,7 @@ import numpy as np
 import os
 import h5py
 import warnings
-from diffsfh.utils import _get_dt_array
+from diffstar.utils import _get_dt_array
 
 TASSO = "/Users/aphearin/work/DATA/diffmah_data"
 BEBOP = "/lcrc/project/halotools/diffmah_data"
