@@ -4,7 +4,7 @@ import numpy as np
 from jax import numpy as jnp
 from scipy.optimize import minimize
 from jax import value_and_grad
-from jax.experimental import optimizers as jax_opt
+from jax.example_libraries import optimizers as jax_opt
 from jax import jit as jjit
 
 
