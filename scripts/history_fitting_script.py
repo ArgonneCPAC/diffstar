@@ -16,8 +16,8 @@ from load_smah_data import (
     load_mdpl_small_data,
 )
 
-from diffsfh.fit_smah_helpers import get_header, MIN_MASS_CUT, SSFRH_FLOOR
-from diffsfh.fit_smah_helpers import (
+from diffstar.fit_smah_helpers import get_header, MIN_MASS_CUT, SSFRH_FLOOR
+from diffstar.fit_smah_helpers import (
     get_loss_data_default,
     get_loss_data_free,
     get_loss_data_fixed_noquench,
@@ -26,7 +26,7 @@ from diffsfh.fit_smah_helpers import (
     get_loss_data_fixed_hi_depl,
     get_loss_data_fixed_depl_noquench,
 )
-from diffsfh.fit_smah_helpers import (
+from diffstar.fit_smah_helpers import (
     loss_default,
     loss_free,
     loss_fixed_noquench,
@@ -42,7 +42,7 @@ from diffsfh.fit_smah_helpers import (
     loss_fixed_hi_depl_deriv_np,
     loss_fixed_depl_noquench_deriv_np,
 )
-from diffsfh.fit_smah_helpers import (
+from diffstar.fit_smah_helpers import (
     get_outline_default,
     get_outline_free,
     get_outline_fixed_noquench,
@@ -52,7 +52,7 @@ from diffsfh.fit_smah_helpers import (
     get_outline_fixed_depl_noquench,
 )
 
-from diffsfh.utils import minimizer_wrapper
+from diffstar.utils import minimizer_wrapper
 import subprocess
 import h5py
 
