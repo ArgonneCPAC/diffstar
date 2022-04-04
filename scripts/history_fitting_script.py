@@ -21,42 +21,38 @@ from diffsfh.fit_smah_helpers import (
     MIN_MASS_CUT,
 )
 from diffsfh.fit_smah_helpers import (
-    get_loss_data_fixed_k,
-    get_loss_data_fixed_k_noquench,
-    get_loss_data_fixed_k_hi,
-    get_loss_data_fixed_k_hi_rej,
-    get_loss_data_fixed_k_hi_depl,
-    get_loss_data_fixed_k_hi_floor,
-    get_loss_data_fixed_k_hi_depl_floor,
-    get_loss_data_fixed_k_depl_floor_noquench,
+    get_loss_data_default,
+    get_loss_data_free,
+    get_loss_data_fixed_noquench,
+    get_loss_data_fixed_hi,
+    get_loss_data_fixed_hi_rej,
+    get_loss_data_fixed_hi_depl,
+    get_loss_data_fixed_depl_noquench,
 )
 from diffsfh.fit_smah_helpers import (
-    loss_fixed_k,
-    loss_fixed_k_noquench,
-    loss_fixed_k_hi,
-    loss_fixed_k_hi_rej,
-    loss_fixed_k_hi_depl,
-    loss_fixed_k_hi_floor,
-    loss_fixed_k_hi_depl_floor,
-    loss_fixed_k_depl_floor_noquench,
-    loss_fixed_k_deriv_np,
-    loss_fixed_k_noquench_deriv_np,
-    loss_fixed_k_hi_deriv_np,
-    loss_fixed_k_hi_rej_deriv_np,
-    loss_fixed_k_hi_depl_deriv_np,
-    loss_fixed_k_hi_floor_deriv_np,
-    loss_fixed_k_hi_depl_floor_deriv_np,
-    loss_fixed_k_depl_floor_noquench_deriv_np,
+    loss_default,
+    loss_free,
+    loss_fixed_noquench,
+    loss_fixed_hi,
+    loss_fixed_hi_rej,
+    loss_fixed_hi_depl,
+    loss_fixed_depl_noquench,
+    loss_grad_default_np,
+    loss_free_deriv_np,
+    loss_fixed_noquench_deriv_np,
+    loss_fixed_hi_deriv_np,
+    loss_fixed_hi_rej_deriv_np,
+    loss_fixed_hi_depl_deriv_np,
+    loss_fixed_depl_noquench_deriv_np,
 )
 from diffsfh.fit_smah_helpers import (
-    get_outline_fixed_k,
-    get_outline_fixed_k_noquench,
-    get_outline_fixed_k_hi,
-    get_outline_fixed_k_hi_rej,
-    get_outline_fixed_k_hi_depl,
-    get_outline_fixed_k_hi_floor,
-    get_outline_fixed_k_hi_depl_floor,
-    get_outline_fixed_k_depl_floor_noquench,
+    get_outline_default,
+    get_outline_free,
+    get_outline_fixed_noquench,
+    get_outline_fixed_hi,
+    get_outline_fixed_hi_rej,
+    get_outline_fixed_hi_depl,
+    get_outline_fixed_depl_noquench,
 )
 
 from diffsfh.utils import minimizer_wrapper
@@ -95,15 +91,15 @@ if __name__ == "__main__":
         "modelname",
         help="Version of the model and loss",
         choices=(
-            "fixed_k",
-            "fixed_k_noquench",
-            "fixed_k_hi",
-            "fixed_k_hi_rej",
-            "fixed_k_hi_depl",
-            "fixed_k_hi_floor",
-            "fixed_k_hi_depl_floor",
-            "fixed_k_depl_floor_noquench",
+            "default",
+            "free",
+            "fixed_noquench",
+            "fixed_hi",
+            "fixed_hi_rej",
+            "fixed_hi_depl",
+            "fixed_depl_noquench",
         ),
+        default="default",
     )
     parser.add_argument("-indir", help="Input directory", default="BEBOP")
     parser.add_argument("-fitmahfn", help="Filename of fit mah parameters")
@@ -125,9 +121,6 @@ if __name__ == "__main__":
         help="Minimum mass included in stellar mass histories.",
         type=float,
         default=MIN_MASS_CUT,
-    )
-    parser.add_argument(
-        "-fixed_floor", help="Fixed value of floor parameter", type=float, default=None,
     )
     parser.add_argument(
         "-ssfrh_floor", help="Clipping floor for sSFH", type=float, default=1e-12,
@@ -196,95 +189,81 @@ if __name__ == "__main__":
     logmp_for_rank = logmp[indx]
     nhalos_for_rank = len(halo_ids_for_rank)
 
-    if args.modelname == "fixed_k":
-        get_loss_data = get_loss_data_fixed_k
-        loss_func = loss_fixed_k
-        loss_func_deriv = loss_fixed_k_deriv_np
-        get_outline = get_outline_fixed_k
+    if args.modelname == "default":
+        get_loss_data = get_loss_data_default
+        loss_func = loss_default
+        loss_func_deriv = loss_grad_default_np
+        get_outline = get_outline_default
         header = get_header
         kwargs = {
             "fstar_tdelay": args.fstar_tdelay,
             "mass_fit_min": args.mass_fit_min,
             "ssfrh_floor": args.ssfrh_floor,
         }
-    elif args.modelname == "fixed_k_noquench":
-        get_loss_data = get_loss_data_fixed_k_noquench
-        loss_func = loss_fixed_k_noquench
-        loss_func_deriv = loss_fixed_k_noquench_deriv_np
-        get_outline = get_outline_fixed_k_noquench
+    elif args.modelname == "free":
+        get_loss_data = get_loss_data_free
+        loss_func = loss_free
+        loss_func_deriv = loss_free_deriv_np
+        get_outline = get_outline_free
         header = get_header
         kwargs = {
             "fstar_tdelay": args.fstar_tdelay,
             "mass_fit_min": args.mass_fit_min,
             "ssfrh_floor": args.ssfrh_floor,
         }
-    elif args.modelname == "fixed_k_hi":
-        get_loss_data = get_loss_data_fixed_k_hi
-        loss_func = loss_fixed_k_hi
-        loss_func_deriv = loss_fixed_k_hi_deriv_np
-        get_outline = get_outline_fixed_k_hi
+    elif args.modelname == "fixed_noquench":
+        get_loss_data = get_loss_data_fixed_noquench
+        loss_func = loss_fixed_noquench
+        loss_func_deriv = loss_fixed_noquench_deriv_np
+        get_outline = get_outline_fixed_noquench
         header = get_header
         kwargs = {
             "fstar_tdelay": args.fstar_tdelay,
             "mass_fit_min": args.mass_fit_min,
             "ssfrh_floor": args.ssfrh_floor,
         }
-    elif args.modelname == "fixed_k_hi_rej":
-        get_loss_data = get_loss_data_fixed_k_hi_rej
-        loss_func = loss_fixed_k_hi_rej
-        loss_func_deriv = loss_fixed_k_hi_rej_deriv_np
-        get_outline = get_outline_fixed_k_hi_rej
+    elif args.modelname == "fixed_hi":
+        get_loss_data = get_loss_data_fixed_hi
+        loss_func = loss_fixed_hi
+        loss_func_deriv = loss_fixed_hi_deriv_np
+        get_outline = get_outline_fixed_hi
         header = get_header
         kwargs = {
             "fstar_tdelay": args.fstar_tdelay,
             "mass_fit_min": args.mass_fit_min,
             "ssfrh_floor": args.ssfrh_floor,
         }
-    elif args.modelname == "fixed_k_hi_depl":
-        get_loss_data = get_loss_data_fixed_k_hi_depl
-        loss_func = loss_fixed_k_hi_depl
-        loss_func_deriv = loss_fixed_k_hi_depl_deriv_np
-        get_outline = get_outline_fixed_k_hi_depl
+    elif args.modelname == "fixed_hi_rej":
+        get_loss_data = get_loss_data_fixed_hi_rej
+        loss_func = loss_fixed_hi_rej
+        loss_func_deriv = loss_fixed_hi_rej_deriv_np
+        get_outline = get_outline_fixed_hi_rej
         header = get_header
         kwargs = {
             "fstar_tdelay": args.fstar_tdelay,
             "mass_fit_min": args.mass_fit_min,
             "ssfrh_floor": args.ssfrh_floor,
         }
-    elif args.modelname == "fixed_k_hi_floor":
-        get_loss_data = get_loss_data_fixed_k_hi_floor
-        loss_func = loss_fixed_k_hi_floor
-        loss_func_deriv = loss_fixed_k_hi_floor_deriv_np
-        get_outline = get_outline_fixed_k_hi_floor
+    elif args.modelname == "fixed_hi_depl":
+        get_loss_data = get_loss_data_fixed_hi_depl
+        loss_func = loss_fixed_hi_depl
+        loss_func_deriv = loss_fixed_hi_depl_deriv_np
+        get_outline = get_outline_fixed_hi_depl
         header = get_header
         kwargs = {
             "fstar_tdelay": args.fstar_tdelay,
             "mass_fit_min": args.mass_fit_min,
-            "fixed_floor": args.fixed_floor,
             "ssfrh_floor": args.ssfrh_floor,
         }
-    elif args.modelname == "fixed_k_hi_depl_floor":
-        get_loss_data = get_loss_data_fixed_k_hi_depl_floor
-        loss_func = loss_fixed_k_hi_depl_floor
-        loss_func_deriv = loss_fixed_k_hi_depl_floor_deriv_np
-        get_outline = get_outline_fixed_k_hi_depl_floor
+    elif args.modelname == "fixed_depl_noquench":
+        get_loss_data = get_loss_data_fixed_depl_noquench
+        loss_func = loss_fixed_depl_noquench
+        loss_func_deriv = loss_fixed_depl_noquench_deriv_np
+        get_outline = get_outline_fixed_depl_noquench
         header = get_header
         kwargs = {
             "fstar_tdelay": args.fstar_tdelay,
             "mass_fit_min": args.mass_fit_min,
-            "fixed_floor": args.fixed_floor,
-            "ssfrh_floor": args.ssfrh_floor,
-        }
-    elif args.modelname == "fixed_k_depl_floor_noquench":
-        get_loss_data = get_loss_data_fixed_k_depl_floor_noquench
-        loss_func = loss_fixed_k_depl_floor_noquench
-        loss_func_deriv = loss_fixed_k_depl_floor_noquench_deriv_np
-        get_outline = get_outline_fixed_k_depl_floor_noquench
-        header = get_header
-        kwargs = {
-            "fstar_tdelay": args.fstar_tdelay,
-            "mass_fit_min": args.mass_fit_min,
-            "fixed_floor": args.fixed_floor,
             "ssfrh_floor": args.ssfrh_floor,
         }
 
@@ -326,6 +305,7 @@ if __name__ == "__main__":
         data_collection = [np.loadtxt(fn) for fn in fit_data_fnames]
         all_fit_data = np.concatenate(data_collection)
         outname = os.path.join(args.outdir, args.outbase)
+        outname = outname + ".h5"
         _write_collated_data(outname, all_fit_data, header)
 
         #  clean up temporary files

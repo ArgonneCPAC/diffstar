@@ -13,26 +13,18 @@ from .utils import _sigmoid, _inverse_sigmoid
 FB = 0.156
 TODAY = 13.8
 LGT0 = jnp.log10(TODAY)
-
+INDX_K = 9.0  # Main sequence efficiency transition speed.
 
 DEFAULT_SFR_PARAMS = OrderedDict(
-    lgmcrit=12.0,
-    lgy_at_mcrit=-1.0,
-    indx_k=9.0,
-    indx_lo=1.0,
-    indx_hi=-1.0,
-    floor_low=1.0,
-    tau_dep=2.0,
+    lgmcrit=12.0, lgy_at_mcrit=-1.0, indx_lo=1.0, indx_hi=-1.0, tau_dep=2.0,
 )
 
 
 _SFR_PARAM_BOUNDS = OrderedDict(
     lgmcrit=(9.0, 13.5),
     lgy_at_mcrit=(-3.0, 0.0),
-    indx_k=(1.0, 15.0),
     indx_lo=(0.0, 5.0),
     indx_hi=(-5.0, 0.0),
-    floor_low=(0.5, 7.0),
     tau_dep=(0.0, 20.0),
 )
 
@@ -78,9 +70,9 @@ def calculate_sm_sfr_fstar_history_from_mah(
         Diffmah halo mass accretion rate in units of Msun/yr.
     log_mah : ndarray of shape (n_times, )
         Diffmah halo mass accretion history in units of Msun.
-    sfr_ms_params : ndarray of shape (6, )
+    sfr_ms_params : ndarray of shape (5, )
         Star formation efficiency model unbounded parameters. Includes
-        (u_lgm, u_lgy, u_k, u_l, u_h, u_emin, u_taudep)
+        (u_lgm, u_lgy, u_l, u_h, u_taudep)
     q_params : ndarray of shape (4, )
         Quenching model unbounded parameters. Includes (u_qt, u_qs, u_drop, u_rejuv)
     index_select: ndarray of shape (n_times_fstar, )
@@ -131,9 +123,9 @@ def calculate_histories(
     mah_params : ndarray of shape (6, )
         Best fit diffmah halo parameters. Includes
         (t0, logmp, logtc, k, early, late)
-    sfr_ms_params : ndarray of shape (6, )
+    sfr_ms_params : ndarray of shape (5, )
         Star formation efficiency model unbounded parameters. Includes
-        (u_lgm, u_lgy, u_k, u_l, u_h, u_emin, u_taudep)
+        (u_lgm, u_lgy, u_l, u_h, u_taudep)
     q_params : ndarray of shape (4, )
         Quenching model unbounded parameters. Includes
         (u_qt, u_qs, u_drop, u_rejuv)
@@ -173,30 +165,19 @@ def calculate_histories(
 
 
 @jjit
-def sigmoid_poly(x, x0, k, ymin, ymax):
-    arg = k * (x - x0)
-    body = 0.5 * arg / jnp.sqrt(1 + arg ** 2) + 0.5
-    return ymin + (ymax - ymin) * body
-
-
-@jjit
 def _get_bounded_sfr_params(
-    u_lgmcrit, u_lgy_at_mcrit, u_indx_k, u_indx_lo, u_indx_hi, u_floor_low, u_tau_dep,
+    u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_tau_dep,
 ):
     lgmcrit = _sigmoid(u_lgmcrit, *SFR_PARAM_BOUNDS["lgmcrit"])
     lgy_at_mcrit = _sigmoid(u_lgy_at_mcrit, *SFR_PARAM_BOUNDS["lgy_at_mcrit"])
-    indx_k = _sigmoid(u_indx_k, *SFR_PARAM_BOUNDS["indx_k"])
     indx_lo = _sigmoid(u_indx_lo, *SFR_PARAM_BOUNDS["indx_lo"])
     indx_hi = _sigmoid(u_indx_hi, *SFR_PARAM_BOUNDS["indx_hi"])
-    floor_low = _sigmoid(u_floor_low, *SFR_PARAM_BOUNDS["floor_low"])
     tau_dep = _sigmoid(u_tau_dep, *SFR_PARAM_BOUNDS["tau_dep"])
     bounded_params = (
         lgmcrit,
         lgy_at_mcrit,
-        indx_k,
         indx_lo,
         indx_hi,
-        floor_low,
         tau_dep,
     )
     return bounded_params
@@ -204,22 +185,18 @@ def _get_bounded_sfr_params(
 
 @jjit
 def _get_unbounded_sfr_params(
-    lgmcrit, lgy_at_mcrit, indx_k, indx_lo, indx_hi, floor_low, tau_dep,
+    lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, tau_dep,
 ):
     u_lgmcrit = _inverse_sigmoid(lgmcrit, *SFR_PARAM_BOUNDS["lgmcrit"])
     u_lgy_at_mcrit = _inverse_sigmoid(lgy_at_mcrit, *SFR_PARAM_BOUNDS["lgy_at_mcrit"])
-    u_indx_k = _inverse_sigmoid(indx_k, *SFR_PARAM_BOUNDS["indx_k"])
     u_indx_lo = _inverse_sigmoid(indx_lo, *SFR_PARAM_BOUNDS["indx_lo"])
     u_indx_hi = _inverse_sigmoid(indx_hi, *SFR_PARAM_BOUNDS["indx_hi"])
-    u_floor_low = _inverse_sigmoid(floor_low, *SFR_PARAM_BOUNDS["floor_low"])
     u_tau_dep = _inverse_sigmoid(tau_dep, *SFR_PARAM_BOUNDS["tau_dep"])
     bounded_params = (
         u_lgmcrit,
         u_lgy_at_mcrit,
-        u_indx_k,
         u_indx_lo,
         u_indx_hi,
-        u_floor_low,
         u_tau_dep,
     )
     return bounded_params
@@ -227,6 +204,8 @@ def _get_unbounded_sfr_params(
 
 @jjit
 def _integrate_sfr(sfr, dt):
+    """Calculate the cumulative stellar mass history.
+    """
     return jnp.cumsum(sfr * dt) * 1e9
 
 
@@ -276,9 +255,9 @@ def _sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params, q_params):
         Diffmah halo mass accretion rate in units of Msun/yr.
     log_mah : ndarray of shape (n_times, )
         Diffmah halo mass accretion history in units of Msun.
-    sfr_ms_params : ndarray of shape (6, )
+    sfr_ms_params : ndarray of shape (5, )
         Star formation efficiency model unbounded parameters. Includes
-        (u_lgm, u_lgy, u_k, u_l, u_h, u_emin, u_taudep)
+        (u_lgm, u_lgy, u_l, u_h, u_taudep)
     q_params : ndarray of shape (4, )
         Quenching model unbounded parameters. Includes
         (u_qt, u_qs, u_drop, u_rejuv)
@@ -288,8 +267,8 @@ def _sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params, q_params):
         Star formation rate history in units of Msun/yr assuming h=1.
     """
     bounded_params = _get_bounded_sfr_params(*sfr_params)
-    sfr_ms_params = bounded_params[:6]
-    tau_dep = bounded_params[6]
+    sfr_ms_params = bounded_params[:4]
+    tau_dep = bounded_params[4]
     efficiency = _sfr_eff_plaw(log_mah, *sfr_ms_params)
 
     t_table = 10 ** lgt
@@ -313,9 +292,7 @@ def _sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params, q_params):
 
 
 @jjit
-def _sfr_eff_plaw(
-    lgm, lgmcrit, lgy_at_mcrit, indx_k, indx_lo, indx_hi, floor_low,
-):
+def _sfr_eff_plaw(lgm, lgmcrit, lgy_at_mcrit, indx_lo, indx_hi):
     """Instantaneous baryon conversion efficiency of main sequence galaxies.
     Depends on the instantanous host halo mass.
     Main sequence efficiency kernel, epsilon(Mhalo).
@@ -327,24 +304,18 @@ def _sfr_eff_plaw(
         Base-10 log of the critical mass
     lgy_at_mcrit : float
         Base-10 log of the critical efficiency at critical mass.
-    indx_k : float
-        Transition speed.
     indx_lo : float
         Asymptotic value of the efficiency at low halo masses.
     indx_hi : float
         Asymptotic value of the efficiency at high halo masses.
-    floor_low : float
-        Asymptotic difference of the base-10 log efficiency floor at low masses
-        and the base-10 log of the critical efficiency
     Returns
     -------
     efficiency : ndarray of shape (n_times)
         Main sequence efficiency value at each snapshot.
     """
-    slope = _sigmoid(lgm, lgmcrit, indx_k, indx_lo, indx_hi)
+    slope = _sigmoid(lgm, lgmcrit, INDX_K, indx_lo, indx_hi)
     eff = lgy_at_mcrit + slope * (lgm - lgmcrit)
-    eff_floor = sigmoid_poly(lgm, lgmcrit, 10.0, lgy_at_mcrit - floor_low, -5)
-    return 10 ** eff + 10 ** eff_floor
+    return 10 ** eff
 
 
 @jjit

@@ -117,12 +117,7 @@ def return_random_pinit(p_init, loss_data, loss_func_deriv):
 
 
 def minimizer_wrapper(
-    loss_func,
-    loss_func_deriv,
-    p_init,
-    loss_data,
-    loss_tol=0.1,
-    max_iter=10,
+    loss_func, loss_func_deriv, p_init, loss_data, loss_tol=0.1, max_iter=10,
 ):
     """Convenience function wrapping scipy's L-BFGS-B optimizer method used to
     minimize the loss function loss_func.
@@ -384,3 +379,10 @@ def _sigmoid(x, x0, k, ymin, ymax):
 def _inverse_sigmoid(y, x0, k, ymin, ymax):
     lnarg = (ymax - ymin) / (y - ymin) - 1
     return x0 - jnp.log(lnarg) / k
+
+
+@jjit
+def sigmoid_poly(x, x0, k, ymin, ymax):
+    arg = k * (x - x0)
+    body = 0.5 * arg / jnp.sqrt(1 + arg ** 2) + 0.5
+    return ymin + (ymax - ymin) * body

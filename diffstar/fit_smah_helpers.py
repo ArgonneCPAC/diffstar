@@ -9,7 +9,7 @@ from .stars import (
     _get_unbounded_sfr_params,
     calculate_sm_sfr_fstar_history_from_mah,
     DEFAULT_SFR_PARAMS,
-    compute_fstar
+    compute_fstar,
 )
 from .quenching import (
     DEFAULT_Q_PARAMS,
@@ -26,13 +26,12 @@ DLOGM_CUT = 3.5  # Only fit SMH within this dex of the present day stellar mass.
 MIN_MASS_CUT = 9.0  # Only fit SMH above this threshold. Log10(Msun) units.
 FSTAR_TIME_DELAY = 1.0  # Time period of averaged SFH (aka fstar). Gyr units.
 SSFRH_FLOOR = 1e-12  # Clip SFH to this minimum sSFR value. 1/yr units.
-FIXED_FLOOR = 1.0  # Default value of floor parameter when fixed.
 
 
 def get_header():
     out = """\
 # halo_id \
-lgmcrit lgy_at_mcrit indx_k indx_lo indx_hi floor_low tau_dep \
+lgmcrit lgy_at_mcrit indx_lo indx_hi tau_dep \
 qt qs q_drop q_rejuv \
 loss success\n\
 """
@@ -104,12 +103,12 @@ def get_weights(
 
 
 #################
-# fixed_k #
+# free parameters #
 #################
 
 
 @jjit
-def loss_fixed_k(params, loss_data):
+def loss_free(params, loss_data):
     """
     MSE loss function for fitting individual stellar mass histories.
     The parameter k is fixed.
@@ -130,11 +129,10 @@ def loss_fixed_k(params, loss_data):
         weight,
         weight_fstar,
         t_fstar_max,
-        fixed_k,
     ) = loss_data
 
-    sfr_params = [*params[0:2], fixed_k, *params[2:6]]
-    q_params = params[6:10]
+    sfr_params = params[0:5]
+    q_params = params[5:9]
 
     _res = calculate_sm_sfr_fstar_history_from_mah(
         lgt,
@@ -164,16 +162,14 @@ def loss_fixed_k(params, loss_data):
     return loss
 
 
-loss_fixed_k_deriv = jjit(
-    grad(loss_fixed_k, argnums=(0))
-)
+loss_free_deriv = jjit(grad(loss_free, argnums=(0)))
 
 
-def loss_fixed_k_deriv_np(params, data):
-    return np.array(loss_fixed_k_deriv(params, data)).astype(float)
+def loss_free_deriv_np(params, data):
+    return np.array(loss_free_deriv(params, data)).astype(float)
 
 
-def get_loss_data_fixed_k(
+def get_loss_data_free(
     t_sim,
     dt,
     sfrh,
@@ -267,8 +263,6 @@ def get_loss_data_fixed_k(
             the SFH snapshots that fall below the threshold mass.
         t_fstar_max : float
             Base-10 log of the cosmic time where SFH target history peaks.
-        fixed_k : float
-            Fixed value of the unbounded diffstar parameter k
     """
     fstar_indx_high = np.searchsorted(t_sim, t_sim - fstar_tdelay)
     _mask = t_sim > fstar_tdelay + fstar_tdelay / 2.0
@@ -307,19 +301,13 @@ def get_loss_data_fixed_k(
     default_sfr_params = np.array(list(DEFAULT_SFR_PARAMS.values()))
     default_sfr_params[0] = np.clip(0.4 * (logmp - 11.0) + 11.25, 11.0, 13.0)
     default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 1.0, -1.5, -0.2)
-    default_sfr_params[3] = np.clip(0.7 * (logmp - 11.0) + 1.0, 1.0, 3.0)
-    default_sfr_params[5] = 1.5
-    default_sfr_params[6] = np.clip(-8.0 * (logmp - 11.0) + 15, 2.0, 15.0)
-    u_default_sfr_params = np.array(
-        _get_unbounded_sfr_params(*default_sfr_params)
-    )
+    default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) + 1.0, 1.0, 3.0)
+    default_sfr_params[4] = np.clip(-8.0 * (logmp - 11.0) + 15, 2.0, 15.0)
+    u_default_sfr_params = np.array(_get_unbounded_sfr_params(*default_sfr_params))
 
-    sfr_ms_params = np.zeros(6)
-    sfr_ms_params[0:2] = u_default_sfr_params[0:2]
-    sfr_ms_params[2:6] = u_default_sfr_params[3:7]
-    fixed_k = u_default_sfr_params[2]
+    sfr_ms_params = u_default_sfr_params
 
-    sfr_ms_params_err = np.array([0.5, 0.5, 1.0, 0.3, 0.5, 3.0])
+    sfr_ms_params_err = np.array([0.5, 0.5, 1.0, 0.3, 3.0])
 
     default_q_params = np.array(list(DEFAULT_Q_PARAMS.values()))
     default_q_params[0] = np.clip(-0.5 * (logmp - 11.0) + 1.5, 0.7, 1.5)
@@ -343,7 +331,6 @@ def get_loss_data_fixed_k(
         weight,
         weight_fstar,
         t_fstar_max,
-        fixed_k,
     )
     p_init = (
         np.concatenate((sfr_ms_params, q_params)),
@@ -352,16 +339,10 @@ def get_loss_data_fixed_k(
     return p_init, loss_data
 
 
-def get_outline_fixed_k(
-    halo_id, loss_data, p_best, loss_best, success
-):
+def get_outline_free(halo_id, loss_data, p_best, loss_best, success):
     """Return the string storing fitting results that will be written to disk"""
-    fixed_k = loss_data[-1]
-    sfr_params = np.zeros(7)
-    sfr_params[:2] = p_best[0:2]
-    sfr_params[2] = fixed_k
-    sfr_params[3:7] = p_best[2:6]
-    q_params = p_best[6:10]
+    sfr_params = p_best[0:5]
+    q_params = p_best[5:9]
     _d = np.concatenate((sfr_params, q_params)).astype("f4")
     data_out = (*_d, float(loss_best))
     out = str(halo_id) + " " + " ".join(["{:.5e}".format(x) for x in data_out])
@@ -370,12 +351,12 @@ def get_outline_fixed_k(
 
 
 #################
-# fixed_k_noquench #
+# fixed_noquench #
 #################
 
 
 @jjit
-def loss_fixed_k_noquench(params, loss_data):
+def loss_fixed_noquench(params, loss_data):
     """
     MSE loss function for fitting individual stellar mass histories.
     The parameter k is fixed. There is no quenching.
@@ -396,11 +377,10 @@ def loss_fixed_k_noquench(params, loss_data):
         weight,
         weight_fstar,
         t_fstar_max,
-        fixed_k,
         q_params,
     ) = loss_data
 
-    sfr_params = [*params[0:2], fixed_k, *params[2:6]]
+    sfr_params = params
 
     _res = calculate_sm_sfr_fstar_history_from_mah(
         lgt,
@@ -430,18 +410,14 @@ def loss_fixed_k_noquench(params, loss_data):
     return loss
 
 
-loss_fixed_k_noquench_deriv = jjit(
-    grad(loss_fixed_k_noquench, argnums=(0))
-)
+loss_fixed_noquench_deriv = jjit(grad(loss_fixed_noquench, argnums=(0)))
 
 
-def loss_fixed_k_noquench_deriv_np(params, data):
-    return np.array(
-        loss_fixed_k_noquench_deriv(params, data)
-    ).astype(float)
+def loss_fixed_noquench_deriv_np(params, data):
+    return np.array(loss_fixed_noquench_deriv(params, data)).astype(float)
 
 
-def get_loss_data_fixed_k_noquench(
+def get_loss_data_fixed_noquench(
     t_sim,
     dt,
     sfrh,
@@ -496,9 +472,6 @@ def get_loss_data_fixed_k_noquench(
         Lower bound value of star formation history used in the fits.
         SFH(t) = max(SFH(t), SMH(t) * ssfrh_floor)
         Default is set as global at top of module.
-    fixed_floor : float
-        Value of the fixed floor parameter.
-        Default is set as global at top of module.
     Returns
     -------
     p_init : ndarray of shape (5, )
@@ -538,8 +511,6 @@ def get_loss_data_fixed_k_noquench(
             the SFH snapshots that fall below the threshold mass.
         t_fstar_max : float
             Base-10 log of the cosmic time where SFH target history peaks.
-        fixed_k : float
-            Fixed value of the unbounded diffstar parameter k
         q_params : ndarray of shape (4, )
             Fixed values of the unbounded quenching parameters
     """
@@ -580,19 +551,13 @@ def get_loss_data_fixed_k_noquench(
     default_sfr_params = np.array(list(DEFAULT_SFR_PARAMS.values()))
     default_sfr_params[0] = np.clip(0.4 * (logmp - 11.0) + 11.25, 11.0, 13.0)
     default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 1.0, -1.5, -0.2)
-    default_sfr_params[3] = np.clip(0.7 * (logmp - 11.0) + 1.0, 1.0, 3.0)
-    default_sfr_params[5] = 1.5
-    default_sfr_params[6] = np.clip(-8.0 * (logmp - 11.0) + 15, 2.0, 15.0)
-    u_default_sfr_params = np.array(
-        _get_unbounded_sfr_params(*default_sfr_params)
-    )
+    default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) + 1.0, 1.0, 3.0)
+    default_sfr_params[4] = np.clip(-8.0 * (logmp - 11.0) + 15, 2.0, 15.0)
+    u_default_sfr_params = np.array(_get_unbounded_sfr_params(*default_sfr_params))
 
-    sfr_ms_params = np.zeros(6)
-    sfr_ms_params[0:2] = u_default_sfr_params[0:2]
-    sfr_ms_params[2:6] = u_default_sfr_params[3:7]
-    fixed_k = u_default_sfr_params[2]
+    sfr_ms_params = u_default_sfr_params
 
-    sfr_ms_params_err = np.array([0.5, 0.5, 1.0, 0.3, 0.5, 3.0])
+    sfr_ms_params_err = np.array([0.5, 0.5, 1.0, 0.3, 3.0])
 
     default_q_params = np.array(list(DEFAULT_Q_PARAMS.values()))
     default_q_params[0] = 1.8
@@ -615,7 +580,6 @@ def get_loss_data_fixed_k_noquench(
         weight,
         weight_fstar,
         t_fstar_max,
-        fixed_k,
         q_params,
     )
     p_init = (
@@ -625,15 +589,10 @@ def get_loss_data_fixed_k_noquench(
     return p_init, loss_data
 
 
-def get_outline_fixed_k_noquench(
-    halo_id, loss_data, p_best, loss_best, success
-):
+def get_outline_fixed_noquench(halo_id, loss_data, p_best, loss_best, success):
     """Return the string storing fitting results that will be written to disk"""
-    fixed_k, q_params = loss_data[-2:]
-    sfr_params = np.zeros(7)
-    sfr_params[:2] = p_best[0:2]
-    sfr_params[2] = fixed_k
-    sfr_params[3:7] = p_best[2:6]
+    q_params = loss_data[-1]
+    sfr_params = p_best
     _d = np.concatenate((sfr_params, q_params)).astype("f4")
     data_out = (*_d, float(loss_best))
     out = str(halo_id) + " " + " ".join(["{:.5e}".format(x) for x in data_out])
@@ -642,12 +601,12 @@ def get_outline_fixed_k_noquench(
 
 
 #################
-# fixed_k_hi #
+# fixed_hi #
 #################
 
 
 @jjit
-def loss_fixed_k_hi(params, loss_data):
+def loss_fixed_hi(params, loss_data):
     """
     MSE loss function for fitting individual stellar mass histories.
     The parameters k, indx_hi are fixed.
@@ -668,12 +627,11 @@ def loss_fixed_k_hi(params, loss_data):
         weight,
         weight_fstar,
         t_fstar_max,
-        fixed_k,
         fixed_hi,
     ) = loss_data
 
-    sfr_params = [*params[0:2], fixed_k, params[2], fixed_hi, *params[3:5]]
-    q_params = params[5:9]
+    sfr_params = [*params[0:3], fixed_hi, params[3]]
+    q_params = params[4:8]
 
     _res = calculate_sm_sfr_fstar_history_from_mah(
         lgt,
@@ -703,18 +661,14 @@ def loss_fixed_k_hi(params, loss_data):
     return loss
 
 
-loss_fixed_k_hi_deriv = jjit(
-    grad(loss_fixed_k_hi, argnums=(0))
-)
+loss_fixed_hi_deriv = jjit(grad(loss_fixed_hi, argnums=(0)))
 
 
-def loss_fixed_k_hi_deriv_np(params, data):
-    return np.array(loss_fixed_k_hi_deriv(params, data)).astype(
-        float
-    )
+def loss_fixed_hi_deriv_np(params, data):
+    return np.array(loss_fixed_hi_deriv(params, data)).astype(float)
 
 
-def get_loss_data_fixed_k_hi(
+def get_loss_data_fixed_hi(
     t_sim,
     dt,
     sfrh,
@@ -769,9 +723,6 @@ def get_loss_data_fixed_k_hi(
         Lower bound value of star formation history used in the fits.
         SFH(t) = max(SFH(t), SMH(t) * ssfrh_floor)
         Default is set as global at top of module.
-    fixed_floor : float
-        Value of the fixed floor parameter.
-        Default is set as global at top of module.
     Returns
     -------
     p_init : ndarray of shape (5, )
@@ -811,8 +762,6 @@ def get_loss_data_fixed_k_hi(
             the SFH snapshots that fall below the threshold mass.
         t_fstar_max : float
             Base-10 log of the cosmic time where SFH target history peaks.
-        fixed_k : float
-            Fixed value of the unbounded diffstar parameter k
         fixed_hi : float
             Fixed value of the unbounded diffstar parameter indx_hi
     """
@@ -853,21 +802,16 @@ def get_loss_data_fixed_k_hi(
     default_sfr_params = np.array(list(DEFAULT_SFR_PARAMS.values()))
     default_sfr_params[0] = np.clip(0.4 * (logmp - 11.0) + 11.25, 11.0, 13.0)
     default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 1.0, -1.5, -0.2)
-    default_sfr_params[3] = np.clip(0.7 * (logmp - 11.0) + 1.0, 1.0, 3.0)
-    default_sfr_params[5] = 1.5
-    default_sfr_params[6] = np.clip(-8.0 * (logmp - 11.0) + 15, 2.0, 15.0)
-    u_default_sfr_params = np.array(
-        _get_unbounded_sfr_params(*default_sfr_params)
-    )
+    default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) + 1.0, 1.0, 3.0)
+    default_sfr_params[4] = np.clip(-8.0 * (logmp - 11.0) + 15, 2.0, 15.0)
+    u_default_sfr_params = np.array(_get_unbounded_sfr_params(*default_sfr_params))
 
-    sfr_ms_params = np.zeros(5)
-    sfr_ms_params[0:2] = u_default_sfr_params[0:2]
-    sfr_ms_params[2] = u_default_sfr_params[3]
-    sfr_ms_params[3:5] = u_default_sfr_params[5:7]
-    fixed_k = u_default_sfr_params[2]
-    fixed_hi = u_default_sfr_params[4]
+    sfr_ms_params = np.zeros(4)
+    sfr_ms_params[0:3] = u_default_sfr_params[0:3]
+    sfr_ms_params[3] = u_default_sfr_params[4]
+    fixed_hi = u_default_sfr_params[3]
 
-    sfr_ms_params_err = np.array([0.5, 0.5, 1.0, 0.5, 3.0])
+    sfr_ms_params_err = np.array([0.5, 0.5, 1.0, 3.0])
 
     default_q_params = np.array(list(DEFAULT_Q_PARAMS.values()))
     default_q_params[0] = np.clip(-0.5 * (logmp - 11.0) + 1.5, 0.7, 1.5)
@@ -891,7 +835,6 @@ def get_loss_data_fixed_k_hi(
         weight,
         weight_fstar,
         t_fstar_max,
-        fixed_k,
         fixed_hi,
     )
     p_init = (
@@ -901,34 +844,37 @@ def get_loss_data_fixed_k_hi(
     return p_init, loss_data
 
 
-def get_outline_fixed_k_hi(
-    halo_id, loss_data, p_best, loss_best, success
-):
+def get_outline_fixed_hi(halo_id, loss_data, p_best, loss_best, success):
     """Return the string storing fitting results that will be written to disk"""
-    fixed_k, fixed_hi = loss_data[-2:]
-    sfr_params = np.zeros(7)
-    sfr_params[:2] = p_best[0:2]
-    sfr_params[2] = fixed_k
-    sfr_params[3] = p_best[2]
-    sfr_params[4] = fixed_hi
-    sfr_params[5:7] = p_best[3:5]
-    q_params = p_best[5:9]
+    fixed_hi = loss_data[-1]
+    sfr_params = np.zeros(5)
+    sfr_params[0:3] = p_best[0:3]
+    sfr_params[3] = fixed_hi
+    sfr_params[4] = p_best[3]
+    q_params = p_best[4:8]
     _d = np.concatenate((sfr_params, q_params)).astype("f4")
     data_out = (*_d, float(loss_best))
     out = str(halo_id) + " " + " ".join(["{:.5e}".format(x) for x in data_out])
     out = out + " " + str(success)
     return out + "\n"
 
+
+loss_default = loss_fixed_hi
+loss_grad_default_np = loss_fixed_hi_deriv_np
+get_loss_data_default = get_loss_data_fixed_hi
+get_outline_default = get_outline_fixed_hi
+
+
 #################
-# fixed_k_hi_rej #
+# fixed_hi_rej #
 #################
 
 
 @jjit
-def loss_fixed_k_hi_rej(params, loss_data):
+def loss_fixed_hi_rej(params, loss_data):
     """
     MSE loss function for fitting individual stellar mass histories.
-    The parameters k, indx_hi are fixed. Rejuvenation is deactivated.
+    The parameters indx_hi are fixed. Rejuvenation is deactivated.
     """
     (
         lgt,
@@ -946,17 +892,16 @@ def loss_fixed_k_hi_rej(params, loss_data):
         weight,
         weight_fstar,
         t_fstar_max,
-        fixed_k,
         fixed_hi,
     ) = loss_data
 
-    sfr_params = [*params[0:2], fixed_k, params[2], fixed_hi, *params[3:5]]
+    sfr_params = [*params[0:3], fixed_hi, params[3]]
 
-    u_lg_drop = params[7]
+    u_lg_drop = params[6]
     lg_drop = _get_bounded_lg_drop(u_lg_drop)
     u_lg_rejuv = _get_unbounded_qrejuv(lg_drop + 0.01, lg_drop)
 
-    q_params = [*params[5:8], u_lg_rejuv]
+    q_params = [*params[4:7], u_lg_rejuv]
 
     _res = calculate_sm_sfr_fstar_history_from_mah(
         lgt,
@@ -986,18 +931,14 @@ def loss_fixed_k_hi_rej(params, loss_data):
     return loss
 
 
-loss_fixed_k_hi_rej_deriv = jjit(
-    grad(loss_fixed_k_hi_rej, argnums=(0))
-)
+loss_fixed_hi_rej_deriv = jjit(grad(loss_fixed_hi_rej, argnums=(0)))
 
 
-def loss_fixed_k_hi_rej_deriv_np(params, data):
-    return np.array(
-        loss_fixed_k_hi_rej_deriv(params, data)
-    ).astype(float)
+def loss_fixed_hi_rej_deriv_np(params, data):
+    return np.array(loss_fixed_hi_rej_deriv(params, data)).astype(float)
 
 
-def get_loss_data_fixed_k_hi_rej(
+def get_loss_data_fixed_hi_rej(
     t_sim,
     dt,
     sfrh,
@@ -1011,7 +952,7 @@ def get_loss_data_fixed_k_hi_rej(
     ssfrh_floor=SSFRH_FLOOR,
 ):
     """Retrieve the target data passed to the optimizer when fitting the halo
-    SFH model for the case in which the parameters k, indx_hi are fixed.
+    SFH model for the case in which the parameters indx_hi are fixed.
     There is no rejuvenation.
     Parameters
     ----------
@@ -1053,9 +994,6 @@ def get_loss_data_fixed_k_hi_rej(
         Lower bound value of star formation history used in the fits.
         SFH(t) = max(SFH(t), SMH(t) * ssfrh_floor)
         Default is set as global at top of module.
-    fixed_floor : float
-        Value of the fixed floor parameter.
-        Default is set as global at top of module.
     Returns
     -------
     p_init : ndarray of shape (5, )
@@ -1095,8 +1033,6 @@ def get_loss_data_fixed_k_hi_rej(
             the SFH snapshots that fall below the threshold mass.
         t_fstar_max : float
             Base-10 log of the cosmic time where SFH target history peaks.
-        fixed_k : float
-            Fixed value of the unbounded diffstar parameter k
         fixed_hi : float
             Fixed value of the unbounded diffstar parameter indx_hi
     """
@@ -1137,21 +1073,16 @@ def get_loss_data_fixed_k_hi_rej(
     default_sfr_params = np.array(list(DEFAULT_SFR_PARAMS.values()))
     default_sfr_params[0] = np.clip(0.4 * (logmp - 11.0) + 11.25, 11.0, 13.0)
     default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 1.0, -1.5, -0.2)
-    default_sfr_params[3] = np.clip(0.7 * (logmp - 11.0) + 1.0, 1.0, 3.0)
-    default_sfr_params[5] = 1.5
-    default_sfr_params[6] = np.clip(-8.0 * (logmp - 11.0) + 15, 2.0, 15.0)
-    u_default_sfr_params = np.array(
-        _get_unbounded_sfr_params(*default_sfr_params)
-    )
+    default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) + 1.0, 1.0, 3.0)
+    default_sfr_params[4] = np.clip(-8.0 * (logmp - 11.0) + 15, 2.0, 15.0)
+    u_default_sfr_params = np.array(_get_unbounded_sfr_params(*default_sfr_params))
 
-    sfr_ms_params = np.zeros(5)
-    sfr_ms_params[0:2] = u_default_sfr_params[0:2]
-    sfr_ms_params[2] = u_default_sfr_params[3]
-    sfr_ms_params[3:5] = u_default_sfr_params[5:7]
-    fixed_k = u_default_sfr_params[2]
-    fixed_hi = u_default_sfr_params[4]
+    sfr_ms_params = np.zeros(4)
+    sfr_ms_params[0:3] = u_default_sfr_params[0:3]
+    sfr_ms_params[3] = u_default_sfr_params[4]
+    fixed_hi = u_default_sfr_params[3]
 
-    sfr_ms_params_err = np.array([0.5, 0.5, 1.0, 0.5, 3.0])
+    sfr_ms_params_err = np.array([0.5, 0.5, 1.0, 3.0])
 
     default_q_params = np.array(list(DEFAULT_Q_PARAMS.values()))
     default_q_params[0] = np.clip(-0.5 * (logmp - 11.0) + 1.5, 0.7, 1.5)
@@ -1178,7 +1109,6 @@ def get_loss_data_fixed_k_hi_rej(
         weight,
         weight_fstar,
         t_fstar_max,
-        fixed_k,
         fixed_hi,
     )
     p_init = (
@@ -1188,22 +1118,18 @@ def get_loss_data_fixed_k_hi_rej(
     return p_init, loss_data
 
 
-def get_outline_fixed_k_hi_rej(
-    halo_id, loss_data, p_best, loss_best, success
-):
+def get_outline_fixed_hi_rej(halo_id, loss_data, p_best, loss_best, success):
     """Return the string storing fitting results that will be written to disk"""
-    fixed_k, fixed_hi = loss_data[-2:]
-    sfr_params = np.zeros(7)
-    sfr_params[:2] = p_best[0:2]
-    sfr_params[2] = fixed_k
-    sfr_params[3] = p_best[2]
-    sfr_params[4] = fixed_hi
-    sfr_params[5:7] = p_best[3:5]
+    fixed_hi = loss_data[-1]
+    sfr_params = np.zeros(5)
+    sfr_params[0:3] = p_best[0:3]
+    sfr_params[3] = fixed_hi
+    sfr_params[4] = p_best[3]
 
     q_params = np.zeros(4)
-    q_params[0:3] = p_best[5:8]
+    q_params[0:3] = p_best[4:7]
 
-    u_lg_drop = p_best[7]
+    u_lg_drop = p_best[6]
     lg_drop = _get_bounded_lg_drop(u_lg_drop)
     u_lg_rejuv = _get_unbounded_qrejuv(lg_drop + 0.01, lg_drop)
 
@@ -1217,15 +1143,15 @@ def get_outline_fixed_k_hi_rej(
 
 
 #################
-# fixed_k_hi_depl #
+# fixed_hi_depl #
 #################
 
 
 @jjit
-def loss_fixed_k_hi_depl(params, loss_data):
+def loss_fixed_hi_depl(params, loss_data):
     """
     MSE loss function for fitting individual stellar mass histories.
-    The parameters k, indx_hi are fixed.
+    The parameters indx_hi are fixed.
     Depletion time is fixed at tau=0Gyr, i.e. gas conversion is instantaenous.
     """
     (
@@ -1244,593 +1170,11 @@ def loss_fixed_k_hi_depl(params, loss_data):
         weight,
         weight_fstar,
         t_fstar_max,
-        fixed_k,
         fixed_hi,
         fixed_tau,
     ) = loss_data
 
-    sfr_params = [*params[0:2], fixed_k, params[2], fixed_hi, params[3], fixed_tau]
-    q_params = params[4:8]
-
-    _res = calculate_sm_sfr_fstar_history_from_mah(
-        lgt,
-        dt,
-        dmhdt,
-        log_mah,
-        sfr_params,
-        q_params,
-        index_select,
-        fstar_indx_high,
-        fstar_tdelay,
-    )
-
-    mstar, sfr, fstar = _res
-    mstar = jnp.log10(mstar)
-    fstar = jnp.log10(fstar)
-
-    sfr_res = 1e8 * (sfr - sfr_target) / sm_target
-    sfr_res = jnp.clip(sfr_res, -1.0, 1.0)
-
-    loss = jnp.mean(((mstar - log_sm_target) / weight) ** 2)
-    loss += jnp.mean(((fstar - fstar_target) / weight_fstar) ** 2)
-    loss += jnp.mean((sfr_res / weight) ** 2)
-
-    qt = _get_bounded_qt(q_params[0])
-    loss += _sigmoid(qt - t_fstar_max, 0.0, 50.0, 100.0, 0.0)
-    return loss
-
-
-loss_fixed_k_hi_depl_deriv = jjit(
-    grad(loss_fixed_k_hi_depl, argnums=(0))
-)
-
-
-def loss_fixed_k_hi_depl_deriv_np(params, data):
-    return np.array(
-        loss_fixed_k_hi_depl_deriv(params, data)
-    ).astype(float)
-
-
-def get_loss_data_fixed_k_hi_depl(
-    t_sim,
-    dt,
-    sfrh,
-    log_smah_sim,
-    logmp,
-    mah_params,
-    dlogm_cut=DLOGM_CUT,
-    t_fit_min=T_FIT_MIN,
-    mass_fit_min=MIN_MASS_CUT,
-    fstar_tdelay=FSTAR_TIME_DELAY,
-    ssfrh_floor=SSFRH_FLOOR,
-):
-    """Retrieve the target data passed to the optimizer when fitting the halo
-    SFH model for the case in which the parameters k, indx_hi are fixed.
-    Depletion time is fixed at tau=0Gyr, i.e. gas conversion is instantaenous.
-    Parameters
-    ----------
-    t_sim : ndarray of shape (nt, )
-        Cosmic time of each simulated snapshot in Gyr units.
-    dt : ndarray of shape (nt, )
-        Cosmic time steps between each simulated snapshot in Gyr units.
-    sfrh : ndarray of shape (nt, )
-        Star formation history of simulated snapshots in Msun/yr units.
-    log_smah_sim : ndarray of shape (nt, )
-        Base-10 log of cumulative stellar mass in Msun units.
-    logmp : float
-        Base-10 log present day halo mass in Msun units.
-    mah_params : ndarray of shape (4, )
-        Best fit diffmah halo parameters. Includes (logtc, k, early, late).
-    dlogm_cut : float, optional
-        Additional quantity used to place a cut on which simulated snapshots
-        are used to define the target halo SFH.
-        Snapshots will not be used when log_smah_sim falls below
-        log_smah_sim[-1] - dlogm_cut.
-        Default is set as global at top of module.
-    t_fit_min : float, optional
-        Additional quantity used to place a cut on which simulated snapshots are used to
-        define the target halo SFH. The value of t_fit_min defines the minimum cosmic
-        time in Gyr used to define the target SFH.
-        Default is set as global at top of module.
-    mass_fit_min : float
-        Quantity used to place a cut on which simulated snapshots are used to
-        define the target halo SFH.
-        The value mass_fit_min is the base-10 log of the minimum stellar mass in the SFH
-        used as target data. The final mass_fit_min cut is equal to
-        min(log_smah_sim[-1] - 0.5, mass_fit_min).
-        Default is set as global at top of module.
-    fstar_tdelay : float
-        Time interval in Gyr for fstar definition.
-        fstar = mstar(t) - mstar(t-fstar_tdelay)
-        Default is set as global at top of module.
-    ssfrh_floor : float
-        Lower bound value of star formation history used in the fits.
-        SFH(t) = max(SFH(t), SMH(t) * ssfrh_floor)
-        Default is set as global at top of module.
-    fixed_floor : float
-        Value of the fixed floor parameter.
-        Default is set as global at top of module.
-    Returns
-    -------
-    p_init : ndarray of shape (5, )
-        Initial guess at the unbounded value of the best-fit parameter.
-        Here we have p_init = (u_lgm, u_lgy, u_l, u_h, u_dt)
-    loss_data : sequence consisting of the following data
-        logt: ndarray of shape (nt, )
-            Base-10 log of cosmic time of each simulated snapshot in Gyr.
-        dt : ndarray of shape (nt, )
-            Cosmic time steps between each simulated snapshot in Gyr
-        dmhdt : ndarray of shape (nt, )
-            Diffmah halo mass accretion rate in units of Msun/yr.
-        log_mah : ndarray of shape (nt, )
-            Diffmah halo mass accretion history in units of Msun.
-        smh : ndarray of shape (nt, )
-            Cumulative stellar mass history in Msun.
-        log_smah_sim : ndarray of shape (nt, )
-            Base-10 log of cumulative stellar mass in Msun.
-        sfrh : ndarray of shape (nt, )
-            Star formation history in Msun/yr.
-        log_fstar_sim : ndarray of shape (nt, )
-            Base-10 log of cumulative SFH averaged over a timescale in Msun/yr.
-        index_select: ndarray of shape (n_times_fstar, )
-            Snapshot indices used in fstar computation.
-        fstar_indx_high: ndarray of shape (n_times_fstar, )
-            Indices of np.searchsorted(t, t - fstar_tdelay)[index_select]
-        fstar_tdelay: float
-            Time interval in Gyr for fstar definition.
-            fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay[Gyr]
-        ssfrh_floor : float
-            Lower bound value of star formation history used in the fits.
-        weight : ndarray of shape (nt, )
-            Weight for each snapshot, to effectively remove from the fit
-            the SMH snapshots that fall below the threshold mass.
-        weight_fstar : ndarray of shape (n_times_fstar, )
-            Weight for each snapshot, to effectively remove from the fit
-            the SFH snapshots that fall below the threshold mass.
-        t_fstar_max : float
-            Base-10 log of the cosmic time where SFH target history peaks.
-        fixed_k : float
-            Fixed value of the unbounded diffstar parameter k
-        fixed_hi : float
-            Fixed value of the unbounded diffstar parameter indx_hi
-        fixed_tau : float
-            Fixed value of the unbounded diffstar parameter tau_dep
-    """
-    fstar_indx_high = np.searchsorted(t_sim, t_sim - fstar_tdelay)
-    _mask = t_sim > fstar_tdelay + fstar_tdelay / 2.0
-    index_select = np.arange(len(t_sim))[_mask]
-    fstar_indx_high = fstar_indx_high[_mask]
-
-    smh = 10 ** log_smah_sim
-
-    fstar_sim = compute_fstar(t_sim, smh, index_select, fstar_indx_high, fstar_tdelay)
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        ssfrh = fstar_sim / smh[index_select]
-        ssfrh = np.clip(ssfrh, ssfrh_floor, np.inf)
-        fstar_sim = ssfrh * smh[index_select]
-        log_fstar_sim = np.where(
-            fstar_sim == 0.0, np.log10(fstar_sim.max()) - 3.0, np.log10(fstar_sim)
-        )
-
-    logt = jnp.log10(t_sim)
-    logtmp = np.log10(t_sim[-1])
-    dmhdt, log_mah = _calc_halo_history(logt, logtmp, logmp, *mah_params)
-
-    weight, weight_fstar = get_weights(
-        t_sim,
-        log_smah_sim,
-        log_fstar_sim,
-        fstar_indx_high,
-        dlogm_cut,
-        t_fit_min,
-        mass_fit_min,
-    )
-
-    t_fstar_max = logt[index_select][np.argmax(log_fstar_sim)]
-
-    default_sfr_params = np.array(list(DEFAULT_SFR_PARAMS.values()))
-    default_sfr_params[0] = np.clip(0.4 * (logmp - 11.0) + 11.25, 11.0, 13.0)
-    default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 1.0, -1.5, -0.2)
-    default_sfr_params[3] = np.clip(0.7 * (logmp - 11.0) + 1.0, 1.0, 3.0)
-    default_sfr_params[5] = 1.5
-    default_sfr_params[6] = 0.01
-    u_default_sfr_params = np.array(
-        _get_unbounded_sfr_params(*default_sfr_params)
-    )
-
-    sfr_ms_params = np.zeros(4)
-    sfr_ms_params[0:2] = u_default_sfr_params[0:2]
-    sfr_ms_params[2] = u_default_sfr_params[3]
-    sfr_ms_params[3] = u_default_sfr_params[5]
-    fixed_k = u_default_sfr_params[2]
-    fixed_hi = u_default_sfr_params[4]
-    fixed_tau = u_default_sfr_params[6]
-
-    sfr_ms_params_err = np.array([0.5, 0.5, 1.0, 0.5])
-
-    default_q_params = np.array(list(DEFAULT_Q_PARAMS.values()))
-    default_q_params[0] = np.clip(-0.5 * (logmp - 11.0) + 1.5, 0.7, 1.5)
-    default_q_params[2] = -2.0
-    q_params = np.array(_get_unbounded_q_params(*default_q_params))
-    q_params_err = np.array([0.3, 0.5, 0.3, 0.3])
-
-    loss_data = (
-        logt,
-        dt,
-        dmhdt,
-        log_mah,
-        smh,
-        log_smah_sim,
-        sfrh,
-        log_fstar_sim,
-        index_select,
-        fstar_indx_high,
-        fstar_tdelay,
-        ssfrh_floor,
-        weight,
-        weight_fstar,
-        t_fstar_max,
-        fixed_k,
-        fixed_hi,
-        fixed_tau,
-    )
-    p_init = (
-        np.concatenate((sfr_ms_params, q_params)),
-        np.concatenate((sfr_ms_params_err, q_params_err)),
-    )
-    return p_init, loss_data
-
-
-def get_outline_fixed_k_hi_depl(
-    halo_id, loss_data, p_best, loss_best, success
-):
-    """Return the string storing fitting results that will be written to disk"""
-    fixed_k, fixed_hi, fixed_tau = loss_data[-3:]
-    sfr_params = np.zeros(7)
-    sfr_params[:2] = p_best[0:2]
-    sfr_params[2] = fixed_k
-    sfr_params[3] = p_best[2]
-    sfr_params[4] = fixed_hi
-    sfr_params[5] = p_best[3]
-    sfr_params[6] = fixed_tau
-
-    q_params = p_best[4:8]
-    _d = np.concatenate((sfr_params, q_params)).astype("f4")
-    data_out = (*_d, float(loss_best))
-    out = str(halo_id) + " " + " ".join(["{:.5e}".format(x) for x in data_out])
-    out = out + " " + str(success)
-    return out + "\n"
-
-
-#################
-# fixed_k_hi_floor #
-#################
-
-
-@jjit
-def loss_fixed_k_hi_floor(params, loss_data):
-    """
-    MSE loss function for fitting individual stellar mass histories.
-    The parameters k, indx_hi, floor are fixed.
-    """
-    (
-        lgt,
-        dt,
-        dmhdt,
-        log_mah,
-        sm_target,
-        log_sm_target,
-        sfr_target,
-        fstar_target,
-        index_select,
-        fstar_indx_high,
-        fstar_tdelay,
-        ssfrh_floor,
-        weight,
-        weight_fstar,
-        t_fstar_max,
-        fixed_k,
-        fixed_hi,
-        fixed_floor,
-    ) = loss_data
-
-    sfr_params = [*params[0:2], fixed_k, params[2], fixed_hi, fixed_floor, params[3]]
-    q_params = params[4:8]
-
-    _res = calculate_sm_sfr_fstar_history_from_mah(
-        lgt,
-        dt,
-        dmhdt,
-        log_mah,
-        sfr_params,
-        q_params,
-        index_select,
-        fstar_indx_high,
-        fstar_tdelay,
-    )
-
-    mstar, sfr, fstar = _res
-    mstar = jnp.log10(mstar)
-    fstar = jnp.log10(fstar)
-
-    sfr_res = 1e8 * (sfr - sfr_target) / sm_target
-    sfr_res = jnp.clip(sfr_res, -1.0, 1.0)
-
-    loss = jnp.mean(((mstar - log_sm_target) / weight) ** 2)
-    loss += jnp.mean(((fstar - fstar_target) / weight_fstar) ** 2)
-    loss += jnp.mean((sfr_res / weight) ** 2)
-
-    qt = _get_bounded_qt(q_params[0])
-    loss += _sigmoid(qt - t_fstar_max, 0.0, 50.0, 100.0, 0.0)
-    return loss
-
-
-loss_fixed_k_hi_floor_deriv = jjit(
-    grad(loss_fixed_k_hi_floor, argnums=(0))
-)
-
-
-def loss_fixed_k_hi_floor_deriv_np(params, data):
-    return np.array(
-        loss_fixed_k_hi_floor_deriv(params, data)
-    ).astype(float)
-
-
-def get_loss_data_fixed_k_hi_floor(
-    t_sim,
-    dt,
-    sfrh,
-    log_smah_sim,
-    logmp,
-    mah_params,
-    dlogm_cut=DLOGM_CUT,
-    t_fit_min=T_FIT_MIN,
-    mass_fit_min=MIN_MASS_CUT,
-    fstar_tdelay=FSTAR_TIME_DELAY,
-    ssfrh_floor=SSFRH_FLOOR,
-    fixed_floor=FIXED_FLOOR,
-):
-    """Retrieve the target data passed to the optimizer when fitting the halo
-    SFH model for the case in which the parameters k, indx_hi, floor are fixed.
-    Parameters
-    ----------
-    t_sim : ndarray of shape (nt, )
-        Cosmic time of each simulated snapshot in Gyr units.
-    dt : ndarray of shape (nt, )
-        Cosmic time steps between each simulated snapshot in Gyr units.
-    sfrh : ndarray of shape (nt, )
-        Star formation history of simulated snapshots in Msun/yr units.
-    log_smah_sim : ndarray of shape (nt, )
-        Base-10 log of cumulative stellar mass in Msun units.
-    logmp : float
-        Base-10 log present day halo mass in Msun units.
-    mah_params : ndarray of shape (4, )
-        Best fit diffmah halo parameters. Includes (logtc, k, early, late).
-    dlogm_cut : float, optional
-        Additional quantity used to place a cut on which simulated snapshots
-        are used to define the target halo SFH.
-        Snapshots will not be used when log_smah_sim falls below
-        log_smah_sim[-1] - dlogm_cut.
-        Default is set as global at top of module.
-    t_fit_min : float, optional
-        Additional quantity used to place a cut on which simulated snapshots are used to
-        define the target halo SFH. The value of t_fit_min defines the minimum cosmic
-        time in Gyr used to define the target SFH.
-        Default is set as global at top of module.
-    mass_fit_min : float
-        Quantity used to place a cut on which simulated snapshots are used to
-        define the target halo SFH.
-        The value mass_fit_min is the base-10 log of the minimum stellar mass in the SFH
-        used as target data. The final mass_fit_min cut is equal to
-        min(log_smah_sim[-1] - 0.5, mass_fit_min).
-        Default is set as global at top of module.
-    fstar_tdelay : float
-        Time interval in Gyr for fstar definition.
-        fstar = mstar(t) - mstar(t-fstar_tdelay)
-        Default is set as global at top of module.
-    ssfrh_floor : float
-        Lower bound value of star formation history used in the fits.
-        SFH(t) = max(SFH(t), SMH(t) * ssfrh_floor)
-        Default is set as global at top of module.
-    fixed_floor : float
-        Value of the fixed floor parameter.
-        Default is set as global at top of module.
-    Returns
-    -------
-    p_init : ndarray of shape (5, )
-        Initial guess at the unbounded value of the best-fit parameter.
-        Here we have p_init = (u_lgm, u_lgy, u_l, u_h, u_dt)
-    loss_data : sequence consisting of the following data
-        logt: ndarray of shape (nt, )
-            Base-10 log of cosmic time of each simulated snapshot in Gyr.
-        dt : ndarray of shape (nt, )
-            Cosmic time steps between each simulated snapshot in Gyr
-        dmhdt : ndarray of shape (nt, )
-            Diffmah halo mass accretion rate in units of Msun/yr.
-        log_mah : ndarray of shape (nt, )
-            Diffmah halo mass accretion history in units of Msun.
-        smh : ndarray of shape (nt, )
-            Cumulative stellar mass history in Msun.
-        log_smah_sim : ndarray of shape (nt, )
-            Base-10 log of cumulative stellar mass in Msun.
-        sfrh : ndarray of shape (nt, )
-            Star formation history in Msun/yr.
-        log_fstar_sim : ndarray of shape (nt, )
-            Base-10 log of cumulative SFH averaged over a timescale in Msun/yr.
-        index_select: ndarray of shape (n_times_fstar, )
-            Snapshot indices used in fstar computation.
-        fstar_indx_high: ndarray of shape (n_times_fstar, )
-            Indices of np.searchsorted(t, t - fstar_tdelay)[index_select]
-        fstar_tdelay: float
-            Time interval in Gyr for fstar definition.
-            fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay[Gyr]
-        ssfrh_floor : float
-            Lower bound value of star formation history used in the fits.
-        weight : ndarray of shape (nt, )
-            Weight for each snapshot, to effectively remove from the fit
-            the SMH snapshots that fall below the threshold mass.
-        weight_fstar : ndarray of shape (n_times_fstar, )
-            Weight for each snapshot, to effectively remove from the fit
-            the SFH snapshots that fall below the threshold mass.
-        t_fstar_max : float
-            Base-10 log of the cosmic time where SFH target history peaks.
-        fixed_k : float
-            Fixed value of the unbounded diffstar parameter k
-        fixed_hi : float
-            Fixed value of the unbounded diffstar parameter indx_hi
-        fixed_floor : float
-            Fixed value of the unbounded diffstar parameter floor_low
-    """
-
-    fstar_indx_high = np.searchsorted(t_sim, t_sim - fstar_tdelay)
-    _mask = t_sim > fstar_tdelay + fstar_tdelay / 2.0
-    index_select = np.arange(len(t_sim))[_mask]
-    fstar_indx_high = fstar_indx_high[_mask]
-
-    smh = 10 ** log_smah_sim
-
-    fstar_sim = compute_fstar(t_sim, smh, index_select, fstar_indx_high, fstar_tdelay)
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        ssfrh = fstar_sim / smh[index_select]
-        ssfrh = np.clip(ssfrh, ssfrh_floor, np.inf)
-        fstar_sim = ssfrh * smh[index_select]
-        log_fstar_sim = np.where(
-            fstar_sim == 0.0, np.log10(fstar_sim.max()) - 3.0, np.log10(fstar_sim)
-        )
-
-    logt = jnp.log10(t_sim)
-    logtmp = np.log10(t_sim[-1])
-    dmhdt, log_mah = _calc_halo_history(logt, logtmp, logmp, *mah_params)
-
-    weight, weight_fstar = get_weights(
-        t_sim,
-        log_smah_sim,
-        log_fstar_sim,
-        fstar_indx_high,
-        dlogm_cut,
-        t_fit_min,
-        mass_fit_min,
-    )
-
-    t_fstar_max = logt[index_select][np.argmax(log_fstar_sim)]
-
-    default_sfr_params = np.array(list(DEFAULT_SFR_PARAMS.values()))
-    default_sfr_params[0] = np.clip(0.4 * (logmp - 11.0) + 11.25, 11.0, 13.0)
-    default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 1.0, -1.5, -0.2)
-    default_sfr_params[3] = np.clip(0.7 * (logmp - 11.0) + 1.0, 1.0, 3.0)
-    default_sfr_params[5] = fixed_floor
-    default_sfr_params[6] = np.clip(-8.0 * (logmp - 11.0) + 15, 2.0, 15.0)
-    u_default_sfr_params = np.array(
-        _get_unbounded_sfr_params(*default_sfr_params)
-    )
-
-    sfr_ms_params = np.zeros(4)
-    sfr_ms_params[0:2] = u_default_sfr_params[0:2]
-    sfr_ms_params[2] = u_default_sfr_params[3]
-    sfr_ms_params[3] = u_default_sfr_params[6]
-    fixed_k = u_default_sfr_params[2]
-    fixed_hi = u_default_sfr_params[4]
-    fixed_floor = u_default_sfr_params[5]
-
-    sfr_ms_params_err = np.array([0.5, 0.5, 1.0, 3.0])
-
-    default_q_params = np.array(list(DEFAULT_Q_PARAMS.values()))
-    default_q_params[0] = np.clip(-0.5 * (logmp - 11.0) + 1.5, 0.7, 1.5)
-    default_q_params[2] = -2.0
-    q_params = np.array(_get_unbounded_q_params(*default_q_params))
-    q_params_err = np.array([0.3, 0.5, 0.3, 0.3])
-
-    loss_data = (
-        logt,
-        dt,
-        dmhdt,
-        log_mah,
-        smh,
-        log_smah_sim,
-        sfrh,
-        log_fstar_sim,
-        index_select,
-        fstar_indx_high,
-        fstar_tdelay,
-        ssfrh_floor,
-        weight,
-        weight_fstar,
-        t_fstar_max,
-        fixed_k,
-        fixed_hi,
-        fixed_floor,
-    )
-    p_init = (
-        np.concatenate((sfr_ms_params, q_params)),
-        np.concatenate((sfr_ms_params_err, q_params_err)),
-    )
-    return p_init, loss_data
-
-
-def get_outline_fixed_k_hi_floor(
-    halo_id, loss_data, p_best, loss_best, success
-):
-    """Return the string storing fitting results that will be written to disk"""
-    fixed_k, fixed_hi, fixed_floor = loss_data[-3:]
-    sfr_params = np.zeros(7)
-    sfr_params[:2] = p_best[0:2]
-    sfr_params[2] = fixed_k
-    sfr_params[3] = p_best[2]
-    sfr_params[4] = fixed_hi
-    sfr_params[5] = fixed_floor
-    sfr_params[6] = p_best[3]
-    q_params = p_best[4:8]
-    _d = np.concatenate((sfr_params, q_params)).astype("f4")
-    data_out = (*_d, float(loss_best))
-    out = str(halo_id) + " " + " ".join(["{:.5e}".format(x) for x in data_out])
-    out = out + " " + str(success)
-    return out + "\n"
-
-
-loss_default = loss_fixed_k_hi_floor
-loss_grad_default_np = loss_fixed_k_hi_floor_deriv_np
-get_loss_data_default = get_loss_data_fixed_k_hi_floor
-get_outline_default = get_outline_fixed_k_hi_floor
-
-#################
-# fixed_k_hi_depl_floor #
-#################
-
-
-@jjit
-def loss_fixed_k_hi_depl_floor(params, loss_data):
-    """
-    MSE loss function for fitting individual stellar mass histories.
-    The parameters k, indx_hi, floor are fixed.
-    Depletion time is fixed at tau=0Gyr, i.e. gas conversion is instantaenous.
-    """
-    (
-        lgt,
-        dt,
-        dmhdt,
-        log_mah,
-        sm_target,
-        log_sm_target,
-        sfr_target,
-        fstar_target,
-        index_select,
-        fstar_indx_high,
-        fstar_tdelay,
-        ssfrh_floor,
-        weight,
-        weight_fstar,
-        t_fstar_max,
-        fixed_k,
-        fixed_hi,
-        fixed_floor,
-        fixed_tau,
-    ) = loss_data
-
-    sfr_params = [*params[0:2], fixed_k, params[2], fixed_hi, fixed_floor, fixed_tau]
+    sfr_params = [*params[0:3], fixed_hi, fixed_tau]
     q_params = params[3:7]
 
     _res = calculate_sm_sfr_fstar_history_from_mah(
@@ -1861,18 +1205,14 @@ def loss_fixed_k_hi_depl_floor(params, loss_data):
     return loss
 
 
-loss_fixed_k_hi_depl_floor_deriv = jjit(
-    grad(loss_fixed_k_hi_depl_floor, argnums=(0))
-)
+loss_fixed_hi_depl_deriv = jjit(grad(loss_fixed_hi_depl, argnums=(0)))
 
 
-def loss_fixed_k_hi_depl_floor_deriv_np(params, data):
-    return np.array(
-        loss_fixed_k_hi_depl_floor_deriv(params, data)
-    ).astype(float)
+def loss_fixed_hi_depl_deriv_np(params, data):
+    return np.array(loss_fixed_hi_depl_deriv(params, data)).astype(float)
 
 
-def get_loss_data_fixed_k_hi_depl_floor(
+def get_loss_data_fixed_hi_depl(
     t_sim,
     dt,
     sfrh,
@@ -1884,11 +1224,10 @@ def get_loss_data_fixed_k_hi_depl_floor(
     mass_fit_min=MIN_MASS_CUT,
     fstar_tdelay=FSTAR_TIME_DELAY,
     ssfrh_floor=SSFRH_FLOOR,
-    fixed_floor=FIXED_FLOOR,
 ):
     """Retrieve the target data passed to the optimizer when fitting the halo
-    SFH model for the case in which the parameters k, indx_hi, floor are fixed.
-    Depletion time is fixed at tau=0Gyr, i.e. gas conversion is instantaenous
+    SFH model for the case in which the parameters indx_hi are fixed.
+    Depletion time is fixed at tau=0Gyr, i.e. gas conversion is instantaenous.
     Parameters
     ----------
     t_sim : ndarray of shape (nt, )
@@ -1929,9 +1268,6 @@ def get_loss_data_fixed_k_hi_depl_floor(
         Lower bound value of star formation history used in the fits.
         SFH(t) = max(SFH(t), SMH(t) * ssfrh_floor)
         Default is set as global at top of module.
-    fixed_floor : float
-        Value of the fixed floor parameter.
-        Default is set as global at top of module.
     Returns
     -------
     p_init : ndarray of shape (5, )
@@ -1971,12 +1307,8 @@ def get_loss_data_fixed_k_hi_depl_floor(
             the SFH snapshots that fall below the threshold mass.
         t_fstar_max : float
             Base-10 log of the cosmic time where SFH target history peaks.
-        fixed_k : float
-            Fixed value of the unbounded diffstar parameter k
         fixed_hi : float
             Fixed value of the unbounded diffstar parameter indx_hi
-        fixed_floor : float
-            Fixed value of the unbounded diffstar parameter floor_low
         fixed_tau : float
             Fixed value of the unbounded diffstar parameter tau_dep
     """
@@ -2017,20 +1349,13 @@ def get_loss_data_fixed_k_hi_depl_floor(
     default_sfr_params = np.array(list(DEFAULT_SFR_PARAMS.values()))
     default_sfr_params[0] = np.clip(0.4 * (logmp - 11.0) + 11.25, 11.0, 13.0)
     default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 1.0, -1.5, -0.2)
-    default_sfr_params[3] = np.clip(0.7 * (logmp - 11.0) + 1.0, 1.0, 3.0)
-    default_sfr_params[5] = fixed_floor
-    default_sfr_params[6] = 0.01
-    u_default_sfr_params = np.array(
-        _get_unbounded_sfr_params(*default_sfr_params)
-    )
+    default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) + 1.0, 1.0, 3.0)
+    default_sfr_params[4] = 0.01
+    u_default_sfr_params = np.array(_get_unbounded_sfr_params(*default_sfr_params))
 
-    sfr_ms_params = np.zeros(3)
-    sfr_ms_params[0:2] = u_default_sfr_params[0:2]
-    sfr_ms_params[2] = u_default_sfr_params[3]
-    fixed_k = u_default_sfr_params[2]
-    fixed_hi = u_default_sfr_params[4]
-    fixed_floor = u_default_sfr_params[5]
-    fixed_tau = u_default_sfr_params[6]
+    sfr_ms_params = u_default_sfr_params[0:3]
+    fixed_hi = u_default_sfr_params[3]
+    fixed_tau = u_default_sfr_params[4]
 
     sfr_ms_params_err = np.array([0.5, 0.5, 1.0])
 
@@ -2056,9 +1381,7 @@ def get_loss_data_fixed_k_hi_depl_floor(
         weight,
         weight_fstar,
         t_fstar_max,
-        fixed_k,
         fixed_hi,
-        fixed_floor,
         fixed_tau,
     )
     p_init = (
@@ -2068,18 +1391,13 @@ def get_loss_data_fixed_k_hi_depl_floor(
     return p_init, loss_data
 
 
-def get_outline_fixed_k_hi_depl_floor(
-    halo_id, loss_data, p_best, loss_best, success
-):
+def get_outline_fixed_hi_depl(halo_id, loss_data, p_best, loss_best, success):
     """Return the string storing fitting results that will be written to disk"""
-    fixed_k, fixed_hi, fixed_floor, fixed_tau = loss_data[-4:]
-    sfr_params = np.zeros(7)
-    sfr_params[:2] = p_best[0:2]
-    sfr_params[2] = fixed_k
-    sfr_params[3] = p_best[2]
-    sfr_params[4] = fixed_hi
-    sfr_params[5] = fixed_floor
-    sfr_params[6] = fixed_tau
+    fixed_hi, fixed_tau = loss_data[-2:]
+    sfr_params = np.zeros(5)
+    sfr_params[0:3] = p_best[0:3]
+    sfr_params[3] = fixed_hi
+    sfr_params[4] = fixed_tau
 
     q_params = p_best[3:7]
     _d = np.concatenate((sfr_params, q_params)).astype("f4")
@@ -2090,15 +1408,15 @@ def get_outline_fixed_k_hi_depl_floor(
 
 
 #################
-# fixed_k_depl_floor_noquench #
+# fixed_depl_noquench #
 #################
 
 
 @jjit
-def loss_fixed_k_depl_floor_noquench(params, loss_data):
+def loss_fixed_depl_noquench(params, loss_data):
     """
     MSE loss function for fitting individual stellar mass histories.
-    The parameters k, indx_hi, floor are fixed. Quenching is deactivated.
+    Only main sequence efficiency parameters. Quenching is deactivated.
     Depletion time is fixed at tau=0Gyr, i.e. gas conversion is instantaenous.
     """
     (
@@ -2117,13 +1435,11 @@ def loss_fixed_k_depl_floor_noquench(params, loss_data):
         weight,
         weight_fstar,
         t_fstar_max,
-        fixed_k,
-        fixed_floor,
         fixed_tau,
         q_params,
     ) = loss_data
 
-    sfr_params = [*params[0:2], fixed_k, *params[2:4], fixed_floor, fixed_tau]
+    sfr_params = [*params[0:4], fixed_tau]
 
     _res = calculate_sm_sfr_fstar_history_from_mah(
         lgt,
@@ -2153,18 +1469,14 @@ def loss_fixed_k_depl_floor_noquench(params, loss_data):
     return loss
 
 
-loss_fixed_k_depl_floor_noquench_deriv = jjit(
-    grad(loss_fixed_k_depl_floor_noquench, argnums=(0))
-)
+loss_fixed_depl_noquench_deriv = jjit(grad(loss_fixed_depl_noquench, argnums=(0)))
 
 
-def loss_fixed_k_depl_floor_noquench_deriv_np(params, data):
-    return np.array(
-        loss_fixed_k_depl_floor_noquench_deriv(params, data)
-    ).astype(float)
+def loss_fixed_depl_noquench_deriv_np(params, data):
+    return np.array(loss_fixed_depl_noquench_deriv(params, data)).astype(float)
 
 
-def get_loss_data_fixed_k_depl_floor_noquench(
+def get_loss_data_fixed_depl_noquench(
     t_sim,
     dt,
     sfrh,
@@ -2178,7 +1490,7 @@ def get_loss_data_fixed_k_depl_floor_noquench(
     ssfrh_floor=SSFRH_FLOOR,
 ):
     """Retrieve the target data passed to the optimizer when fitting the halo
-    SFH model for the case in which the parameters k, floor iare fixed.
+    SFH model for the case in which only the main sequence parameters are varied.
     Depletion time is fixed at tau=0Gyr, i.e. gas conversion is instantaenous.
     There is no quenching.
     Parameters
@@ -2221,9 +1533,6 @@ def get_loss_data_fixed_k_depl_floor_noquench(
         Lower bound value of star formation history used in the fits.
         SFH(t) = max(SFH(t), SMH(t) * ssfrh_floor)
         Default is set as global at top of module.
-    fixed_floor : float
-        Value of the fixed floor parameter.
-        Default is set as global at top of module.
     Returns
     -------
     p_init : ndarray of shape (5, )
@@ -2263,10 +1572,6 @@ def get_loss_data_fixed_k_depl_floor_noquench(
             the SFH snapshots that fall below the threshold mass.
         t_fstar_max : float
             Base-10 log of the cosmic time where SFH target history peaks.
-        fixed_k : float
-            Fixed value of the unbounded diffstar parameter k
-        fixed_floor : float
-            Fixed value of the unbounded diffstar parameter floor_low
         fixed_tau : float
             Fixed value of the unbounded diffstar parameter tau_dep
         q_params : float
@@ -2309,19 +1614,12 @@ def get_loss_data_fixed_k_depl_floor_noquench(
     default_sfr_params = np.array(list(DEFAULT_SFR_PARAMS.values()))
     default_sfr_params[0] = np.clip(0.4 * (logmp - 11.0) + 11.25, 11.0, 13.0)
     default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 1.0, -1.5, -0.2)
-    default_sfr_params[3] = np.clip(0.7 * (logmp - 11.0) + 1.0, 1.0, 3.0)
-    default_sfr_params[5] = 6.9
-    default_sfr_params[6] = 0.01
-    u_default_sfr_params = np.array(
-        _get_unbounded_sfr_params(*default_sfr_params)
-    )
+    default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) + 1.0, 1.0, 3.0)
+    default_sfr_params[4] = 0.01
+    u_default_sfr_params = np.array(_get_unbounded_sfr_params(*default_sfr_params))
 
-    sfr_ms_params = np.zeros(4)
-    sfr_ms_params[0:2] = u_default_sfr_params[0:2]
-    sfr_ms_params[2:4] = u_default_sfr_params[3:5]
-    fixed_k = u_default_sfr_params[2]
-    fixed_floor = u_default_sfr_params[5]
-    fixed_tau = u_default_sfr_params[6]
+    sfr_ms_params = u_default_sfr_params[0:4]
+    fixed_tau = u_default_sfr_params[4]
 
     sfr_ms_params_err = np.array([0.5, 0.5, 1.0, 0.3])
 
@@ -2346,8 +1644,6 @@ def get_loss_data_fixed_k_depl_floor_noquench(
         weight,
         weight_fstar,
         t_fstar_max,
-        fixed_k,
-        fixed_floor,
         fixed_tau,
         q_params,
     )
@@ -2358,17 +1654,12 @@ def get_loss_data_fixed_k_depl_floor_noquench(
     return p_init, loss_data
 
 
-def get_outline_fixed_k_depl_floor_noquench(
-    halo_id, loss_data, p_best, loss_best, success
-):
+def get_outline_fixed_depl_noquench(halo_id, loss_data, p_best, loss_best, success):
     """Return the string storing fitting results that will be written to disk"""
-    fixed_k, fixed_floor, fixed_tau, q_params = loss_data[-4:]
-    sfr_params = np.zeros(7)
-    sfr_params[:2] = p_best[0:2]
-    sfr_params[2] = fixed_k
-    sfr_params[3:5] = p_best[2:4]
-    sfr_params[5] = fixed_floor
-    sfr_params[6] = fixed_tau
+    fixed_tau, q_params = loss_data[-2:]
+    sfr_params = np.zeros(5)
+    sfr_params[:4] = p_best[0:4]
+    sfr_params[4] = fixed_tau
 
     _d = np.concatenate((sfr_params, q_params)).astype("f4")
     data_out = (*_d, float(loss_best))
