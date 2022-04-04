@@ -23,7 +23,7 @@ from diffmah.individual_halo_assembly import _calc_halo_history
 
 T_FIT_MIN = 1.0  # Only fit snapshots above this threshold. Gyr units.
 DLOGM_CUT = 3.5  # Only fit SMH within this dex of the present day stellar mass.
-MIN_MASS_CUT = 9.0  # Only fit SMH above this threshold. Log10(Msun) units.
+MIN_MASS_CUT = 7.0  # Only fit SMH above this threshold. Log10(Msun) units.
 FSTAR_TIME_DELAY = 1.0  # Time period of averaged SFH (aka fstar). Gyr units.
 SSFRH_FLOOR = 1e-12  # Clip SFH to this minimum sSFR value. 1/yr units.
 

@@ -16,10 +16,7 @@ from load_smah_data import (
     load_mdpl_small_data,
 )
 
-from diffsfh.fit_smah_helpers import (
-    get_header,
-    MIN_MASS_CUT,
-)
+from diffsfh.fit_smah_helpers import get_header, MIN_MASS_CUT, SSFRH_FLOOR
 from diffsfh.fit_smah_helpers import (
     get_loss_data_default,
     get_loss_data_free,
@@ -123,7 +120,7 @@ if __name__ == "__main__":
         default=MIN_MASS_CUT,
     )
     parser.add_argument(
-        "-ssfrh_floor", help="Clipping floor for sSFH", type=float, default=1e-12,
+        "-ssfrh_floor", help="Clipping floor for sSFH", type=float, default=SSFRH_FLOOR,
     )
     args = parser.parse_args()
 
