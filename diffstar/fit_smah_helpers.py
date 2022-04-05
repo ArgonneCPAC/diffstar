@@ -737,7 +737,7 @@ def loss_fixed_hi(params, loss_data):
 
     loss = jnp.mean(((mstar - log_sm_target) / weight) ** 2)
     loss += jnp.mean(((fstar - fstar_target) / weight_fstar) ** 2)
-    loss += jnp.mean((sfr_res / weight) ** 2)
+    # loss += jnp.mean((sfr_res / weight) ** 2)
 
     qt = _get_bounded_qt(q_params[0])
     loss += _sigmoid(qt - t_fstar_max, 0.0, 50.0, 100.0, 0.0)
