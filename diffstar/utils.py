@@ -117,7 +117,7 @@ def return_random_pinit(p_init, loss_data, loss_func_deriv):
 
 
 def minimizer_wrapper(
-    loss_func, loss_func_deriv, p_init, loss_data, loss_tol=0.1, max_iter=20,
+    loss_func, loss_func_deriv, p_init, loss_data, loss_tol=0.1, max_iter=10,
 ):
     """Convenience function wrapping scipy's L-BFGS-B optimizer method used to
     minimize the loss function loss_func.

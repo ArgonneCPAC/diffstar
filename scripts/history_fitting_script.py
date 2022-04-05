@@ -100,7 +100,6 @@ if __name__ == "__main__":
     )
     parser.add_argument("-indir", help="Input directory", default="BEBOP")
     parser.add_argument("-fitmahfn", help="Filename of fit mah parameters")
-    parser.add_argument("-nstep", help="Num opt steps per halo", type=int, default=200)
     parser.add_argument("-test", help="Short test run?", type=bool, default=False)
     parser.add_argument(
         "-gal_type",
@@ -129,7 +128,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     rank_basepat = args.outbase + TMP_OUTPAT
     rank_outname = os.path.join(args.outdir, rank_basepat).format(rank)
-    nstep = args.nstep
 
     if args.indir == "TASSO":
         indir = TASSO
@@ -278,9 +276,7 @@ if __name__ == "__main__":
             p_init, loss_data = get_loss_data(
                 tarr, dt, sfrh, lgsmah, logmp_halo, mah_params, **kwargs
             )
-            _res = minimizer_wrapper(
-                loss_func, loss_func_deriv, p_init, loss_data, nstep
-            )
+            _res = minimizer_wrapper(loss_func, loss_func_deriv, p_init, loss_data)
             p_best, loss_best, success = _res
             outline = get_outline(halo_id, loss_data, p_best, loss_best, success)
 
