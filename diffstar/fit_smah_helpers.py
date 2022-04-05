@@ -382,9 +382,9 @@ def get_loss_data_free(
     t_fstar_max = logt[index_select][np.argmax(log_fstar_sim)]
 
     default_sfr_params = np.array(list(DEFAULT_SFR_PARAMS.values()))
-    default_sfr_params[0] = np.clip(0.4 * (logmp - 11.0) + 11.25, 11.0, 13.0)
-    default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 1.0, -1.5, -0.2)
-    default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) + 1.0, 1.0, 3.0)
+    default_sfr_params[0] = np.clip(0.3 * (logmp - 11.0) + 11.4, 11.0, 13.0)
+    default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 0.7, -1.5, -0.2)
+    default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) - 0.3, 0.2, 3.0)
     default_sfr_params[4] = np.clip(-8.0 * (logmp - 11.0) + 15, 2.0, 15.0)
     u_default_sfr_params = np.array(_get_unbounded_sfr_params(*default_sfr_params))
 
@@ -632,9 +632,9 @@ def get_loss_data_fixed_noquench(
     t_fstar_max = logt[index_select][np.argmax(log_fstar_sim)]
 
     default_sfr_params = np.array(list(DEFAULT_SFR_PARAMS.values()))
-    default_sfr_params[0] = np.clip(0.4 * (logmp - 11.0) + 11.25, 11.0, 13.0)
-    default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 1.0, -1.5, -0.2)
-    default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) + 1.0, 1.0, 3.0)
+    default_sfr_params[0] = np.clip(0.3 * (logmp - 11.0) + 11.4, 11.0, 13.0)
+    default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 0.7, -1.5, -0.2)
+    default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) - 0.3, 0.2, 3.0)
     default_sfr_params[4] = np.clip(-8.0 * (logmp - 11.0) + 15, 2.0, 15.0)
     u_default_sfr_params = np.array(_get_unbounded_sfr_params(*default_sfr_params))
 
@@ -883,9 +883,9 @@ def get_loss_data_fixed_hi(
     t_fstar_max = logt[index_select][np.argmax(log_fstar_sim)]
 
     default_sfr_params = np.array(list(DEFAULT_SFR_PARAMS.values()))
-    default_sfr_params[0] = np.clip(0.4 * (logmp - 11.0) + 11.25, 11.0, 13.0)
-    default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 1.0, -1.5, -0.2)
-    default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) + 1.0, 1.0, 3.0)
+    default_sfr_params[0] = np.clip(0.3 * (logmp - 11.0) + 11.4, 11.0, 13.0)
+    default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 0.7, -1.5, -0.2)
+    default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) - 0.3, 0.2, 3.0)
     default_sfr_params[4] = np.clip(-8.0 * (logmp - 11.0) + 15, 2.0, 15.0)
     u_default_sfr_params = np.array(_get_unbounded_sfr_params(*default_sfr_params))
 
@@ -1154,9 +1154,9 @@ def get_loss_data_fixed_hi_rej(
     t_fstar_max = logt[index_select][np.argmax(log_fstar_sim)]
 
     default_sfr_params = np.array(list(DEFAULT_SFR_PARAMS.values()))
-    default_sfr_params[0] = np.clip(0.4 * (logmp - 11.0) + 11.25, 11.0, 13.0)
-    default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 1.0, -1.5, -0.2)
-    default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) + 1.0, 1.0, 3.0)
+    default_sfr_params[0] = np.clip(0.3 * (logmp - 11.0) + 11.4, 11.0, 13.0)
+    default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 0.7, -1.5, -0.2)
+    default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) - 0.3, 0.2, 3.0)
     default_sfr_params[4] = np.clip(-8.0 * (logmp - 11.0) + 15, 2.0, 15.0)
     u_default_sfr_params = np.array(_get_unbounded_sfr_params(*default_sfr_params))
 
@@ -1430,9 +1430,9 @@ def get_loss_data_fixed_hi_depl(
     t_fstar_max = logt[index_select][np.argmax(log_fstar_sim)]
 
     default_sfr_params = np.array(list(DEFAULT_SFR_PARAMS.values()))
-    default_sfr_params[0] = np.clip(0.4 * (logmp - 11.0) + 11.25, 11.0, 13.0)
-    default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 1.0, -1.5, -0.2)
-    default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) + 1.0, 1.0, 3.0)
+    default_sfr_params[0] = np.clip(0.3 * (logmp - 11.0) + 11.4, 11.0, 13.0)
+    default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 0.7, -1.5, -0.2)
+    default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) - 0.3, 0.2, 3.0)
     default_sfr_params[4] = 0.01
     u_default_sfr_params = np.array(_get_unbounded_sfr_params(*default_sfr_params))
 
@@ -1695,9 +1695,9 @@ def get_loss_data_fixed_depl_noquench(
     t_fstar_max = logt[index_select][np.argmax(log_fstar_sim)]
 
     default_sfr_params = np.array(list(DEFAULT_SFR_PARAMS.values()))
-    default_sfr_params[0] = np.clip(0.4 * (logmp - 11.0) + 11.25, 11.0, 13.0)
-    default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 1.0, -1.5, -0.2)
-    default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) + 1.0, 1.0, 3.0)
+    default_sfr_params[0] = np.clip(0.3 * (logmp - 11.0) + 11.4, 11.0, 13.0)
+    default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 0.7, -1.5, -0.2)
+    default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) - 0.3, 0.2, 3.0)
     default_sfr_params[4] = 0.01
     u_default_sfr_params = np.array(_get_unbounded_sfr_params(*default_sfr_params))
 
