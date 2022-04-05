@@ -10,6 +10,8 @@ from .stars import (
     calculate_sm_sfr_fstar_history_from_mah,
     DEFAULT_SFR_PARAMS,
     compute_fstar,
+    _get_bounded_sfr_params_vmap,
+    calculate_histories_batch,
 )
 from .quenching import (
     DEFAULT_Q_PARAMS,
@@ -17,9 +19,12 @@ from .quenching import (
     _get_unbounded_q_params,
     _get_bounded_lg_drop,
     _get_unbounded_qrejuv,
+    _get_bounded_q_params_vmap,
 )
 from .utils import _sigmoid
 from diffmah.individual_halo_assembly import _calc_halo_history
+import os
+import h5py
 
 T_FIT_MIN = 1.0  # Only fit snapshots above this threshold. Gyr units.
 DLOGM_CUT = 3.5  # Only fit SMH within this dex of the present day stellar mass.
@@ -36,6 +41,84 @@ qt qs q_drop q_rejuv \
 loss success\n\
 """
     return out
+
+
+def load_diffstar_data(
+    run_name, lgt, dt, fstar_tdelay, mah_params, data_drn,
+):
+    """Calculate Diffstar histories and best-fit parameters.
+    Parameters
+    ----------
+    run_name : string
+        Filename where the Diffstar best-fit parameters are stored.
+    lgt : ndarray of shape (n_times, )
+        Base-10 log of cosmic time of each simulated snapshot in Gyr
+    dt : ndarray of shape (n_times, )
+        Cosmic time steps between each simulated snapshot in Gyr
+    fstar_tdelay: float
+        Time interval in Gyr for fstar definition.
+        fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay[Gyr]
+    mah_params : ndarray of shape (ng, 6, )
+        Best fit diffmah halo parameters. Includes
+        (t0, logmp, logtc, k, early, late)
+    data_drn : string
+        Filepath where the Diffstar best-fit parameters are stored.
+    Returns
+    -------
+    hists : tuple of shape (5, ) with MAH and SFH histories that contains
+        mstar : ndarray of shape (ng, n_times)
+            Cumulative stellar mass history in units of Msun/yr assuming h=1.
+        sfr : ndarray of shape (ng, n_times)
+            Star formation rate history in units of Msun/yr assuming h=1.
+        fstar : ndarray of shape (ng, n_times_fstar)
+            SFH averaged over timescale fstar_tdelay in units of Msun/yr assuming h=1.
+        dmhdt : ndarray of shape (ng, n_times)
+            Mass accretion rate in units of Msun/yr assuming h=1.
+        log_mah : ndarray of shape (ng, n_times)
+            Base-10 log of cumulative peak halo mass in units of Msun assuming h=1.
+    fit_params : ndarray of shape (ng, 9)
+        Best fit bounded Diffstar parameters.
+    u_fit_params : ndarray of shape (ng, 9)
+        Best fit unbounded Diffstar parameters.
+    loss : ndarray of shape (ng, )
+        Best-fit loss value for each halo.
+    success : ndarray of shape (ng, )
+        Success string for each halo.
+            Successful : "L-BFGS-B"
+            Unsuccessful: "Fail"
+    """
+    sfr_fitdata = dict()
+
+    fn = os.path.join(data_drn, run_name)
+    with h5py.File(fn, "r") as hdf:
+        for key in hdf.keys():
+            sfr_fitdata[key] = hdf[key][...]
+
+    colnames = get_header()[1:].strip().split()
+    sfr_colnames = colnames[1:6]
+    q_colnames = colnames[6:10]
+
+    u_fit_params = np.array([sfr_fitdata[key] for key in sfr_colnames + q_colnames]).T
+    u_sfr_fit_params = np.array([sfr_fitdata[key] for key in sfr_colnames]).T
+    u_q_fit_params = np.array([sfr_fitdata[key] for key in q_colnames]).T
+
+    sfr_fit_params = _get_bounded_sfr_params_vmap(*u_sfr_fit_params.T)
+    q_fit_params = _get_bounded_q_params_vmap(*u_q_fit_params.T)
+
+    sfr_fit_params = np.array([np.array(x) for x in sfr_fit_params]).T
+    q_fit_params = np.array([np.array(x) for x in q_fit_params]).T
+
+    fit_params = np.concatenate((sfr_fit_params, q_fit_params), axis=1)
+
+    success_names = np.array(["Adam", "L-BFGS-B", "Fail"])
+    sfr_fitdata["success"] = success_names[sfr_fitdata["success"].astype(int)]
+
+    hists = calculate_histories_batch(
+        lgt, dt, mah_params, u_sfr_fit_params, u_q_fit_params, fstar_tdelay,
+    )
+    mstars_fit, sfrs_fit, fstars_fit, dmhdts_fit, log_mahs_fit = hists
+    print(hists[0].shape, np.unique(sfr_fitdata["success"], return_counts=True))
+    return hists, fit_params, u_fit_params, sfr_fitdata["loss"], sfr_fitdata["success"]
 
 
 def get_weights(

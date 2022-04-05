@@ -142,7 +142,7 @@ def calculate_histories(
         Cumulative stellar mass history in units of Msun/yr assuming h=1.
     sfr : ndarray of shape (n_times)
         Star formation rate history in units of Msun/yr assuming h=1.
-    fstar : ndarray of shape (n_times)
+    fstar : ndarray of shape (n_times_fstar)
         SFH averaged over timescale fstar_tdelay in units of Msun/yr assuming h=1.
     dmhdt : ndarray of shape (n_times)
         Mass accretion rate in units of Msun/yr assuming h=1.
@@ -161,6 +161,48 @@ def calculate_histories(
         index_high,
         fstar_tdelay,
     )
+    return mstar, sfr, fstar, dmhdt, log_mah
+
+
+calculate_histories_vmap = jjit(
+    vmap(calculate_histories, in_axes=(None, None, 0, 0, 0, None, None, None))
+)
+
+
+def calculate_histories_batch(lgt, dt, mah_params, sfr_params, q_params, fstar_tdelay):
+    """Calculate MAH and SFH histories from Diffmah and Diffstar parameters for
+    large amounts of halos in small batches for memory efficiency in small systems.
+    """
+    t_sim = 10 ** lgt
+    index_select, index_high = fstar_tools(t_sim, fstar_tdelay=fstar_tdelay)
+
+    ng = len(mah_params)
+    nt = len(lgt)
+    nt2 = len(index_high)
+    indices = np.array_split(np.arange(ng), max(int(ng / 5000), 1))
+
+    mstar = np.zeros((ng, nt))
+    sfr = np.zeros((ng, nt))
+    fstar = np.zeros((ng, nt2))
+    dmhdt = np.zeros((ng, nt))
+    log_mah = np.zeros((ng, nt))
+
+    for inds in indices:
+        _res = calculate_histories_vmap(
+            lgt,
+            dt,
+            mah_params[inds],
+            sfr_params[inds],
+            q_params[inds],
+            index_select,
+            index_high,
+            fstar_tdelay,
+        )
+        mstar[inds] = _res[0]
+        sfr[inds] = _res[1]
+        fstar[inds] = _res[2]
+        dmhdt[inds] = _res[3]
+        log_mah[inds] = _res[4]
     return mstar, sfr, fstar, dmhdt, log_mah
 
 
@@ -202,6 +244,10 @@ def _get_unbounded_sfr_params(
     return bounded_params
 
 
+_get_bounded_sfr_params_vmap = jjit(vmap(_get_bounded_sfr_params, (0,) * 5, 0))
+_get_unbounded_sfr_params_vmap = jjit(vmap(_get_unbounded_sfr_params, (0,) * 5, 0))
+
+
 @jjit
 def _integrate_sfr(sfr, dt):
     """Calculate the cumulative stellar mass history.
@@ -238,6 +284,9 @@ def compute_fstar(tarr, mstar, index_select, index_high, fstar_tdelay):
     )
     fstar = (mstar_high - mstar_low) / fstar_tdelay / 1e9
     return fstar
+
+
+compute_fstar_vmap = jjit(vmap(compute_fstar, in_axes=(None, 0, *[None] * 3)))
 
 
 @jjit
@@ -443,3 +492,26 @@ def jax_np_interp(x, xt, yt, indx_hi):
     m = dy_tot / dx_tot
     y = yt_lo + m * (x - xt_lo)
     return y
+
+
+def fstar_tools(t_sim, fstar_tdelay=1.0):
+    """ Calculate the snapshots used by fstar.
+    Parameters
+    ----------
+        t_sim: ndarray of shape (nt, )
+            Cosmic time of each simulated snapshot in Gyr.
+        fstar_tdelay: float
+            Time interval in Gyr for fstar definition.
+            fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay[Gyr]
+    Returns
+    -------
+        index_select: ndarray of shape (n_times_fstar, )
+            Snapshot indices used in fstar computation.
+        fstar_indx_high: ndarray of shape (n_times_fstar, )
+            Indices of np.searchsorted(t, t - fstar_tdelay)[index_select]
+    """
+    fstar_indx_high = np.searchsorted(t_sim, t_sim - fstar_tdelay)
+    _mask = t_sim > fstar_tdelay + fstar_tdelay / 2.0
+    index_select = np.arange(len(t_sim))[_mask]
+    fstar_indx_high = fstar_indx_high[_mask]
+    return index_select, fstar_indx_high

@@ -2,6 +2,7 @@
 from collections import OrderedDict
 from jax import numpy as jnp
 from jax import jit as jjit
+from jax import vmap
 import numpy as np
 from .utils import _sigmoid, _inverse_sigmoid
 
@@ -159,6 +160,10 @@ def _get_unbounded_q_params(lg_qt, lg_qs, lg_drop, lg_rejuv):
     u_lg_drop = _inverse_sigmoid(lg_drop, *Q_PARAM_BOUNDS["u_lg_drop"])
     u_lg_rejuv = _get_unbounded_qrejuv(lg_rejuv, lg_drop)
     return u_lg_qt, u_lg_qs, u_lg_drop, u_lg_rejuv
+
+
+_get_bounded_q_params_vmap = jjit(vmap(_get_bounded_q_params, (0,) * 4, 0))
+_get_unbounded_q_params_vmap = jjit(vmap(_get_unbounded_q_params, (0,) * 4, 0))
 
 
 @jjit
