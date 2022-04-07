@@ -44,9 +44,15 @@ loss success\n\
 
 
 def load_diffstar_data(
-    run_name, lgt, dt, fstar_tdelay, mah_params, data_drn,
+    run_name,
+    lgt,
+    dt,
+    fstar_tdelay,
+    mah_params,
+    data_drn,
 ):
     """Calculate Diffstar histories and best-fit parameters.
+
     Parameters
     ----------
     run_name : string
@@ -63,6 +69,7 @@ def load_diffstar_data(
         (t0, logmp, logtc, k, early, late)
     data_drn : string
         Filepath where the Diffstar best-fit parameters are stored.
+
     Returns
     -------
     hists : tuple of shape (5, ) with MAH and SFH histories that contains
@@ -86,6 +93,7 @@ def load_diffstar_data(
         Success string for each halo.
             Successful : "L-BFGS-B"
             Unsuccessful: "Fail"
+
     """
     sfr_fitdata = dict()
 
@@ -114,7 +122,12 @@ def load_diffstar_data(
     sfr_fitdata["success"] = success_names[sfr_fitdata["success"].astype(int)]
 
     hists = calculate_histories_batch(
-        lgt, dt, mah_params, u_sfr_fit_params, u_q_fit_params, fstar_tdelay,
+        lgt,
+        dt,
+        mah_params,
+        u_sfr_fit_params,
+        u_q_fit_params,
+        fstar_tdelay,
     )
     mstars_fit, sfrs_fit, fstars_fit, dmhdts_fit, log_mahs_fit = hists
     print(hists[0].shape, np.unique(sfr_fitdata["success"], return_counts=True))
@@ -131,6 +144,7 @@ def get_weights(
     mass_fit_min,
 ):
     """Calculate weights to mask target SMH and fstar target data.
+
     Parameters
     ----------
     t_sim : ndarray of shape (nt, )
@@ -156,6 +170,7 @@ def get_weights(
         The value mass_fit_min is the base-10 log of the minimum stellar mass in the SFH
         used as target data. The final mass_fit_min cut is equal to
         min(log_smah_sim[-1] - 0.5, mass_fit_min).
+
     Returns
     -------
     weight : ndarray of shape (nt, )
@@ -164,6 +179,7 @@ def get_weights(
     weight_fstar : ndarray of shape (n_times_fstar, )
         Weight for each snapshot, to effectively remove from the fit
         the SFH snapshots that fall below the threshold mass.
+
     """
     mass_fit_min = min(log_smah_sim[-1] - 0.5, mass_fit_min)
 
@@ -195,6 +211,7 @@ def loss_free(params, loss_data):
     """
     MSE loss function for fitting individual stellar mass histories.
     The parameter k is fixed.
+
     """
     (
         lgt,
@@ -267,6 +284,7 @@ def get_loss_data_free(
 ):
     """Retrieve the target data passed to the optimizer when fitting the halo
     SFH model for the case in which the parameter k is fixed.
+
     Parameters
     ----------
     t_sim : ndarray of shape (nt, )
@@ -307,6 +325,7 @@ def get_loss_data_free(
         Lower bound value of star formation history used in the fits.
         SFH(t) = max(SFH(t), SMH(t) * ssfrh_floor)
         Default is set as global at top of module.
+
     Returns
     -------
     p_init : ndarray of shape (5, )
@@ -346,6 +365,7 @@ def get_loss_data_free(
             the SFH snapshots that fall below the threshold mass.
         t_fstar_max : float
             Base-10 log of the cosmic time where SFH target history peaks.
+
     """
     fstar_indx_high = np.searchsorted(t_sim, t_sim - fstar_tdelay)
     _mask = t_sim > fstar_tdelay + fstar_tdelay / 2.0
@@ -443,6 +463,7 @@ def loss_fixed_noquench(params, loss_data):
     """
     MSE loss function for fitting individual stellar mass histories.
     The parameter k is fixed. There is no quenching.
+
     """
     (
         lgt,
@@ -515,6 +536,7 @@ def get_loss_data_fixed_noquench(
 ):
     """Retrieve the target data passed to the optimizer when fitting the halo
     SFH model for the case in which k parameter is fixed and there is no quenching.
+
     Parameters
     ----------
     t_sim : ndarray of shape (nt, )
@@ -555,6 +577,7 @@ def get_loss_data_fixed_noquench(
         Lower bound value of star formation history used in the fits.
         SFH(t) = max(SFH(t), SMH(t) * ssfrh_floor)
         Default is set as global at top of module.
+
     Returns
     -------
     p_init : ndarray of shape (5, )
@@ -596,6 +619,7 @@ def get_loss_data_fixed_noquench(
             Base-10 log of the cosmic time where SFH target history peaks.
         q_params : ndarray of shape (4, )
             Fixed values of the unbounded quenching parameters
+
     """
     fstar_indx_high = np.searchsorted(t_sim, t_sim - fstar_tdelay)
     _mask = t_sim > fstar_tdelay + fstar_tdelay / 2.0
@@ -693,6 +717,7 @@ def loss_fixed_hi(params, loss_data):
     """
     MSE loss function for fitting individual stellar mass histories.
     The parameters k, indx_hi are fixed.
+
     """
     (
         lgt,
@@ -766,6 +791,7 @@ def get_loss_data_fixed_hi(
 ):
     """Retrieve the target data passed to the optimizer when fitting the halo
     SFH model for the case in which the parameters k, indx_hi are fixed.
+
     Parameters
     ----------
     t_sim : ndarray of shape (nt, )
@@ -806,6 +832,7 @@ def get_loss_data_fixed_hi(
         Lower bound value of star formation history used in the fits.
         SFH(t) = max(SFH(t), SMH(t) * ssfrh_floor)
         Default is set as global at top of module.
+
     Returns
     -------
     p_init : ndarray of shape (5, )
@@ -847,6 +874,7 @@ def get_loss_data_fixed_hi(
             Base-10 log of the cosmic time where SFH target history peaks.
         fixed_hi : float
             Fixed value of the unbounded diffstar parameter indx_hi
+
     """
     fstar_indx_high = np.searchsorted(t_sim, t_sim - fstar_tdelay)
     _mask = t_sim > fstar_tdelay + fstar_tdelay / 2.0
@@ -958,6 +986,7 @@ def loss_fixed_hi_rej(params, loss_data):
     """
     MSE loss function for fitting individual stellar mass histories.
     The parameters indx_hi are fixed. Rejuvenation is deactivated.
+
     """
     (
         lgt,
@@ -1037,6 +1066,7 @@ def get_loss_data_fixed_hi_rej(
     """Retrieve the target data passed to the optimizer when fitting the halo
     SFH model for the case in which the parameters indx_hi are fixed.
     There is no rejuvenation.
+
     Parameters
     ----------
     t_sim : ndarray of shape (nt, )
@@ -1077,6 +1107,7 @@ def get_loss_data_fixed_hi_rej(
         Lower bound value of star formation history used in the fits.
         SFH(t) = max(SFH(t), SMH(t) * ssfrh_floor)
         Default is set as global at top of module.
+
     Returns
     -------
     p_init : ndarray of shape (5, )
@@ -1118,6 +1149,7 @@ def get_loss_data_fixed_hi_rej(
             Base-10 log of the cosmic time where SFH target history peaks.
         fixed_hi : float
             Fixed value of the unbounded diffstar parameter indx_hi
+
     """
     fstar_indx_high = np.searchsorted(t_sim, t_sim - fstar_tdelay)
     _mask = t_sim > fstar_tdelay + fstar_tdelay / 2.0
@@ -1236,6 +1268,7 @@ def loss_fixed_hi_depl(params, loss_data):
     MSE loss function for fitting individual stellar mass histories.
     The parameters indx_hi are fixed.
     Depletion time is fixed at tau=0Gyr, i.e. gas conversion is instantaenous.
+
     """
     (
         lgt,
@@ -1311,6 +1344,7 @@ def get_loss_data_fixed_hi_depl(
     """Retrieve the target data passed to the optimizer when fitting the halo
     SFH model for the case in which the parameters indx_hi are fixed.
     Depletion time is fixed at tau=0Gyr, i.e. gas conversion is instantaenous.
+
     Parameters
     ----------
     t_sim : ndarray of shape (nt, )
@@ -1351,6 +1385,7 @@ def get_loss_data_fixed_hi_depl(
         Lower bound value of star formation history used in the fits.
         SFH(t) = max(SFH(t), SMH(t) * ssfrh_floor)
         Default is set as global at top of module.
+
     Returns
     -------
     p_init : ndarray of shape (5, )
@@ -1394,6 +1429,7 @@ def get_loss_data_fixed_hi_depl(
             Fixed value of the unbounded diffstar parameter indx_hi
         fixed_tau : float
             Fixed value of the unbounded diffstar parameter tau_dep
+
     """
     fstar_indx_high = np.searchsorted(t_sim, t_sim - fstar_tdelay)
     _mask = t_sim > fstar_tdelay + fstar_tdelay / 2.0
@@ -1501,6 +1537,7 @@ def loss_fixed_depl_noquench(params, loss_data):
     MSE loss function for fitting individual stellar mass histories.
     Only main sequence efficiency parameters. Quenching is deactivated.
     Depletion time is fixed at tau=0Gyr, i.e. gas conversion is instantaenous.
+
     """
     (
         lgt,
@@ -1576,6 +1613,7 @@ def get_loss_data_fixed_depl_noquench(
     SFH model for the case in which only the main sequence parameters are varied.
     Depletion time is fixed at tau=0Gyr, i.e. gas conversion is instantaenous.
     There is no quenching.
+
     Parameters
     ----------
     t_sim : ndarray of shape (nt, )
@@ -1616,6 +1654,7 @@ def get_loss_data_fixed_depl_noquench(
         Lower bound value of star formation history used in the fits.
         SFH(t) = max(SFH(t), SMH(t) * ssfrh_floor)
         Default is set as global at top of module.
+
     Returns
     -------
     p_init : ndarray of shape (5, )
@@ -1659,6 +1698,7 @@ def get_loss_data_fixed_depl_noquench(
             Fixed value of the unbounded diffstar parameter tau_dep
         q_params : float
             Fixed value of the unbounded quenching parameters
+
     """
     fstar_indx_high = np.searchsorted(t_sim, t_sim - fstar_tdelay)
     _mask = t_sim > fstar_tdelay + fstar_tdelay / 2.0

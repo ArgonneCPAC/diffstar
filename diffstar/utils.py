@@ -37,7 +37,9 @@ def _get_dt_array(t):
 
 def get_1d_arrays(*args):
     """Return a list of ndarrays of the same length.
+
     Each arg must be either an ndarray of shape (npts, ), or a scalar.
+
     """
     results = [np.atleast_1d(arg) for arg in args]
     sizes = [arr.size for arr in results]
@@ -49,6 +51,7 @@ def get_1d_arrays(*args):
 
 def minimizer(loss_func, loss_func_deriv, p_init, loss_data, nstep, *args, **kwargs):
     """Minimizer mixing scipy's L-BFGS-B minimizer with JAX's Adam as a backup plan.
+
     Parameters
     ----------
     loss_func : callable
@@ -66,6 +69,7 @@ def minimizer(loss_func, loss_func_deriv, p_init, loss_data, nstep, *args, **kwa
         to compute loss_func(p_init, loss_data)
     n_step : int
         Number of steps to walk down the gradient. Only used by Adam.
+
     Returns
     -------
     p_best : ndarray of shape (n_params, )
@@ -76,6 +80,7 @@ def minimizer(loss_func, loss_func_deriv, p_init, loss_data, nstep, *args, **kwa
         -1 if NaN or inf is encountered by the fitter, causing termination before n_step
         0 for a fit that fails with L-BFGS-B but terminates without problems using Adam
         1 for a fit that terminates with no such problems using L-BFGS-B
+
     """
 
     res = minimize(
@@ -97,7 +102,9 @@ def minimizer(loss_func, loss_func_deriv, p_init, loss_data, nstep, *args, **kwa
 
 def return_random_pinit(p_init, loss_data, loss_func_deriv):
     """Slightly perturb the initial guess with a Gaussian perturbation.
+
     Makes sure that the gradient does not contain NaNs.
+
     """
 
     p_init_2 = np.random.normal(p_init[0], p_init[1])
@@ -117,12 +124,18 @@ def return_random_pinit(p_init, loss_data, loss_func_deriv):
 
 
 def minimizer_wrapper(
-    loss_func, loss_func_deriv, p_init, loss_data, loss_tol=0.1, max_iter=10,
+    loss_func,
+    loss_func_deriv,
+    p_init,
+    loss_data,
+    loss_tol=0.1,
+    max_iter=10,
 ):
-    """Convenience function wrapping scipy's L-BFGS-B optimizer method used to
-    minimize the loss function loss_func.
+    """Convenience function wrapping scipy's L-BFGS-B optimizer
+
     Starting from p_init, L-BFGS-B goes down the gradient
     to calculate the returned value p_best.
+
     Parameters
     ----------
     loss_func : callable
@@ -144,6 +157,7 @@ def minimizer_wrapper(
     max_iter : int
         While loss_best > loss_tol the fitter will restart from a slightly
         different initial guess, but it will stop after max_iter times.
+
     Returns
     -------
     p_best : ndarray of shape (n_params, )
@@ -153,6 +167,7 @@ def minimizer_wrapper(
     success : int
         -1 if NaN or inf is encountered by the fitter, causing termination before n_step
         1 for a fit that terminates with no such problems
+
     """
     iter_id = 0
 
@@ -218,10 +233,11 @@ def jax_adam_wrapper_v2(
     warmup_n_step=50,
     warmup_step_size=None,
 ):
-    """Convenience function wrapping JAX's Adam optimizer used to
-    minimize the loss function loss_func.
+    """Convenience function wrapping JAX's Adam optimizer
+
     Starting from params_init, we take n_step steps down the gradient
     to calculate the returned value params_step_n.
+
     Parameters
     ----------
     loss_func : callable
@@ -244,6 +260,7 @@ def jax_adam_wrapper_v2(
         Step size to use during warmup phase. Default is 5*step_size.
     step_size : float, optional
         Step size parameter in the Adam algorithm. Default is 0.01.
+
     Returns
     -------
     params_step_n : ndarray of shape (n_params, )
@@ -257,6 +274,7 @@ def jax_adam_wrapper_v2(
     fit_terminates : int
         0 if NaN or inf is encountered by the fitter, causing termination before n_step
         1 for a fit that terminates with no such problems
+
     """
     if warmup_step_size is None:
         warmup_step_size = 5 * step_size
@@ -281,10 +299,11 @@ def jax_adam_wrapper_v2(
 
 
 def _jax_adam_wrapper(loss_func, params_init, loss_data, n_step, step_size=0.01):
-    """Convenience function wrapping JAX's Adam optimizer used to
-    minimize the loss function loss_func.
+    """Convenience function wrapping JAX's Adam optimizer
+
     Starting from params_init, we take n_step steps down the gradient
     to calculate the returned value params_step_n.
+
     Parameters
     ----------
     loss_func : callable
@@ -300,6 +319,7 @@ def _jax_adam_wrapper(loss_func, params_init, loss_data, n_step, step_size=0.01)
         Number of steps to walk down the gradient
     step_size : float, optional
         Step size parameter in the Adam algorithm. Default is 0.01
+
     Returns
     -------
     params_step_n : ndarray of shape (n_params, )
@@ -310,6 +330,7 @@ def _jax_adam_wrapper(loss_func, params_init, loss_data, n_step, step_size=0.01)
         Stores the value of the loss at each step
     params_arr : ndarray of shape (n_step, n_params)
         Stores the value of the model params at each step
+
     """
     loss_arr = np.zeros(n_step).astype("f4") - 1.0
     opt_init, opt_update, get_params = jax_opt.adam(step_size)
@@ -354,7 +375,8 @@ def _jax_adam_wrapper(loss_func, params_init, loss_data, n_step, step_size=0.01)
 
 @jjit
 def _sigmoid(x, x0, k, ymin, ymax):
-    """Sigmoid function implemented w/ `jax.numpy.exp`.
+    """Sigmoid function implemented w/ `jax.numpy.exp`
+
     Parameters
     ----------
     x : float or array-like
@@ -367,9 +389,11 @@ def _sigmoid(x, x0, k, ymin, ymax):
         The value as x goes to -infty.
     ymax : float or array-like
         The value as x goes to +infty.
+
     Returns
     -------
     sigmoid : scalar or array-like, same shape as input
+
     """
     height_diff = ymax - ymin
     return ymin + height_diff / (1 + jnp.exp(-k * (x - x0)))

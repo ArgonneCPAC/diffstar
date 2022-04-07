@@ -30,6 +30,7 @@ Q_PARAM_BOUNDS = calculate_sigmoid_bounds(_Q_PARAM_BOUNDS)
 @jjit
 def quenching_function(lgt, u_lg_qt, u_lg_qs, u_lg_drop, u_lg_rejuv):
     """Quenching function halting the star formation of main sequence galaxies.
+
     After some time, galaxies might experience a rejuvenated star formation.
 
     Parameters
@@ -45,9 +46,11 @@ def quenching_function(lgt, u_lg_qt, u_lg_qs, u_lg_drop, u_lg_rejuv):
         Unbounded base-10 log of the lowest drop in SFR.
     u_lg_rejuv : float
         Unbounded base-10 log of the asymptotic SFR value after rejuvenation completes
+
     Returns
     -------
     History of the multiplicative change of SFR
+
     """
     lg_qt, lg_qs, lg_drop, lg_rejuv = _get_bounded_q_params(
         u_lg_qt, u_lg_qs, u_lg_drop, u_lg_rejuv
@@ -77,9 +80,11 @@ def _quenching_kern(lgt, lg_qt, q_dt, q_drop, q_rejuv):
         The quenching function reaches this lowest point at t = t_q
     q_rejuv : float
         Base-10 log of the asymptotic SFR value after rejuvenation completes
+
     Returns
     -------
     History of the base-10 logarithmic change in SFR
+
     """
     qs = q_dt / 12
     f2 = q_drop - q_rejuv
