@@ -34,13 +34,15 @@ _SFR_PARAM_BOUNDS = OrderedDict(
 
 
 def calculate_sigmoid_bounds(param_bounds):
+    bounds_out = OrderedDict()
+
     for key in param_bounds:
         _bounds = (
             float(np.mean(param_bounds[key])),
             abs(float(4.0 / np.diff(param_bounds[key]))),
         )
-        param_bounds[key] = _bounds + param_bounds[key]
-    return param_bounds
+        bounds_out[key] = _bounds + param_bounds[key]
+    return bounds_out
 
 
 SFR_PARAM_BOUNDS = calculate_sigmoid_bounds(_SFR_PARAM_BOUNDS)
