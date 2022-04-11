@@ -8,6 +8,22 @@ from jax.example_libraries import optimizers as jax_opt
 from jax import jit as jjit
 
 
+@jjit
+def _jax_get_dt_array(t):
+    dt = jnp.zeros_like(t)
+    tmids = 0.5 * (t[:-1] + t[1:])
+    dtmids = jnp.diff(tmids)
+
+    dt = dt.at[1:-1].set(dtmids)
+
+    t_lo = t[0] - (t[1] - t[0]) / 2
+    t_hi = t[-1] + dtmids[-1] / 2
+
+    dt = dt.at[0].set(tmids[0] - t_lo)
+    dt = dt.at[-1].set(t_hi - tmids[-1])
+    return dt
+
+
 def _get_dt_array(t):
     """Compute delta time from input time.
 
