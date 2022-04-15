@@ -44,12 +44,7 @@ loss success\n\
 
 
 def load_diffstar_data(
-    run_name,
-    lgt,
-    dt,
-    fstar_tdelay,
-    mah_params,
-    data_drn,
+    run_name, t_sim, fstar_tdelay, mah_params, data_drn,
 ):
     """Calculate Diffstar histories and best-fit parameters.
 
@@ -57,10 +52,8 @@ def load_diffstar_data(
     ----------
     run_name : string
         Filename where the Diffstar best-fit parameters are stored.
-    lgt : ndarray of shape (n_times, )
-        Base-10 log of cosmic time of each simulated snapshot in Gyr
-    dt : ndarray of shape (n_times, )
-        Cosmic time steps between each simulated snapshot in Gyr
+    t_sim : ndarray of shape (n_times, )
+        Cosmic time of each simulated snapshot in Gyr
     fstar_tdelay: float
         Time interval in Gyr for fstar definition.
         fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay[Gyr]
@@ -74,7 +67,7 @@ def load_diffstar_data(
     -------
     hists : tuple of shape (5, ) with MAH and SFH histories that contains
         mstar : ndarray of shape (ng, n_times)
-            Cumulative stellar mass history in units of Msun/yr assuming h=1.
+            Cumulative stellar mass history in units of Msun assuming h=1.
         sfr : ndarray of shape (ng, n_times)
             Star formation rate history in units of Msun/yr assuming h=1.
         fstar : ndarray of shape (ng, n_times_fstar)
@@ -122,12 +115,7 @@ def load_diffstar_data(
     sfr_fitdata["success"] = success_names[sfr_fitdata["success"].astype(int)]
 
     hists = calculate_histories_batch(
-        lgt,
-        dt,
-        mah_params,
-        u_sfr_fit_params,
-        u_q_fit_params,
-        fstar_tdelay,
+        t_sim, mah_params, u_sfr_fit_params, u_q_fit_params, fstar_tdelay,
     )
     mstars_fit, sfrs_fit, fstars_fit, dmhdts_fit, log_mahs_fit = hists
     print(hists[0].shape, np.unique(sfr_fitdata["success"], return_counts=True))
