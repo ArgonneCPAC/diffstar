@@ -228,13 +228,13 @@ def calculate_histories_batch(t_sim, mah_params, sfr_params, q_params, fstar_tde
     ----------
     t_sim : ndarray of shape (n_times, )
         Cosmic time of each simulated snapshot in Gyr
-    mah_params : ndarray of shape (6, )
+    mah_params : ndarray of shape (ng, 6)
         Best fit diffmah halo parameters. Includes
         (logt0, logmp, logtc, k, early, late)
-    sfr_ms_params : ndarray of shape (5, )
+    sfr_ms_params : ndarray of shape (ng, 5)
         Star formation efficiency model unbounded parameters. Includes
         (u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_tau_dep)
-    q_params : ndarray of shape (4, )
+    q_params : ndarray of shape (ng, 4)
         Quenching model unbounded parameters. Includes
         (u_qt, u_qs, u_drop, u_rejuv)
     fstar_tdelay: float
@@ -243,15 +243,15 @@ def calculate_histories_batch(t_sim, mah_params, sfr_params, q_params, fstar_tde
 
     Returns
     -------
-    mstar : ndarray of shape (n_times)
+    mstar : ndarray of shape (ng, n_times)
         Cumulative stellar mass history in units of Msun assuming h=1.
-    sfr : ndarray of shape (n_times)
+    sfr : ndarray of shape (ng, n_times)
         Star formation rate history in units of Msun/yr assuming h=1.
-    fstar : ndarray of shape (n_times_fstar)
+    fstar : ndarray of shape (ng, n_times_fstar)
         SFH averaged over timescale fstar_tdelay in units of Msun/yr assuming h=1.
-    dmhdt : ndarray of shape (n_times)
+    dmhdt : ndarray of shape (ng, n_times)
         Mass accretion rate in units of Msun/yr assuming h=1.
-    log_mah : ndarray of shape (n_times)
+    log_mah : ndarray of shape (ng, n_times)
         Base-10 log of cumulative peak halo mass in units of Msun assuming h=1.
 
     """
