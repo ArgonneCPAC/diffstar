@@ -122,6 +122,47 @@ def load_diffstar_data(
     return hists, fit_params, u_fit_params, sfr_fitdata["loss"], sfr_fitdata["success"]
 
 
+def get_mah_params(data_path, runname):
+    """Load the Diffmah parameters.
+
+    Parameters
+    ----------
+    data_path : string
+        Filepath where the Diffmah best-fit parameters are stored.
+    runname : string
+        Filename where the Diffmah best-fit parameters are stored.
+
+
+    Returns
+    -------
+    mah_params : ndarray of shape (ng, 6)
+        Best fit diffmah halo parameters. Includes
+        (t0, logmp, logtc, k, early, late)
+    """
+
+    fitting_data = dict()
+
+    fn = f"{data_path}{runname}"
+    with h5py.File(fn, "r") as hdf:
+        for key in hdf.keys():
+            if key == "halo_id":
+                fitting_data[key] = hdf[key][...]
+            else:
+                fitting_data["fit_" + key] = hdf[key][...]
+
+    mah_params = np.array(
+        [
+            np.log10(fitting_data["fit_t0"]),
+            fitting_data["fit_logmp_fit"],
+            fitting_data["fit_mah_logtc"],
+            fitting_data["fit_mah_k"],
+            fitting_data["fit_early_index"],
+            fitting_data["fit_late_index"],
+        ]
+    ).T
+    return mah_params
+
+
 def get_weights(
     t_sim,
     log_smah_sim,
