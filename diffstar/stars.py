@@ -13,7 +13,7 @@ from .utils import _sigmoid, _inverse_sigmoid, _get_dt_array
 FB = 0.156
 TODAY = 13.8
 LGT0 = jnp.log10(TODAY)
-INDX_K = 9.0  # Main sequence efficiency transition speed.
+INDX_K = 0.5  # Main sequence efficiency transition speed.
 
 DEFAULT_SFR_PARAMS = OrderedDict(
     lgmcrit=12.0, lgy_at_mcrit=-1.0, indx_lo=1.0, indx_hi=-1.0, tau_dep=2.0,
