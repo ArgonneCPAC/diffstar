@@ -221,8 +221,8 @@ calculate_histories_vmap = jjit(
 
 
 def calculate_histories_batch(t_sim, mah_params, sfr_params, q_params, fstar_tdelay):
-    """Calculate MAH and SFH histories from Diffmah and Diffstar parameters for
-    large amounts of halos in small batches for memory efficiency in small systems.
+    """Calculate MAH and SFH histories for a large population of halos.
+
 
     Parameters
     ----------
@@ -254,8 +254,24 @@ def calculate_histories_batch(t_sim, mah_params, sfr_params, q_params, fstar_tde
     log_mah : ndarray of shape (ng, n_times)
         Base-10 log of cumulative peak halo mass in units of Msun assuming h=1.
 
-    """
+    Notes
+    -----
+    Histories are calculated from Diffmah and Diffstar parameters in small batches
+    for memory efficiency in small systems.
 
+    The input tsim array is in units of Gyr and should be strictly monotonically
+    increasing. The tsim array should begin at roughly t[0]~0.1, and have spacing
+    at least as fine as dt~0.25. The input tsim array is used to integrate SFR to
+    compute Mstar, and so tsim should be finely-spaced enough for the desired
+    accuracy of the integration.
+
+    Note that mstar[0] = sfr[0] * (t_sim[1] - t_sim[0]) * 1e9, and so by definition
+    sSFR[0] = sfr[0] / mstar[0] = 1 / (t_sim[1] - t_sim[0]) / 1e9.
+    """
+    assert np.all(
+        np.diff(t_sim) > 0.0
+    ), "t_sim needs to be strictly monotonically increasing"
+    assert np.all(t_sim > 0.0), "t_sim needs to be strictly positive"
     dt = _get_dt_array(t_sim)
     lgt = np.log10(t_sim)
     index_select, index_high = fstar_tools(t_sim, fstar_tdelay=fstar_tdelay)
