@@ -231,7 +231,7 @@ def calculate_histories_batch(t_sim, mah_params, sfr_params, q_params, fstar_tde
     mah_params : ndarray of shape (ng, 6)
         Best fit diffmah halo parameters. Includes
         (logt0, logmp, logtc, k, early, late)
-    sfr_ms_params : ndarray of shape (ng, 5)
+    sfr_params : ndarray of shape (ng, 5)
         Star formation efficiency model unbounded parameters. Includes
         (u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_tau_dep)
     q_params : ndarray of shape (ng, 4)
@@ -272,6 +272,9 @@ def calculate_histories_batch(t_sim, mah_params, sfr_params, q_params, fstar_tde
         np.diff(t_sim) > 0.0
     ), "t_sim needs to be strictly monotonically increasing"
     assert np.all(t_sim > 0.0), "t_sim needs to be strictly positive"
+    _msg = "Diffmah and Diffstar parameters need to have the same number of galaxies"
+    assert len(mah_params) == len(sfr_params) == len(q_params), _msg
+
     dt = _get_dt_array(t_sim)
     lgt = np.log10(t_sim)
     index_select, index_high = fstar_tools(t_sim, fstar_tdelay=fstar_tdelay)
