@@ -16,12 +16,18 @@ LGT0 = jnp.log10(TODAY)
 INDX_K = 9.0  # Main sequence efficiency transition speed.
 
 DEFAULT_SFR_PARAMS = OrderedDict(
-    lgmcrit=12.0, lgy_at_mcrit=-1.0, indx_lo=1.0, indx_hi=-1.0, tau_dep=2.0,
+    lgmcrit=12.0,
+    lgmcrit_width=1.0,
+    lgy_at_mcrit=-1.0,
+    indx_lo=1.0,
+    indx_hi=-1.0,
+    tau_dep=2.0,
 )
 
 
 _SFR_PARAM_BOUNDS = OrderedDict(
     lgmcrit=(9.0, 13.5),
+    lgmcrit_width=(0.0, 5.0),
     lgy_at_mcrit=(-3.0, 0.0),
     indx_lo=(0.0, 5.0),
     indx_hi=(-5.0, 0.0),
@@ -312,15 +318,17 @@ def calculate_histories_batch(t_sim, mah_params, sfr_params, q_params, fstar_tde
 
 @jjit
 def _get_bounded_sfr_params(
-    u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_tau_dep,
+    u_lgmcrit, u_lgmcrit_width, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_tau_dep,
 ):
     lgmcrit = _sigmoid(u_lgmcrit, *SFR_PARAM_BOUNDS["lgmcrit"])
+    lgmcrit_width = _sigmoid(u_lgmcrit_width, *SFR_PARAM_BOUNDS["lgmcrit_width"])
     lgy_at_mcrit = _sigmoid(u_lgy_at_mcrit, *SFR_PARAM_BOUNDS["lgy_at_mcrit"])
     indx_lo = _sigmoid(u_indx_lo, *SFR_PARAM_BOUNDS["indx_lo"])
     indx_hi = _sigmoid(u_indx_hi, *SFR_PARAM_BOUNDS["indx_hi"])
     tau_dep = _sigmoid(u_tau_dep, *SFR_PARAM_BOUNDS["tau_dep"])
     bounded_params = (
         lgmcrit,
+        lgmcrit_width,
         lgy_at_mcrit,
         indx_lo,
         indx_hi,
@@ -331,15 +339,19 @@ def _get_bounded_sfr_params(
 
 @jjit
 def _get_unbounded_sfr_params(
-    lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, tau_dep,
+    lgmcrit, lgmcrit_width, lgy_at_mcrit, indx_lo, indx_hi, tau_dep,
 ):
     u_lgmcrit = _inverse_sigmoid(lgmcrit, *SFR_PARAM_BOUNDS["lgmcrit"])
+    u_lgmcrit_width = _inverse_sigmoid(
+        lgmcrit_width, *SFR_PARAM_BOUNDS["lgmcrit_width"]
+    )
     u_lgy_at_mcrit = _inverse_sigmoid(lgy_at_mcrit, *SFR_PARAM_BOUNDS["lgy_at_mcrit"])
     u_indx_lo = _inverse_sigmoid(indx_lo, *SFR_PARAM_BOUNDS["indx_lo"])
     u_indx_hi = _inverse_sigmoid(indx_hi, *SFR_PARAM_BOUNDS["indx_hi"])
     u_tau_dep = _inverse_sigmoid(tau_dep, *SFR_PARAM_BOUNDS["tau_dep"])
     bounded_params = (
         u_lgmcrit,
+        u_lgmcrit_width,
         u_lgy_at_mcrit,
         u_indx_lo,
         u_indx_hi,
@@ -348,8 +360,8 @@ def _get_unbounded_sfr_params(
     return bounded_params
 
 
-_get_bounded_sfr_params_vmap = jjit(vmap(_get_bounded_sfr_params, (0,) * 5, 0))
-_get_unbounded_sfr_params_vmap = jjit(vmap(_get_unbounded_sfr_params, (0,) * 5, 0))
+_get_bounded_sfr_params_vmap = jjit(vmap(_get_bounded_sfr_params, (0,) * 6, 0))
+_get_unbounded_sfr_params_vmap = jjit(vmap(_get_unbounded_sfr_params, (0,) * 6, 0))
 
 
 @jjit
@@ -425,8 +437,8 @@ def _sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params, q_params):
 
     """
     bounded_params = _get_bounded_sfr_params(*sfr_params)
-    sfr_ms_params = bounded_params[:4]
-    tau_dep = bounded_params[4]
+    sfr_ms_params = bounded_params[:5]
+    tau_dep = bounded_params[5]
     efficiency = _sfr_eff_plaw(log_mah, *sfr_ms_params)
 
     t_table = 10 ** lgt
@@ -450,7 +462,7 @@ def _sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params, q_params):
 
 
 @jjit
-def _sfr_eff_plaw(lgm, lgmcrit, lgy_at_mcrit, indx_lo, indx_hi):
+def _sfr_eff_plaw(lgm, lgmcrit, lgmcrit_width, lgy_at_mcrit, indx_lo, indx_hi):
     """Instantaneous baryon conversion efficiency of main sequence galaxies.
 
     Main sequence efficiency kernel, epsilon(Mhalo).
@@ -474,9 +486,42 @@ def _sfr_eff_plaw(lgm, lgmcrit, lgy_at_mcrit, indx_lo, indx_hi):
         Main sequence efficiency value at each snapshot.
 
     """
-    slope = _sigmoid(lgm, lgmcrit, INDX_K, indx_lo, indx_hi)
+    slope = _new_slope_model(lgm, lgmcrit, lgmcrit_width, indx_lo, INDX_K, indx_hi)
     eff = lgy_at_mcrit + slope * (lgm - lgmcrit)
     return 10 ** eff
+
+
+@jjit
+def _new_slope_model(lgm, lgmcrit, lgmcrit_width, indx_lo, indx_k, indx_hi):
+    lgmcrit_lo = lgmcrit - lgmcrit_width / 2
+    lgmcrit_hi = lgmcrit + lgmcrit_width / 2
+    slope_lo = _tw_sigmoid(lgm, lgmcrit_lo, 1 / indx_k, indx_lo, 0)
+    slope_hi = _tw_sigmoid(lgm, lgmcrit_hi, 1 / indx_k, 0, indx_hi)
+    slope = _tw_sigmoid(lgm, lgmcrit, 1 / indx_k, slope_lo, slope_hi)
+    return slope
+
+
+@jjit
+def _tw_cuml_kern(x, m, h):
+    """Triweight kernel version of an err function."""
+    z = (x - m) / h
+    val = (
+        -5 * z ** 7 / 69984
+        + 7 * z ** 5 / 2592
+        - 35 * z ** 3 / 864
+        + 35 * z / 96
+        + 1 / 2
+    )
+    val = jnp.where(z < -3, 0, val)
+    val = jnp.where(z > 3, 1, val)
+    return val
+
+
+@jjit
+def _tw_sigmoid(x, x0, tw_h, ymin, ymax):
+    height_diff = ymax - ymin
+    body = _tw_cuml_kern(x, x0, tw_h)
+    return ymin + height_diff * body
 
 
 @jjit

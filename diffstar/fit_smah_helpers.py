@@ -36,7 +36,7 @@ SSFRH_FLOOR = 1e-12  # Clip SFH to this minimum sSFR value. 1/yr units.
 def get_header():
     out = """\
 # halo_id \
-lgmcrit lgy_at_mcrit indx_lo indx_hi tau_dep \
+lgmcrit lgmcrit_width lgy_at_mcrit indx_lo indx_hi tau_dep \
 qt qs q_drop q_rejuv \
 loss success\n\
 """
@@ -767,8 +767,8 @@ def loss_fixed_hi(params, loss_data):
         fixed_hi,
     ) = loss_data
 
-    sfr_params = [*params[0:3], fixed_hi, params[3]]
-    q_params = params[4:8]
+    sfr_params = [*params[0:4], fixed_hi, params[4]]
+    q_params = params[5:9]
 
     _res = calculate_sm_sfr_fstar_history_from_mah(
         lgt,
@@ -941,17 +941,17 @@ def get_loss_data_fixed_hi(
 
     default_sfr_params = np.array(list(DEFAULT_SFR_PARAMS.values()))
     default_sfr_params[0] = np.clip(0.3 * (logmp - 11.0) + 11.4, 11.0, 13.0)
-    default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 0.7, -1.5, -0.2)
-    default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) - 0.3, 0.2, 3.0)
-    default_sfr_params[4] = np.clip(-8.0 * (logmp - 11.0) + 15, 2.0, 15.0)
+    default_sfr_params[2] = np.clip(0.2 * (logmp - 11.0) - 0.7, -1.5, -0.2)
+    default_sfr_params[3] = np.clip(0.7 * (logmp - 11.0) - 0.3, 0.2, 3.0)
+    default_sfr_params[5] = np.clip(-8.0 * (logmp - 11.0) + 15, 2.0, 15.0)
     u_default_sfr_params = np.array(_get_unbounded_sfr_params(*default_sfr_params))
 
-    sfr_ms_params = np.zeros(4)
-    sfr_ms_params[0:3] = u_default_sfr_params[0:3]
-    sfr_ms_params[3] = u_default_sfr_params[4]
-    fixed_hi = u_default_sfr_params[3]
+    sfr_ms_params = np.zeros(5)
+    sfr_ms_params[0:4] = u_default_sfr_params[0:4]
+    sfr_ms_params[4] = u_default_sfr_params[5]
+    fixed_hi = u_default_sfr_params[4]
 
-    sfr_ms_params_err = np.array([0.5, 0.5, 1.0, 3.0])
+    sfr_ms_params_err = np.array([0.5, 0.5, 0.5, 1.0, 3.0])
 
     default_q_params = np.array(list(DEFAULT_Q_PARAMS.values()))
     default_q_params[0] = np.clip(-0.5 * (logmp - 11.0) + 1.5, 0.7, 1.5)
@@ -987,11 +987,11 @@ def get_loss_data_fixed_hi(
 def get_outline_fixed_hi(halo_id, loss_data, p_best, loss_best, success):
     """Return the string storing fitting results that will be written to disk"""
     fixed_hi = loss_data[-1]
-    sfr_params = np.zeros(5)
-    sfr_params[0:3] = p_best[0:3]
-    sfr_params[3] = fixed_hi
-    sfr_params[4] = p_best[3]
-    q_params = p_best[4:8]
+    sfr_params = np.zeros(6)
+    sfr_params[0:4] = p_best[0:4]
+    sfr_params[4] = fixed_hi
+    sfr_params[5] = p_best[4]
+    q_params = p_best[5:9]
     _d = np.concatenate((sfr_params, q_params)).astype("f4")
     data_out = (*_d, float(loss_best))
     out = str(halo_id) + " " + " ".join(["{:.5e}".format(x) for x in data_out])
