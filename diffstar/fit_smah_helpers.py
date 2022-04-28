@@ -96,8 +96,8 @@ def load_diffstar_data(
             sfr_fitdata[key] = hdf[key][...]
 
     colnames = get_header()[1:].strip().split()
-    sfr_colnames = colnames[1:6]
-    q_colnames = colnames[6:10]
+    sfr_colnames = colnames[1:7]
+    q_colnames = colnames[7:11]
 
     u_fit_params = np.array([sfr_fitdata[key] for key in sfr_colnames + q_colnames]).T
     u_sfr_fit_params = np.array([sfr_fitdata[key] for key in sfr_colnames]).T
