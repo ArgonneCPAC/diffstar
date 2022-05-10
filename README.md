@@ -6,10 +6,10 @@ For a typical development environment in conda:
 ```
 $ conda config --add channels conda-forge
 $ conda config --prepend channels conda-forge
-$ conda create -n diffit python=3.9 numpy numba flake8 pytest jax ipython jupyter matplotlib scipy h5py diffmah
+$ conda create -n diffit python=3.9 numpy numba flake8 pytest jax ipython jupyter matplotlib scipy h5py diffmah diffstar
 ```
 
-To install diffstar into your environment from the source code:
+Alternatively, to install diffstar into your environment from the source code:
 ```
 $ conda activate my_env_name
 $ cd /path/to/root/diffstar
@@ -30,7 +30,7 @@ You can find a preprint of the diffstar paper in [arXiv](https://arxiv.org/abs/2
 @ARTICLE{2022arXiv220504273A,
        author = {{Alarcon}, Alex and {Hearin}, Andrew P. and {Becker}, Matthew R. and {Chaves-Montero}, Jon{\'a}s},
         title = "{Diffstar: A Fully Parametric Physical Model for Galaxy Assembly History}",
-      journal = {arXiv e-prints},
+      journal = {arXiv:2205.04273},
      keywords = {Astrophysics - Astrophysics of Galaxies, Astrophysics - Cosmology and Nongalactic Astrophysics},
          year = 2022,
         month = may,
