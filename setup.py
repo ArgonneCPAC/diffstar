@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 
 PACKAGENAME = "diffstar"
-VERSION = "0.0.1"
+VERSION = "0.0.2"
 
 
 setup(
@@ -12,7 +12,7 @@ setup(
     author_email=["alexalarcongonzalez@gmail.com", "ahearin@anl.gov"],
     description="Differentiable star formation histories",
     long_description="Differentiable star formation histories",
-    install_requires=["numpy", "jax"],
+    install_requires=["numpy", "jax", "diffmah"],
     packages=find_packages(),
     url="https://github.com/ArgonneCPAC/diffstar",
 )
