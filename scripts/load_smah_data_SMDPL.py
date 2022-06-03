@@ -5,11 +5,14 @@ import os
 import warnings
 from umachine_pyio.load_mock import load_mock_from_binaries
 from astropy.cosmology import Planck15
+import h5py
+from diffstar.utils import _get_dt_array
 
 
-BEBOP = "/lcrc/project/halotools/UniverseMachine/SMDPL/sfh_z0_binaries/"
+BEBOP_SMDPL = "/lcrc/project/halotools/UniverseMachine/SMDPL/sfh_z0_binaries/"
 
 H_BPL = 0.678
+
 
 def load_fit_mah(filename, data_drn=BEBOP):
     """ Load the best fit diffmah parameter data.
@@ -40,24 +43,55 @@ def load_fit_mah(filename, data_drn=BEBOP):
 
 
 def load_SMDPL_data(subvols, data_drn=BEBOP):
-    galprops = ["halo_id", "mpeak_history_main_prog"]
-    _halos = load_mock_from_binaries(subvols, root_dirname=data_drn, galprops=galprops)
-    halo_ids = np.array(_halos["halo_id"])
-    _mah = np.maximum.accumulate(_halos["mpeak_history_main_prog"], axis=1)
+    """Load the stellar mass histories from UniverseMachine simulation
+    applied to the Bolshoi-Planck (BPL) simulation.
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        log_mahs = np.where(_mah == 0, 0, np.log10(_mah))
+    The loaded stellar mass data has units of Msun assuming the h = H_BPL
+    from the cosmology of the underlying simulation.
 
-    # Needed for .../SMDPL/sfr_catalogs 
-    # but not for .../SMDPL/sfh_z0_binaries 
-    # log_mahs = np.where(log_mahs > 0.0, log_mahs + np.log10(H_BPL), log_mahs)
+    The output stellar mass data has units of Msun/h, or units of
+    Mstar[h=H_BPL] using the h value of the simulation.
 
-    
-    SMDPL_a = np.load('/lcrc/project/halotools/UniverseMachine/SMDPL/scale_list.npy')
+    H_BPL is defined at the top of the module.
+
+    Parameters
+    ----------
+    gal_type : string
+        Name of the galaxy type of the file being loaded. Options are
+            'cens': central galaxies
+            'sats': satellite galaxies
+            'orphans': orphan galaxies
+    data_drn : string
+        Filepath where the Diffstar best-fit parameters are stored.
+
+    Returns
+    -------
+    halo_ids:  ndarray of shape (n_gal, )
+        IDs of the halos in the file.
+    log_smahs: ndarray of shape (n_gal, n_times)
+        Cumulative stellar mass history in units of Msun assuming h=1.
+    sfrh: ndarray of shape (n_gal, n_times)
+        Star formation rate history in units of Msun/yr assuming h=1.
+    bpl_t : ndarray of shape (n_times, )
+        Cosmic time of each simulated snapshot in Gyr
+    dt : ndarray of shape (n_times, )
+        Cosmic time steps between each simulated snapshot in Gyr
+    """
+
+    galprops = ["halo_id", "sfr_history_main_prog"]
+    halos = load_mock_from_binaries(subvols, root_dirname=data_drn, galprops=galprops)
+
+    SMDPL_a = np.load("/lcrc/project/halotools/UniverseMachine/SMDPL/scale_list.npy")
     SMDPL_z = 1.0 / SMDPL_a - 1.0
     SMDPL_t = Planck15.age(SMDPL_z).value
 
-    log_mah_fit_min = 10.0
-    return halo_ids, log_mahs, SMDPL_t, log_mah_fit_min
+    halo_ids = halos["halo_id"]
+    dt = _get_dt_array(SMDPL_t)
+    sfrh = halos["sfr_history_main_prog"]
+    sm_cumsum = np.cumsum(sfrh * dt, axis=1) * 1e9
 
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        log_smahs = np.where(sm_cumsum == 0, 0, np.log10(sm_cumsum))
+
+    return halo_ids, log_smahs, sfrh, SMDPL_t, dt

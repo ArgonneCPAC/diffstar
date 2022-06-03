@@ -4,17 +4,7 @@ import os
 from mpi4py import MPI
 import argparse
 from time import time
-from load_smah_data import (
-    TASSO,
-    BEBOP,
-    load_fit_mah,
-    load_bolshoi_data,
-    load_tng_data,
-    load_mdpl_data,
-    load_bolshoi_small_data,
-    load_tng_small_data,
-    load_mdpl_small_data,
-)
+from load_smah_data_SMDPL import BEBOP_SMDPL, load_fit_mah, load_SMDPL_data
 
 from diffstar.fit_smah_helpers import get_header, MIN_MASS_CUT, SSFRH_FLOOR
 from diffstar.fit_smah_helpers import (
@@ -98,6 +88,8 @@ if __name__ == "__main__":
         ),
         default="default",
     )
+    parser.add_argument("subvol0", help="First_subvolume")
+    parser.add_argument("subvol1", help="Last subvolume")
     parser.add_argument("-indir", help="Input directory", default="BEBOP")
     parser.add_argument("-fitmahfn", help="Filename of fit mah parameters")
     parser.add_argument("-test", help="Short test run?", type=bool, default=False)
@@ -121,6 +113,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-ssfrh_floor", help="Clipping floor for sSFH", type=float, default=SSFRH_FLOOR,
     )
+
     args = parser.parse_args()
 
     start = time()
@@ -129,45 +122,13 @@ if __name__ == "__main__":
     rank_basepat = args.outbase + TMP_OUTPAT
     rank_outname = os.path.join(args.outdir, rank_basepat).format(rank)
 
-    if args.indir == "TASSO":
-        indir = TASSO
-    elif args.indir == "BEBOP":
-        indir = BEBOP
-    else:
-        indir = args.indir
+    indir = args.indir
 
-    if args.simulation == "bpl":
-        _smah_data = load_bolshoi_data(args.gal_type, data_drn=indir)
-        halo_ids, log_smahs, sfrhs, tarr, dt = _smah_data
-        _smah_data = load_fit_mah(args.fitmahfn, data_drn=indir)
-        mah_fit_params, logmp = _smah_data
-    elif args.simulation == "tng":
-        _smah_data = load_tng_data(args.gal_type, data_drn=indir)
-        halo_ids, log_smahs, sfrhs, tarr, dt = _smah_data
-        _smah_data = load_fit_mah(args.fitmahfn, data_drn=indir)
-        mah_fit_params, logmp = _smah_data
-    elif args.simulation == "mdpl":
-        _smah_data = load_mdpl_data(args.gal_type, data_drn=indir)
-        halo_ids, log_smahs, sfrhs, tarr, dt = _smah_data
-        _smah_data = load_fit_mah(args.fitmahfn, data_drn=indir)
-        mah_fit_params, logmp = _smah_data
-    elif args.simulation == "bpl_small":
-        _smah_data = load_bolshoi_small_data(args.gal_type, data_drn=indir)
-        halo_ids, log_smahs, sfrhs, tarr, dt = _smah_data
-        _smah_data = load_fit_mah(args.fitmahfn, data_drn=indir)
-        mah_fit_params, logmp = _smah_data
-    elif args.simulation == "tng_small":
-        _smah_data = load_tng_small_data(args.gal_type, data_drn=indir)
-        halo_ids, log_smahs, sfrhs, tarr, dt = _smah_data
-        _smah_data = load_fit_mah(args.fitmahfn, data_drn=indir)
-        mah_fit_params, logmp = _smah_data
-    elif args.simulation == "mdpl_small":
-        _smah_data = load_mdpl_small_data(args.gal_type, data_drn=indir)
-        halo_ids, log_smahs, sfrhs, tarr, dt = _smah_data
-        _smah_data = load_fit_mah(args.fitmahfn, data_drn=indir)
-        mah_fit_params, logmp = _smah_data
-    else:
-        raise NotImplementedError
+    subvols = np.arange(int(args.subvol0), int(args.subvol1), 1).astype(int)
+    _smah_data = load_SMDPL_data(subvols, data_drn=BEBOP_SMDPL)
+    halo_ids, log_smahs, sfrhs, tarr, dt = _smah_data
+    _smah_data = load_fit_mah(args.fitmahfn, data_drn=indir)
+    mah_fit_params, logmp = _smah_data
 
     # Get data for rank
     if args.test:
@@ -297,8 +258,10 @@ if __name__ == "__main__":
         fit_data_fnames = [pat.format(i) for i in range(nranks)]
         data_collection = [np.loadtxt(fn) for fn in fit_data_fnames]
         all_fit_data = np.concatenate(data_collection)
-        outname = os.path.join(args.outdir, args.outbase)
-        outname = outname + ".h5"
+        outname = os.path.join(args.outdir, args.outbase) + "_%d_%d.h5" % (
+            subvols[0],
+            subvols[-1],
+        )
         _write_collated_data(outname, all_fit_data, header)
 
         #  clean up temporary files
