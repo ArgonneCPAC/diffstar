@@ -41,6 +41,18 @@ def load_fit_mah(filename, data_drn=BEBOP_SMDPL):
             else:
                 fitting_data["fit_" + key] = hdf[key][...]
 
+    mah_fit_params = np.array(
+        [
+            fitting_data["fit_mah_logtc"],
+            fitting_data["fit_mah_k"],
+            fitting_data["fit_early_index"],
+            fitting_data["fit_late_index"],
+        ]
+    ).T
+    logmp = fitting_data["fit_logmp_fit"]
+
+    return mah_fit_params, logmp
+
 
 def load_SMDPL_data(subvols, data_drn=BEBOP_SMDPL):
     """Load the stellar mass histories from UniverseMachine simulation
