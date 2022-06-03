@@ -14,7 +14,7 @@ BEBOP_SMDPL = "/lcrc/project/halotools/UniverseMachine/SMDPL/sfh_z0_binaries/"
 H_BPL = 0.678
 
 
-def load_fit_mah(filename, data_drn=BEBOP):
+def load_fit_mah(filename, data_drn=BEBOP_SMDPL):
     """ Load the best fit diffmah parameter data.
     Parameters
     ----------
@@ -42,7 +42,7 @@ def load_fit_mah(filename, data_drn=BEBOP):
                 fitting_data["fit_" + key] = hdf[key][...]
 
 
-def load_SMDPL_data(subvols, data_drn=BEBOP):
+def load_SMDPL_data(subvols, data_drn=BEBOP_SMDPL):
     """Load the stellar mass histories from UniverseMachine simulation
     applied to the Bolshoi-Planck (BPL) simulation.
 

@@ -127,7 +127,9 @@ if __name__ == "__main__":
     subvols = np.arange(int(args.subvol0), int(args.subvol1), 1).astype(int)
     _smah_data = load_SMDPL_data(subvols, data_drn=BEBOP_SMDPL)
     halo_ids, log_smahs, sfrhs, tarr, dt = _smah_data
-    _smah_data = load_fit_mah(args.fitmahfn, data_drn=indir)
+
+    _name = args.fitmahfn + "_%d_%d.h5" % (subvols[0], subvols[-1])
+    _smah_data = load_fit_mah(_name, data_drn=indir)
     mah_fit_params, logmp = _smah_data
 
     # Get data for rank
