@@ -69,9 +69,6 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument(
-        "simulation", help="name of the simulation (used to select the data loader)"
-    )
     parser.add_argument("outdir", help="Output directory")
     parser.add_argument("outbase", help="Basename of the output hdf5 file")
     parser.add_argument(
