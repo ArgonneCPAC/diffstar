@@ -64,9 +64,8 @@ def load_bolshoi_data(gal_type, data_drn=BEBOP):
     The loaded stellar mass data has units of Msun assuming the h = H_BPL
     from the cosmology of the underlying simulation.
 
-    The output  stellar mass data is transformed to have units of Msun
-    assuming h=1 via the transformation:
-        Mstar[h = 1] = (H_BPL)**2 * M[h = H_BPL]
+    The output stellar mass data has units of Msun/h, or units of
+    Mstar[h=H_BPL] using the h value of the simulation.
 
     H_BPL is defined at the top of the module.
 
@@ -103,9 +102,6 @@ def load_bolshoi_data(gal_type, data_drn=BEBOP):
     sfrh = halos["sfr_history_main_prog"]
     sm_cumsum = np.cumsum(sfrh * dt, axis=1) * 1e9
 
-    sfrh *= H_BPL ** 2
-    sm_cumsum *= H_BPL ** 2
-
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         log_smahs = np.where(sm_cumsum == 0, 0, np.log10(sm_cumsum))
@@ -120,9 +116,8 @@ def load_bolshoi_small_data(gal_type, data_drn=BEBOP):
     The loaded stellar mass data has units of Msun assuming the h = H_BPL
     from the cosmology of the underlying simulation.
 
-    The output  stellar mass data is transformed to have units of Msun
-    assuming h=1 via the transformation:
-        Mstar[h = 1] = (H_BPL)**2 * M[h = H_BPL]
+    The output stellar mass data has units of Msun/h, or units of
+    Mstar[h=H_BPL] using the h value of the simulation.
 
     H_BPL is defined at the top of the module.
 
@@ -159,9 +154,6 @@ def load_bolshoi_small_data(gal_type, data_drn=BEBOP):
     sfrh = halos["sfr_history_main_prog"]
     sm_cumsum = np.cumsum(sfrh * dt, axis=1) * 1e9
 
-    sfrh *= H_BPL ** 2
-    sm_cumsum *= H_BPL ** 2
-
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         log_smahs = np.where(sm_cumsum == 0, 0, np.log10(sm_cumsum))
@@ -175,9 +167,8 @@ def load_tng_data(gal_type, data_drn=BEBOP):
     The loaded stellar mass data has units of Msun assuming the h = H_TNG
     from the cosmology of the underlying simulation.
 
-    The output  stellar mass data is transformed to have units of Msun
-    assuming h=1 via the transformation:
-        Mstar[h = 1] = (H_TNG)**2 * M[h = H_TNG]
+    The output stellar mass data has units of Msun/h, or units of
+    Mstar[h=H_TNG] using the h value of the simulation.
 
     H_TNG is defined at the top of the module.
 
@@ -214,9 +205,6 @@ def load_tng_data(gal_type, data_drn=BEBOP):
     sfrh = halos["sfh"]
     sm_cumsum = np.cumsum(sfrh * dt, axis=1) * 1e9
 
-    sfrh *= H_TNG ** 2
-    sm_cumsum *= H_TNG ** 2
-
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         log_smahs = np.where(sm_cumsum == 0, 0, np.log10(sm_cumsum))
@@ -231,9 +219,8 @@ def load_tng_small_data(gal_type, data_drn=BEBOP):
     The loaded stellar mass data has units of Msun assuming the h = H_TNG
     from the cosmology of the underlying simulation.
 
-    The output  stellar mass data is transformed to have units of Msun
-    assuming h=1 via the transformation:
-        Mstar[h = 1] = (H_TNG)**2 * M[h = H_TNG]
+    The output stellar mass data has units of Msun/h, or units of
+    Mstar[h=H_TNG] using the h value of the simulation.
 
     H_TNG is defined at the top of the module.
 
@@ -270,9 +257,6 @@ def load_tng_small_data(gal_type, data_drn=BEBOP):
     sfrh = halos["sfh"]
     sm_cumsum = np.cumsum(sfrh * dt, axis=1) * 1e9
 
-    sfrh *= H_TNG ** 2
-    sm_cumsum *= H_TNG ** 2
-
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         log_smahs = np.where(sm_cumsum == 0, 0, np.log10(sm_cumsum))
@@ -287,9 +271,8 @@ def load_mdpl_data(gal_type, data_drn=BEBOP):
     The loaded stellar mass data has units of Msun assuming the h = H_MDPL
     from the cosmology of the underlying simulation.
 
-    The output  stellar mass data is transformed to have units of Msun
-    assuming h=1 via the transformation:
-        Mstar[h = 1] = (H_MDPL)**2 * M[h = H_MDPL]
+    The output stellar mass data has units of Msun/h, or units of
+    Mstar[h=H_MDPL] using the h value of the simulation.
 
     H_MDPL is defined at the top of the module.
 
@@ -326,9 +309,6 @@ def load_mdpl_data(gal_type, data_drn=BEBOP):
     sfrh = halos["sfr_history_main_prog"]
     sm_cumsum = np.cumsum(sfrh * dt, axis=1) * 1e9
 
-    sfrh *= H_MDPL ** 2
-    sm_cumsum *= H_MDPL ** 2
-
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         log_smahs = np.where(sm_cumsum == 0, 0, np.log10(sm_cumsum))
@@ -344,9 +324,8 @@ def load_mdpl_small_data(gal_type, data_drn=BEBOP):
     The loaded stellar mass data has units of Msun assuming the h = H_MDPL
     from the cosmology of the underlying simulation.
 
-    The output  stellar mass data is transformed to have units of Msun
-    assuming h=1 via the transformation:
-        Mstar[h = 1] = (H_MDPL)**2 * M[h = H_MDPL]
+    The output stellar mass data has units of Msun/h, or units of
+    Mstar[h=H_MDPL] using the h value of the simulation.
 
     H_MDPL is defined at the top of the module.
 
@@ -382,9 +361,6 @@ def load_mdpl_small_data(gal_type, data_drn=BEBOP):
     dt = _get_dt_array(mdpl_t)
     sfrh = halos["sfr_history_main_prog"]
     sm_cumsum = np.cumsum(sfrh * dt, axis=1) * 1e9
-
-    sfrh *= H_MDPL ** 2
-    sm_cumsum *= H_MDPL ** 2
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
