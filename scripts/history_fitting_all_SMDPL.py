@@ -292,7 +292,7 @@ if __name__ == "__main__":
         _write_collated_data_diffmah(_outpath_diffmah, _res_diffmah, colnames_diffmah)
 
         end = time()
-        msg = "\n\n Diffmah Wallclock runtime to fit {0} galaxies with {1} ranks = {2:.1f} seconds\n\n"
+        msg = "Diffmah Wallclock runtime to fit {0} galaxies with {1} ranks = {2:.1f} seconds"
         runtime = end - start
         print(msg.format(nhalos_tot, nranks, runtime))
         start = time()
@@ -352,7 +352,7 @@ if __name__ == "__main__":
 
         end = time()
 
-        msg = "\n\n Diffstar Wallclock runtime to fit {0} galaxies with {1} ranks = {2:.1f} seconds\n\n"
+        msg = "Diffstar Wallclock runtime to fit {0} galaxies with {1} ranks = {2:.1f} seconds\n\n"
         runtime = end - start
 
         print(msg.format(nhalos_tot, nranks, runtime))
