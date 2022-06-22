@@ -291,6 +291,7 @@ if __name__ == "__main__":
         end = time()
         msg = "Diffmah Wallclock runtime to fit {0} galaxies with {1} ranks = {2:.1f} seconds"
         runtime = end - start
+        print(msg.format(nhalos_tot, nranks, runtime))
 
         start = time()
 
