@@ -114,9 +114,8 @@ def load_SMDPL_data(subvols, data_drn=BEBOP_SMDPL):
     return halo_ids, log_mahs, log_smahs, sfrh, SMDPL_t, dt, log_mah_fit_min
 
 
-def _write_collated_data_diffmah(outname, data, header):
+def _write_collated_data_diffmah(outname, data, colnames):
     nrows, ncols = np.shape(data)
-    colnames = header[1:].strip().split()
     assert len(colnames) == ncols, "data mismatched with header"
     with h5py.File(outname, "w") as hdf:
         for i, name in enumerate(colnames):
@@ -126,9 +125,8 @@ def _write_collated_data_diffmah(outname, data, header):
                 hdf[name] = data[:, i]
 
 
-def _write_collated_data_diffstar(outname, data, header):
+def _write_collated_data_diffstar(outname, data, colnames):
     nrows, ncols = np.shape(data)
-    colnames = header[1:].strip().split()
     assert len(colnames) == ncols, "data mismatched with header"
     with h5py.File(outname, "w") as hdf:
         for i, name in enumerate(colnames):
@@ -208,17 +206,21 @@ def run_diffstar(inps):
 header_diffstar = get_header_diffstar()
 header_diffmah = get_header_diffmah()
 
+colnames_diffstar = header_diffstar[1:].strip().split()
+colnames_diffmah = header_diffmah[1:].strip().split()
+
 
 if __name__ == "__main__":
 
-    # """
+    """
     pool = MPIPool()
     if not pool.is_master():
         pool.wait()
         sys.exit(0)
-    # """
+    """
 
-    nranks = pool.comm.Get_size() - 1
+    # nranks = pool.comm.Get_size() - 1
+    nranks = 100
 
     parser = argparse.ArgumentParser()
 
@@ -258,10 +260,10 @@ if __name__ == "__main__":
 
         _name_diffmah = outbase_diffmah + "_%d.h5" % subvol
         _name_diffstar = outbase_diffstar + "_%d.h5" % subvol
-        _name_diffmah_exists = os.path.exists(os.path.join(args.outdir, _name_diffmah))
-        _name_diffstar_exists = os.path.exists(
-            os.path.join(args.outdir, _name_diffstar)
-        )
+        _outpath_diffmah = os.path.join(args.outdir, _name_diffmah)
+        _outpath_diffstar = os.path.join(args.outdir, _name_diffstar)
+        _name_diffmah_exists = os.path.exists(_outpath_diffmah)
+        _name_diffstar_exists = os.path.exists(_outpath_diffstar)
 
         print("Running subvol %d" % subvol)
 
@@ -282,29 +284,57 @@ if __name__ == "__main__":
                 [halo_ids[indx], log_mahs[indx], SMDPL_t, log_mah_fit_min]
             )
 
-        _res_diffmah = pool.map(run_diffmah, inputs_diffmah)
+        _res_diffmah = run_diffmah(inputs_diffmah[0])
+        # _res_diffmah = np.concatenate(pool.map(run_diffmah, inputs_diffmah), axis=0)
 
-        breakpoint()
-        """
+        _res_diffmah = _res_diffmah.astype(float)
+
+        _write_collated_data_diffmah(_outpath_diffmah, _res_diffmah, colnames_diffmah)
+
+        _res_diffmah = {
+            key: val for (key, val) in zip(colnames_diffmah, _res_diffmah.T)
+        }
+
+        mah_fit_params = np.array(
+            [
+                _res_diffmah["mah_logtc"],
+                _res_diffmah["mah_k"],
+                _res_diffmah["early_index"],
+                _res_diffmah["late_index"],
+            ]
+        ).T
+
+        logmp = _res_diffmah["logmp_fit"]
+
+        # """
         inputs_diffstar = []
         for indx in indxs:
-            inputs_diffstar.append([
-                halo_ids[indx],
-                log_smahs[indx],
-                sfrhs[indx],
-                mah_fit_params[indx],
-                logmp[indx],
-                SMDPL_t,
-                dt,
-                kwargs
-            ])
+            inputs_diffstar.append(
+                [
+                    halo_ids[indx],
+                    log_smahs[indx],
+                    sfrhs[indx],
+                    mah_fit_params[indx],
+                    logmp[indx],
+                    SMDPL_t,
+                    dt,
+                    kwargs,
+                ]
+            )
 
-        _res_diffstar = pool.map(run_diffstar, inputs_diffstar)
+        _res_diffstar = run_diffstar(inputs_diffstar[0])
+        # _res_diffstar = np.concatenate(pool.map(run_diffstar, inputs_diffstar), axis=0)
+
+        _res_diffstar = _res_diffstar.astype(float)
+
+        _write_collated_data_diffstar(
+            _outpath_diffstar, _res_diffstar, colnames_diffstar
+        )
+
         end = time()
 
-        msg = (
-            "\n\nWallclock runtime to fit {0} galaxies with {1} ranks = {2:.1f} seconds\n\n"
-        )
+        msg = "\n\nWallclock runtime to fit {0} galaxies with {1} ranks = {2:.1f} seconds\n\n"
         runtime = end - start
+        print("Subvolume %d" % subvol)
         print(msg.format(nhalos_tot, nranks, runtime))
-        """
+        # """
