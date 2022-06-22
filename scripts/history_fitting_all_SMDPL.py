@@ -284,7 +284,7 @@ if __name__ == "__main__":
                 [halo_ids[indx], log_mahs[indx], SMDPL_t, log_mah_fit_min]
             )
 
-        _res_diffmah = run_diffmah(inputs_diffmah[0])
+        _res_diffmah = np.array(run_diffmah(inputs_diffmah[0]))
         # _res_diffmah = np.concatenate(pool.map(run_diffmah, inputs_diffmah), axis=0)
 
         _res_diffmah = _res_diffmah.astype(float)
@@ -322,7 +322,7 @@ if __name__ == "__main__":
                 ]
             )
 
-        _res_diffstar = run_diffstar(inputs_diffstar[0])
+        _res_diffstar = np.array(run_diffstar(inputs_diffstar[0]))
         # _res_diffstar = np.concatenate(pool.map(run_diffstar, inputs_diffstar), axis=0)
 
         _res_diffstar = _res_diffstar.astype(float)
