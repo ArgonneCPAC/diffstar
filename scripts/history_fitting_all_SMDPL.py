@@ -255,7 +255,7 @@ if __name__ == "__main__":
         "ssfrh_floor": args.ssfrh_floor,
     }
 
-    for subvol in np.arange(args.subvol0, args.subvol1, 1):
+    for subvol in np.arange(int(args.subvol0), int(args.subvol1), 1):
 
         _name_diffmah = outbase_diffmah + "_%d.h5" % subvol
         _name_diffstar = outbase_diffstar + "_%d.h5" % subvol
@@ -284,7 +284,6 @@ if __name__ == "__main__":
             )
         _res_diffmah = np.concatenate(pool.map(run_diffmah, inputs_diffmah), axis=0)
 
-        # _res_diffmah = np.array(run_diffmah(inputs_diffmah[0]))
         _res_diffmah = _res_diffmah.astype(float)
 
         _write_collated_data_diffmah(_outpath_diffmah, _res_diffmah, colnames_diffmah)
@@ -309,21 +308,6 @@ if __name__ == "__main__":
         ).T
         logmp = _res_diffmah["logmp_fit"]
 
-        """
-        if 1:
-            inputs_diffstar = []
-            indx = indxs[0]
-            inputs_diffstar.append([
-                halo_ids[indx],
-                log_smahs[indx],
-                sfrhs[indx],
-                mah_fit_params,
-                logmp,
-                SMDPL_t,
-                dt,
-                kwargs
-            ])
-        """
         inputs_diffstar = []
         for indx in indxs:
             inputs_diffstar.append(
@@ -338,9 +322,7 @@ if __name__ == "__main__":
                     kwargs,
                 ]
             )
-        # """
 
-        # _res_diffstar = np.array(run_diffstar(inputs_diffstar[0]))
         _res_diffstar = np.concatenate(pool.map(run_diffstar, inputs_diffstar), axis=0)
 
         _res_diffstar = _res_diffstar.astype(float)
