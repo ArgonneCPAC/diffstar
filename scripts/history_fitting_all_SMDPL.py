@@ -240,6 +240,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "-ssfrh_floor", help="Clipping floor for sSFH", type=float, default=SSFRH_FLOOR,
     )
+    parser.add_argument("-subvol0", help="Basename of the output hdf5 file", default=0)
+    parser.add_argument("-subvol1", help="Basename of the output hdf5 file", default=1)
 
     args = parser.parse_args()
 
@@ -253,7 +255,7 @@ if __name__ == "__main__":
         "ssfrh_floor": args.ssfrh_floor,
     }
 
-    for subvol in range(576):
+    for subvol in np.arange(args.subvol0, args.subvol1, 1):
 
         _name_diffmah = outbase_diffmah + "_%d.h5" % subvol
         _name_diffstar = outbase_diffstar + "_%d.h5" % subvol
@@ -351,7 +353,4 @@ if __name__ == "__main__":
 
         msg = "Diffstar Wallclock runtime to fit {0} galaxies with {1} ranks = {2:.1f} seconds\n\n"
         runtime = end - start
-
         print(msg.format(nhalos_tot, nranks, runtime))
-        # """
-        assert False
