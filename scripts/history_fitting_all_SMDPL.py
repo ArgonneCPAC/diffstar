@@ -199,7 +199,7 @@ def run_diffstar(inps):
         p_best, loss_best, success = _res
         outline = get_outline_diffstar(halo_id, loss_data, p_best, loss_best, success)
 
-    output.append(outline.strip().split())
+        output.append(outline.strip().split())
     return output
 
 
@@ -283,24 +283,23 @@ if __name__ == "__main__":
             inputs_diffmah.append(
                 [halo_ids[indx], log_mahs[indx], SMDPL_t, log_mah_fit_min]
             )
-
-        _res_diffmah = np.array(run_diffmah(inputs_diffmah[0]))
         # _res_diffmah = np.concatenate(pool.map(run_diffmah, inputs_diffmah), axis=0)
 
+        _res_diffmah = np.array(run_diffmah(inputs_diffmah[0]))
         _res_diffmah = _res_diffmah.astype(float)
-
+        print(_res_diffmah.shape)
         _write_collated_data_diffmah(_outpath_diffmah, _res_diffmah, colnames_diffmah)
-
+        print(_res_diffmah.shape)
         end = time()
         msg = "Diffmah Wallclock runtime to fit {0} galaxies with {1} ranks = {2:.1f} seconds"
         runtime = end - start
         print(msg.format(nhalos_tot, nranks, runtime))
         start = time()
-
+        print(_res_diffmah.shape)
         _res_diffmah = {
             key: val for (key, val) in zip(colnames_diffmah, _res_diffmah.T)
         }
-
+        print(_res_diffmah["halo_id"].shape)
         mah_fit_params = np.array(
             [
                 _res_diffmah["mah_logtc"],
@@ -309,24 +308,25 @@ if __name__ == "__main__":
                 _res_diffmah["late_index"],
             ]
         ).T
-
         logmp = _res_diffmah["logmp_fit"]
+        print(logmp.shape)
 
         # """
-        inputs_diffstar = []
-        indx = indxs[0]
-        inputs_diffstar.append(
-            [
-                halo_ids[indx],
-                log_smahs[indx],
-                sfrhs[indx],
-                mah_fit_params,
-                logmp,
-                SMDPL_t,
-                dt,
-                kwargs,
-            ]
-        )
+        if 1:
+            inputs_diffstar = []
+            indx = indxs[0]
+            inputs_diffstar.append(
+                [
+                    halo_ids[indx],
+                    log_smahs[indx],
+                    sfrhs[indx],
+                    mah_fit_params,
+                    logmp,
+                    SMDPL_t,
+                    dt,
+                    kwargs,
+                ]
+            )
         """
         for indx in indxs:
             inputs_diffstar.append([
@@ -357,3 +357,4 @@ if __name__ == "__main__":
 
         print(msg.format(nhalos_tot, nranks, runtime))
         # """
+        assert False
