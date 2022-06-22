@@ -144,9 +144,6 @@ def run_diffmah(inps):
     lgm_min = inps[3]
 
     nstep = 150
-
-    halo_ids_for_rank = halo_ids[indx]
-    log_mahs_for_rank = log_mahs[indx]
     nhalos_for_rank = len(halo_ids_for_rank)
 
     output = []
