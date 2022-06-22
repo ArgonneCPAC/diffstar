@@ -291,6 +291,12 @@ if __name__ == "__main__":
 
         _write_collated_data_diffmah(_outpath_diffmah, _res_diffmah, colnames_diffmah)
 
+        end = time()
+        msg = "\n\n Diffmah Wallclock runtime to fit {0} galaxies with {1} ranks = {2:.1f} seconds\n\n"
+        runtime = end - start
+        print(msg.format(nhalos_tot, nranks, runtime))
+        start = time()
+
         _res_diffmah = {
             key: val for (key, val) in zip(colnames_diffmah, _res_diffmah.T)
         }
@@ -308,19 +314,32 @@ if __name__ == "__main__":
 
         # """
         inputs_diffstar = []
+        indx = indxs[0]
+        inputs_diffstar.append(
+            [
+                halo_ids[indx],
+                log_smahs[indx],
+                sfrhs[indx],
+                mah_fit_params,
+                logmp,
+                SMDPL_t,
+                dt,
+                kwargs,
+            ]
+        )
+        """
         for indx in indxs:
-            inputs_diffstar.append(
-                [
-                    halo_ids[indx],
-                    log_smahs[indx],
-                    sfrhs[indx],
-                    mah_fit_params[indx],
-                    logmp[indx],
-                    SMDPL_t,
-                    dt,
-                    kwargs,
-                ]
-            )
+            inputs_diffstar.append([
+                halo_ids[indx],
+                log_smahs[indx],
+                sfrhs[indx],
+                mah_fit_params[indx],
+                logmp[indx],
+                SMDPL_t,
+                dt,
+                kwargs
+            ])
+        """
 
         _res_diffstar = np.array(run_diffstar(inputs_diffstar[0]))
         # _res_diffstar = np.concatenate(pool.map(run_diffstar, inputs_diffstar), axis=0)
@@ -333,8 +352,8 @@ if __name__ == "__main__":
 
         end = time()
 
-        msg = "\n\nWallclock runtime to fit {0} galaxies with {1} ranks = {2:.1f} seconds\n\n"
+        msg = "\n\n Diffstar Wallclock runtime to fit {0} galaxies with {1} ranks = {2:.1f} seconds\n\n"
         runtime = end - start
-        print("Subvolume %d" % subvol)
+
         print(msg.format(nhalos_tot, nranks, runtime))
         # """
