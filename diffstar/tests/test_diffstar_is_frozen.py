@@ -1,4 +1,4 @@
-"""
+"""Unit tests enforcing that the behavior of Diffstar on the default params is frozen.
 """
 import os
 import numpy as np

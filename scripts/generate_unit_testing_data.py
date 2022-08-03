@@ -1,4 +1,8 @@
-"""
+"""This script generates the unit-testing data used to freeze the behavior of Diffstar.
+
+The purpose of these testing data is to ensure that if the behavior of Diffstar changes
+as the code evolves, then we will find out about it.
+
 """
 import argparse
 import os
