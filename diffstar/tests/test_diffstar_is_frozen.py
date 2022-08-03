@@ -4,17 +4,15 @@ import os
 import numpy as np
 from jax import numpy as jnp
 from diffmah.individual_halo_assembly import DEFAULT_MAH_PARAMS
-
 from diffmah.individual_halo_assembly import _get_early_late
 from diffmah.individual_halo_assembly import _calc_halo_history
 
-from ..stars import DEFAULT_SFR_PARAMS, _SFR_PARAM_BOUNDS
 from ..stars import _sfr_history_from_mah, LGT0
 from ..stars import _get_unbounded_sfr_params, _get_bounded_sfr_params
+from ..stars import DEFAULT_SFR_PARAMS as DEFAULT_MS_U_PARAM_DICT
+from ..quenching import DEFAULT_Q_PARAMS as DEFAULT_Q_U_PARAM_DICT
 from ..quenching import _get_unbounded_q_params, _get_bounded_q_params
 from ..utils import _get_dt_array
-from ..quenching import DEFAULT_Q_PARAMS as DEFAULT_Q_U_PARAM_DICT
-from ..stars import DEFAULT_SFR_PARAMS as DEFAULT_MS_U_PARAM_DICT
 
 DEFAULT_MS_PARAMS = jnp.array(
     _get_bounded_sfr_params(*tuple(DEFAULT_MS_U_PARAM_DICT.values()))
@@ -39,11 +37,6 @@ def _get_default_mah_params():
     default_mah_params = [LGT0, logmp, mah_logtc, k, early_index, late_index]
     default_mah_params = jnp.array(default_mah_params)
     return default_mah_params
-
-
-def test_sfh_parameter_bounds():
-    for key, val in DEFAULT_SFR_PARAMS.items():
-        assert _SFR_PARAM_BOUNDS[key][0] < val < _SFR_PARAM_BOUNDS[key][1]
 
 
 def calc_sfh_on_default_params():

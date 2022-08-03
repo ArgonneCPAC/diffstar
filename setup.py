@@ -14,5 +14,6 @@ setup(
     long_description="Differentiable star formation histories",
     install_requires=["numpy", "jax", "diffmah"],
     packages=find_packages(),
+    package_data={"diffstar": ["tests/testing_data/*.txt"]},
     url="https://github.com/ArgonneCPAC/diffstar",
 )
