@@ -11,6 +11,8 @@ FB = 0.156
 
 @jjit
 def _gas_conversion_kern(t_form, t_acc, dt, tau_dep, tau_dep_max):
+    """For a parcel of gas accreted at t_acc,
+    calculate the star-forming gas fraction at time t_acc"""
     alpha = (tau_dep / 2.0) * (tau_dep / tau_dep_max)
     w = (tau_dep - alpha) / 3.0
     m = t_acc + alpha
@@ -70,3 +72,26 @@ def _lax_lagged_gas(lgtarr, dtarr, dmhdt_arr, tau_dep, tau_dep_max):
     res = lax.scan(scan_gas_consumption, mgas_init, arr)
     lagged_gas = res[1]
     return lagged_gas
+
+
+@jjit
+def _star_forming_frac_at_tform_from_tacc(t_form, t_acc, n_steps, tau_dep, tau_dep_max):
+    alpha = (tau_dep / 2.0) * (tau_dep / tau_dep_max)
+    w = (tau_dep - alpha) / 3.0
+    m = t_acc + alpha
+    _norm = tw_bin_jax_kern(m, w, t_acc, t_acc + tau_dep)
+    _norm = 1.0 / jnp.clip(_norm, 0.01, jnp.inf)
+
+    @jjit
+    def _scan_sf_frac(carryover, el):
+        t = el
+        pred = t > t_acc
+        dt = lax.cond(pred, lambda x: (t - t_acc) / n_steps, lambda x: 0.0, t)
+        tri_kern = lax.cond(
+            t_form < t_acc,
+            lambda x: 0.0,
+            lambda x: _norm * tw_bin_jax_kern(m, w, x, x + dt) / dt,
+            t_form,
+        )
+
+        return carryover, accumulated
