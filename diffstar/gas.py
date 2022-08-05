@@ -47,26 +47,3 @@ def _get_lagged_gas(lgt, dt, dmhdt, tau_dep, tau_dep_max):
     lagged_mgas = jnp.sum(integrand, axis=1)
 
     return lagged_mgas
-
-
-@jjit
-def _lax_lagged_gas(lgtarr, dtarr, dmhdt_arr, tau_dep, tau_dep_max):
-    tarr = 10**lgtarr
-
-    @jjit
-    def scan_gas_consumption(carryover, el):
-        mgas = carryover
-        dt, t, dmhdt = el
-
-        raise NotImplementedError("Left off here")
-        dmgas = _gas_conversion_kern(t_form, t_acc, dt, tau_dep, tau_dep_max)
-
-        carryover = mgas
-        accumulated = mgas
-        return carryover, accumulated
-
-    mgas_init = FB * dmhdt_arr * dtarr[0]
-    arr = jnp.vstack((dtarr, tarr, dmhdt_arr)).T
-    res = lax.scan(scan_gas_consumption, mgas_init, arr)
-    lagged_gas = res[1]
-    return lagged_gas
