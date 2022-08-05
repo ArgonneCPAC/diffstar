@@ -9,14 +9,18 @@ import numpy as np
 from diffmah.individual_halo_assembly import _calc_halo_history
 from .quenching import quenching_function
 from .utils import _sigmoid, _inverse_sigmoid, _get_dt_array
+from .gas import _get_lagged_gas
 
-FB = 0.156
 TODAY = 13.8
 LGT0 = jnp.log10(TODAY)
 INDX_K = 9.0  # Main sequence efficiency transition speed.
 
 DEFAULT_SFR_PARAMS = OrderedDict(
-    lgmcrit=12.0, lgy_at_mcrit=-1.0, indx_lo=1.0, indx_hi=-1.0, tau_dep=2.0,
+    lgmcrit=12.0,
+    lgy_at_mcrit=-1.0,
+    indx_lo=1.0,
+    indx_hi=-1.0,
+    tau_dep=2.0,
 )
 
 
@@ -99,13 +103,18 @@ def calculate_sm_sfr_fstar_history_from_mah(
     """
     sfr = _sfr_history_from_mah(lgt, dt, dmhdt, log_mah, sfr_ms_params, q_params)
     mstar = _integrate_sfr(sfr, dt)
-    fstar = compute_fstar(10 ** lgt, mstar, index_select, index_high, fstar_tdelay)
+    fstar = compute_fstar(10**lgt, mstar, index_select, index_high, fstar_tdelay)
     return mstar, sfr, fstar
 
 
 @jjit
 def calculate_sm_sfr_history_from_mah(
-    lgt, dt, dmhdt, log_mah, sfr_ms_params, q_params,
+    lgt,
+    dt,
+    dmhdt,
+    log_mah,
+    sfr_ms_params,
+    q_params,
 ):
     """Calculate individual galaxy SFH from precalculated halo MAH
 
@@ -312,7 +321,11 @@ def calculate_histories_batch(t_sim, mah_params, sfr_params, q_params, fstar_tde
 
 @jjit
 def _get_bounded_sfr_params(
-    u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_tau_dep,
+    u_lgmcrit,
+    u_lgy_at_mcrit,
+    u_indx_lo,
+    u_indx_hi,
+    u_tau_dep,
 ):
     lgmcrit = _sigmoid(u_lgmcrit, *SFR_PARAM_BOUNDS["lgmcrit"])
     lgy_at_mcrit = _sigmoid(u_lgy_at_mcrit, *SFR_PARAM_BOUNDS["lgy_at_mcrit"])
@@ -331,7 +344,11 @@ def _get_bounded_sfr_params(
 
 @jjit
 def _get_unbounded_sfr_params(
-    lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, tau_dep,
+    lgmcrit,
+    lgy_at_mcrit,
+    indx_lo,
+    indx_hi,
+    tau_dep,
 ):
     u_lgmcrit = _inverse_sigmoid(lgmcrit, *SFR_PARAM_BOUNDS["lgmcrit"])
     u_lgy_at_mcrit = _inverse_sigmoid(lgy_at_mcrit, *SFR_PARAM_BOUNDS["lgy_at_mcrit"])
@@ -429,18 +446,8 @@ def _sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params, q_params):
     tau_dep = bounded_params[4]
     efficiency = _sfr_eff_plaw(log_mah, *sfr_ms_params)
 
-    t_table = 10 ** lgt
-    depletion_matrix = _depletion_kernel(t_table, t_table, dtarr, tau_dep)
-    depletion_matrix_inst = jnp.identity(len(lgt)) / dtarr
-
-    tau_w = jnp.where(
-        tau_dep > 5.0 * jnp.mean(dtarr), jnp.ones(len(dtarr)), jnp.zeros(len(dtarr))
-    )
-    depletion_matrix = jnp.where(tau_w == 1, depletion_matrix, depletion_matrix_inst)
-
-    mgas = FB * dmhdt
-    integrand = mgas * depletion_matrix * dtarr
-    lagged_mgas = jnp.sum(integrand, axis=1)
+    tau_dep_max = SFR_PARAM_BOUNDS["tau_dep"][3]
+    lagged_mgas = _get_lagged_gas(lgt, dtarr, dmhdt, tau_dep, tau_dep_max)
 
     lagged_sfr = lagged_mgas * efficiency
 
@@ -476,7 +483,7 @@ def _sfr_eff_plaw(lgm, lgmcrit, lgy_at_mcrit, indx_lo, indx_hi):
     """
     slope = _sigmoid(lgm, lgmcrit, INDX_K, indx_lo, indx_hi)
     eff = lgy_at_mcrit + slope * (lgm - lgmcrit)
-    return 10 ** eff
+    return 10**eff
 
 
 @jjit
@@ -546,9 +553,9 @@ def tw_cuml_jax_kern(x, m, h):
             x > 3,
             lambda xx: 1.0,
             lambda xx: (
-                -5 * xx ** 7 / 69984
-                + 7 * xx ** 5 / 2592
-                - 35 * xx ** 3 / 864
+                -5 * xx**7 / 69984
+                + 7 * xx**5 / 2592
+                - 35 * xx**3 / 864
                 + 35 * xx / 96
                 + 1 / 2
             ),
@@ -580,10 +587,6 @@ def tw_bin_jax_kern(m, h, L, H):
 
     """
     return tw_cuml_jax_kern(H, m, h) - tw_cuml_jax_kern(L, m, h)
-
-
-_a, _b = (0, None, 0, None), (None, 0, None, None)
-_depletion_kernel = jjit(vmap(vmap(_gas_conversion_kern, in_axes=_b), in_axes=_a))
 
 
 @jjit
