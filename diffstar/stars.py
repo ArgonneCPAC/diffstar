@@ -3,12 +3,11 @@
 from jax import numpy as jnp
 from jax import jit as jjit
 from jax import vmap
-from jax import lax
 from collections import OrderedDict
 import numpy as np
 from diffmah.individual_halo_assembly import _calc_halo_history
 from .quenching import quenching_function
-from .utils import _sigmoid, _inverse_sigmoid, _get_dt_array, tw_bin_jax_kern
+from .utils import _sigmoid, _inverse_sigmoid, _get_dt_array
 from .utils import jax_np_interp
 from .gas import _get_lagged_gas
 
@@ -485,46 +484,6 @@ def _sfr_eff_plaw(lgm, lgmcrit, lgy_at_mcrit, indx_lo, indx_hi):
     slope = _sigmoid(lgm, lgmcrit, INDX_K, indx_lo, indx_hi)
     eff = lgy_at_mcrit + slope * (lgm - lgmcrit)
     return 10**eff
-
-
-@jjit
-def _gas_conversion_kern(t_form, t_acc, dt, tau_dep):
-    """Gas depletion kernel:
-    For t_form >= t_acc -> Fdep ~ truncated triweight kernel
-    For t_form < t_acc -> Fdep = 0
-
-    Parameters
-    ----------
-    t_form : float
-        Cosmic time in Gyr when gas is transforming into stars.
-    t_acc : float
-        Cosmic time in Gyr when gas accreted by the halo.
-    dt : float
-        Cosmic time step in Gyr between the simulated snapshot at t_form
-        and the next one.
-    tau_dep : float
-        Cosmic time in Gyr when gas is transforming into stars.
-
-    Returns
-    -------
-    tri_kern : float
-        Fraction of gas accreted at time t_acc forming stars at t_form.
-
-    """
-    alpha = (tau_dep / 2.0) * (tau_dep / SFR_PARAM_BOUNDS["tau_dep"][3])
-    w = (tau_dep - alpha) / 3.0
-    m = t_acc + alpha
-
-    _norm = tw_bin_jax_kern(m, w, t_acc, t_acc + tau_dep)
-    _norm = 1.0 / jnp.clip(_norm, 0.01, jnp.inf)
-
-    tri_kern = lax.cond(
-        t_form < t_acc,
-        lambda x: 0.0,
-        lambda x: _norm * tw_bin_jax_kern(m, w, x, x + dt) / dt,
-        t_form,
-    )
-    return tri_kern
 
 
 def fstar_tools(t_sim, fstar_tdelay=1.0):
