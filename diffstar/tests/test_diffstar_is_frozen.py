@@ -9,17 +9,14 @@ from diffmah.individual_halo_assembly import _calc_halo_history
 
 from ..stars import _sfr_history_from_mah, LGT0
 from ..stars import _get_unbounded_sfr_params, _get_bounded_sfr_params
-from ..stars import DEFAULT_SFR_PARAMS as DEFAULT_MS_U_PARAM_DICT
-from ..quenching import DEFAULT_Q_PARAMS as DEFAULT_Q_U_PARAM_DICT
+from ..stars import DEFAULT_SFR_PARAMS as DEFAULT_SFR_PARAMS_DICT
+from ..quenching import DEFAULT_Q_PARAMS as DEFAULT_Q_PARAMS_DICT
 from ..quenching import _get_unbounded_q_params, _get_bounded_q_params
 from ..utils import _get_dt_array
 
-DEFAULT_MS_PARAMS = jnp.array(
-    _get_bounded_sfr_params(*tuple(DEFAULT_MS_U_PARAM_DICT.values()))
-)
-DEFAULT_Q_PARAMS = jnp.array(
-    _get_bounded_q_params(*tuple(DEFAULT_Q_U_PARAM_DICT.values()))
-)
+DEFAULT_MS_PARAMS = jnp.array(list(DEFAULT_SFR_PARAMS_DICT.values()))
+DEFAULT_Q_PARAMS = jnp.array(list(DEFAULT_Q_PARAMS_DICT.values()))
+
 
 DEFAULT_LOGM0 = 12.0
 

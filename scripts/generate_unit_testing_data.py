@@ -7,8 +7,8 @@ as the code evolves, then we will find out about it.
 import argparse
 import os
 import numpy as np
-from diffstar.tests.test_stars import calc_sfh_on_default_params
-from diffstar.tests.test_stars import _get_default_mah_params
+from diffstar.tests.test_diffstar_is_frozen import calc_sfh_on_default_params
+from diffstar.tests.test_diffstar_is_frozen import _get_default_mah_params
 
 
 TASSO = "/Users/aphearin/work/repositories/python/diffstar/diffstar/tests/testing_data"
