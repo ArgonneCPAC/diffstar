@@ -3,12 +3,12 @@
 from jax import numpy as jnp
 from jax import jit as jjit
 from jax import vmap
-from jax import lax
 from collections import OrderedDict
 import numpy as np
 from diffmah.individual_halo_assembly import _calc_halo_history
 from .quenching import quenching_function
 from .utils import _sigmoid, _inverse_sigmoid, _get_dt_array
+from .utils import jax_np_interp
 from .gas import _get_lagged_gas
 
 TODAY = 13.8
@@ -484,141 +484,6 @@ def _sfr_eff_plaw(lgm, lgmcrit, lgy_at_mcrit, indx_lo, indx_hi):
     slope = _sigmoid(lgm, lgmcrit, INDX_K, indx_lo, indx_hi)
     eff = lgy_at_mcrit + slope * (lgm - lgmcrit)
     return 10**eff
-
-
-@jjit
-def _gas_conversion_kern(t_form, t_acc, dt, tau_dep):
-    """Gas depletion kernel:
-    For t_form >= t_acc -> Fdep ~ truncated triweight kernel
-    For t_form < t_acc -> Fdep = 0
-
-    Parameters
-    ----------
-    t_form : float
-        Cosmic time in Gyr when gas is transforming into stars.
-    t_acc : float
-        Cosmic time in Gyr when gas accreted by the halo.
-    dt : float
-        Cosmic time step in Gyr between the simulated snapshot at t_form
-        and the next one.
-    tau_dep : float
-        Cosmic time in Gyr when gas is transforming into stars.
-
-    Returns
-    -------
-    tri_kern : float
-        Fraction of gas accreted at time t_acc forming stars at t_form.
-
-    """
-    alpha = (tau_dep / 2.0) * (tau_dep / SFR_PARAM_BOUNDS["tau_dep"][3])
-    w = (tau_dep - alpha) / 3.0
-    m = t_acc + alpha
-
-    _norm = tw_bin_jax_kern(m, w, t_acc, t_acc + tau_dep)
-    _norm = 1.0 / jnp.clip(_norm, 0.01, jnp.inf)
-
-    tri_kern = lax.cond(
-        t_form < t_acc,
-        lambda x: 0.0,
-        lambda x: _norm * tw_bin_jax_kern(m, w, x, x + dt) / dt,
-        t_form,
-    )
-    return tri_kern
-
-
-@jjit
-def tw_cuml_jax_kern(x, m, h):
-    """CDF of the triweight kernel.
-
-    Parameters
-    ----------
-    x : array-like or scalar
-        The value at which to evaluate the kernel.
-    m : array-like or scalar
-        The mean of the kernel.
-    h : array-like or scalar
-        The approximate 1-sigma width of the kernel.
-
-    Returns
-    -------
-    kern_cdf : array-like or scalar
-        The value of the kernel CDF.
-
-    """
-    y = (x - m) / h
-    return lax.cond(
-        y < -3,
-        lambda x: 0.0,
-        lambda x: lax.cond(
-            x > 3,
-            lambda xx: 1.0,
-            lambda xx: (
-                -5 * xx**7 / 69984
-                + 7 * xx**5 / 2592
-                - 35 * xx**3 / 864
-                + 35 * xx / 96
-                + 1 / 2
-            ),
-            x,
-        ),
-        y,
-    )
-
-
-@jjit
-def tw_bin_jax_kern(m, h, L, H):
-    """Integrated bin weight for the triweight kernel.
-
-    Parameters
-    ----------
-    m : array-like or scalar
-        The value at which to evaluate the kernel.
-    h : array-like or scalar
-        The approximate 1-sigma width of the kernel.
-    L : array-like or scalar
-        The lower bin limit.
-    H : array-like or scalar
-        The upper bin limit.
-
-    Returns
-    -------
-    bin_prob : array-like or scalar
-        The value of the kernel integrated over the bin.
-
-    """
-    return tw_cuml_jax_kern(H, m, h) - tw_cuml_jax_kern(L, m, h)
-
-
-@jjit
-def jax_np_interp(x, xt, yt, indx_hi):
-    """JAX-friendly implementation of np.interp.
-    Requires indx_hi to be precomputed, e.g., using np.searchsorted.
-
-    Parameters
-    ----------
-    x : ndarray of shape (n, )
-        Abscissa values in the interpolation
-    xt : ndarray of shape (k, )
-        Lookup table for the abscissa
-    yt : ndarray of shape (k, )
-        Lookup table for the ordinates
-
-    Returns
-    -------
-    y : ndarray of shape (n, )
-        Result of linear interpolation
-
-    """
-    indx_lo = indx_hi - 1
-    xt_lo = xt[indx_lo]
-    xt_hi = xt[indx_hi]
-    dx_tot = xt_hi - xt_lo
-    yt_lo = yt[indx_lo]
-    yt_hi = yt[indx_hi]
-    dy_tot = yt_hi - yt_lo
-    m = dy_tot / dx_tot
-    y = yt_lo + m * (x - xt_lo)
-    return y
 
 
 def fstar_tools(t_sim, fstar_tdelay=1.0):
