@@ -490,3 +490,35 @@ def tw_bin_jax_kern(m, h, L, H):
 
     """
     return tw_cuml_jax_kern(H, m, h) - tw_cuml_jax_kern(L, m, h)
+
+
+@jjit
+def jax_np_interp(x, xt, yt, indx_hi):
+    """JAX-friendly implementation of np.interp.
+    Requires indx_hi to be precomputed, e.g., using np.searchsorted.
+
+    Parameters
+    ----------
+    x : ndarray of shape (n, )
+        Abscissa values in the interpolation
+    xt : ndarray of shape (k, )
+        Lookup table for the abscissa
+    yt : ndarray of shape (k, )
+        Lookup table for the ordinates
+
+    Returns
+    -------
+    y : ndarray of shape (n, )
+        Result of linear interpolation
+
+    """
+    indx_lo = indx_hi - 1
+    xt_lo = xt[indx_lo]
+    xt_hi = xt[indx_hi]
+    dx_tot = xt_hi - xt_lo
+    yt_lo = yt[indx_lo]
+    yt_hi = yt[indx_hi]
+    dy_tot = yt_hi - yt_lo
+    m = dy_tot / dx_tot
+    y = yt_lo + m * (x - xt_lo)
+    return y
