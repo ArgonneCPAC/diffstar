@@ -8,7 +8,7 @@ import numpy as np
 from diffmah.individual_halo_assembly import _calc_halo_history
 from ..utils import _sigmoid, _inverse_sigmoid
 from ..utils import jax_np_interp
-from ..gas import _get_lagged_gas
+from .gas_consumption import _get_lagged_gas
 from .quenching_kernels import quenching_function
 
 _SFR_PARAM_BOUNDS = OrderedDict(
