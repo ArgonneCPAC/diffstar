@@ -45,7 +45,7 @@ def calc_sfh_on_default_params():
     mah_params = _get_default_mah_params()
     n_t = 100
     lgt = jnp.linspace(-1, LGT0, n_t)
-    dt = _get_dt_array(10 * lgt)
+    dt = _get_dt_array(10**lgt)
     dmhdt, log_mah = _calc_halo_history(lgt, *mah_params)
     u_ms_params = jnp.array(_get_unbounded_sfr_params(*DEFAULT_MS_PARAMS))
     u_q_params = jnp.array(_get_unbounded_q_params(*DEFAULT_Q_PARAMS))
