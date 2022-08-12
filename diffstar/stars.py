@@ -441,6 +441,16 @@ def _sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params, q_params):
         Star formation rate history in units of Msun/yr assuming h=1.
 
     """
+    ms_sfr = _ms_sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params)
+    qfrac = quenching_function(lgt, *q_params)
+    sfr = qfrac * ms_sfr
+    return sfr
+
+
+@jjit
+def _ms_sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params):
+    """Main Sequence formation history of an individual galaxy."""
+
     bounded_params = _get_bounded_sfr_params(*sfr_params)
     sfr_ms_params = bounded_params[:4]
     tau_dep = bounded_params[4]
@@ -449,11 +459,8 @@ def _sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params, q_params):
     tau_dep_max = SFR_PARAM_BOUNDS["tau_dep"][3]
     lagged_mgas = _get_lagged_gas(lgt, dtarr, dmhdt, tau_dep, tau_dep_max)
 
-    lagged_sfr = lagged_mgas * efficiency
-
-    qfrac = quenching_function(lgt, *q_params)
-    sfr = qfrac * lagged_sfr
-    return sfr
+    ms_sfr = lagged_mgas * efficiency
+    return ms_sfr
 
 
 @jjit
