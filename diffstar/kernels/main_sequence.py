@@ -4,6 +4,7 @@ from jax import jit as jjit
 from jax import lax
 from jax import numpy as jnp
 from jax import grad
+from jax import vmap
 from diffmah.individual_halo_assembly import _rolling_plaw_vs_t, _rolling_plaw_vs_logt
 from diffmah.individual_halo_assembly import DEFAULT_MAH_PARAMS
 from ..utils import _jax_get_dt_array
@@ -73,11 +74,15 @@ def _lax_ms_sfh_from_mah_closure_input(
 
 
 def get_lax_ms_sfh_from_mah_kern(
-    n_steps=DEFAULT_N_STEPS, lgt0=LGT0, t_min=DEFAULT_T_MIN, fb=FB
+    n_steps=DEFAULT_N_STEPS, lgt0=LGT0, t_min=DEFAULT_T_MIN, fb=FB, vmap_time=True
 ):
     @jjit
     def _lax_ms_sfh_from_mah_kern(t_form, mah_params, u_ms_params):
         args = t_form, mah_params, u_ms_params, n_steps, lgt0, t_min, fb
         return _lax_ms_sfh_from_mah_closure_input(*args)
 
-    return _lax_ms_sfh_from_mah_kern
+    if vmap_time:
+        _t = [0, None, None]
+        _lax_ms_sfh_from_mah = jjit(vmap(_lax_ms_sfh_from_mah_kern, in_axes=_t))
+
+    return _lax_ms_sfh_from_mah
