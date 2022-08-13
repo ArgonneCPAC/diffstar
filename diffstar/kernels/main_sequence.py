@@ -14,7 +14,7 @@ from .gas_consumption import _gas_conversion_kern, FB
 
 _d_log_mh_dt_scalar = jjit(grad(_rolling_plaw_vs_t, argnums=0))
 
-DEFAULT_N_STEPS = 100
+DEFAULT_N_STEPS = 50
 DEFAULT_T_MIN = 0.01
 
 
