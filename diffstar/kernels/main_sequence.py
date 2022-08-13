@@ -84,5 +84,24 @@ def get_lax_ms_sfh_from_mah_kern(
     if vmap_time:
         _t = [0, None, None]
         _lax_ms_sfh_from_mah = jjit(vmap(_lax_ms_sfh_from_mah_kern, in_axes=_t))
+    else:
+        _lax_ms_sfh_from_mah = _lax_ms_sfh_from_mah_kern
 
     return _lax_ms_sfh_from_mah
+
+
+def scan_sfhpop(sfh_kern_at_tform, tarr, mah_params, u_ms_params):
+    pass
+
+    @jjit
+    def scan_func(carryover, el):
+        t_form = el
+        sfr_at_t_form = sfh_kern_at_tform(t_form, mah_params, u_ms_params)
+        carryover = sfr_at_t_form
+        accumulated = sfr_at_t_form
+        return carryover, accumulated
+
+    scan_init = 0.0
+    scan_arr = tarr
+    sfh = lax.scan(scan_func, scan_init, scan_arr)
+    return sfh
