@@ -74,18 +74,41 @@ def _lax_ms_sfh_from_mah_closure_input(
 
 
 def get_lax_ms_sfh_from_mah_kern(
-    n_steps=DEFAULT_N_STEPS, lgt0=LGT0, t_min=DEFAULT_T_MIN, fb=FB, vmap_time=True
+    n_steps=DEFAULT_N_STEPS, lgt0=LGT0, t_min=DEFAULT_T_MIN, fb=FB, time_array=None
 ):
     @jjit
     def _lax_ms_sfh_from_mah_kern(t_form, mah_params, u_ms_params):
         args = t_form, mah_params, u_ms_params, n_steps, lgt0, t_min, fb
         return _lax_ms_sfh_from_mah_closure_input(*args)
 
-    if vmap_time:
+    if time_array == "vmap":
         _t = [0, None, None]
         _lax_ms_sfh_from_mah = jjit(vmap(_lax_ms_sfh_from_mah_kern, in_axes=_t))
-    else:
+    elif time_array == "scan":
+
+        @jjit
+        def _lax_ms_sfh_from_mah(tarr, mah_params, u_ms_params):
+            @jjit
+            def scan_func_time_array(carryover, el):
+                t_form = el
+                sfr_at_t_form = _lax_ms_sfh_from_mah_kern(
+                    t_form, mah_params, u_ms_params
+                )
+                carryover = sfr_at_t_form
+                accumulated = sfr_at_t_form
+                return carryover, accumulated
+
+            scan_init = 0.0
+            scan_arr = tarr
+            res = lax.scan(scan_func_time_array, scan_init, scan_arr)
+            sfh = res[1]
+            return sfh
+
+    elif time_array is None:
         _lax_ms_sfh_from_mah = _lax_ms_sfh_from_mah_kern
+    else:
+        msg = "Input `time_array`={0} must be either `vmap` or `scan`"
+        raise ValueError(msg.format(time_array))
 
     return _lax_ms_sfh_from_mah
 
