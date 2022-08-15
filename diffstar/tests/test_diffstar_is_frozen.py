@@ -11,7 +11,7 @@ from ..stars import _sfr_history_from_mah, LGT0
 from ..stars import _get_unbounded_sfr_params
 from ..stars import DEFAULT_SFR_PARAMS as DEFAULT_SFR_PARAMS_DICT
 from ..quenching import DEFAULT_Q_PARAMS as DEFAULT_Q_PARAMS_DICT
-from ..quenching import _get_unbounded_q_params
+from ..kernels.quenching_kernels import _get_unbounded_q_params
 from ..utils import _get_dt_array
 
 DEFAULT_MS_PARAMS = jnp.array(list(DEFAULT_SFR_PARAMS_DICT.values()))
