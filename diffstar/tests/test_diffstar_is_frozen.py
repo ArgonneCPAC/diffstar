@@ -157,3 +157,46 @@ def test_diffmah_behavior_is_frozen():
     frozen_dmhdt = np.loadtxt(dmhdt_fn)
     msg = "Diffmah dmhdt has changed when evaluated on default parameters"
     assert np.allclose(frozen_dmhdt, dmhdt, rtol=1e-4), msg
+
+
+def test_sfh_is_frozen_on_example_bpl_sample():
+    """Freeze model behavior against precomputed testing data from 4 BPL fits."""
+    LGT0_BPL = 1.13980
+
+    sfh_fn = os.path.join(TESTING_DATA_DRN, "sfh_test_sample.txt")
+    lgt_fn = os.path.join(TESTING_DATA_DRN, "lgt_bpl.txt")
+    dt_fn = os.path.join(TESTING_DATA_DRN, "dt_bpl.txt")
+    mah_params_fn = os.path.join(TESTING_DATA_DRN, "mah_params_test_sample.txt")
+    ms_params_fn = os.path.join(TESTING_DATA_DRN, "ms_u_params_test_sample.txt")
+    q_params_fn = os.path.join(TESTING_DATA_DRN, "q_u_params_test_sample.txt")
+
+    frozen_sfhs = np.loadtxt(sfh_fn)
+    lgt_bpl = np.loadtxt(lgt_fn)
+    dt_bpl = np.loadtxt(dt_fn)
+    mah_params_test_sample = np.loadtxt(mah_params_fn)
+    ms_u_params_test_sample = np.loadtxt(ms_params_fn)
+    q_u_params_test_sample = np.loadtxt(q_params_fn)
+
+    sfh_test_sample = []
+    for ih in range(mah_params_test_sample.shape[0]):
+        all_mah_params_ih = np.array(
+            (
+                LGT0_BPL,
+                mah_params_test_sample[ih, 0],
+                mah_params_test_sample[ih, 1],
+                DEFAULT_MAH_PARAMS["mah_k"],
+                mah_params_test_sample[ih, 2],
+                mah_params_test_sample[ih, 3],
+            )
+        )
+        ms_u_params_ih = np.array(ms_u_params_test_sample[ih, :])
+        q_u_params_ih = np.array(q_u_params_test_sample[ih, :])
+
+        dmhdt_ih, log_mah_ih = _calc_halo_history(lgt_bpl, *all_mah_params_ih)
+        sfh_ih = _sfr_history_from_mah(
+            lgt_bpl, dt_bpl, dmhdt_ih, log_mah_ih, ms_u_params_ih, q_u_params_ih
+        )
+
+        sfh_test_sample.append(sfh_ih)
+    sfh_test_sample = np.array(sfh_test_sample)
+    assert np.allclose(frozen_sfhs, sfh_test_sample, rtol=1e-5)
