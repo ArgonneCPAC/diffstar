@@ -15,13 +15,15 @@ _Q_PARAM_BOUNDS = OrderedDict(
 
 
 def calculate_sigmoid_bounds(param_bounds):
+    bounds_out = OrderedDict()
+
     for key in param_bounds:
         _bounds = (
             float(np.mean(param_bounds[key])),
             abs(float(4.0 / np.diff(param_bounds[key]))),
         )
-        param_bounds[key] = _bounds + param_bounds[key]
-    return param_bounds
+        bounds_out[key] = _bounds + param_bounds[key]
+    return bounds_out
 
 
 Q_PARAM_BOUNDS = calculate_sigmoid_bounds(_Q_PARAM_BOUNDS)
@@ -55,7 +57,7 @@ def quenching_function(lgt, u_lg_qt, u_lg_qs, u_lg_drop, u_lg_rejuv):
     lg_qt, lg_qs, lg_drop, lg_rejuv = _get_bounded_q_params(
         u_lg_qt, u_lg_qs, u_lg_drop, u_lg_rejuv
     )
-    qs = 10 ** lg_qs
+    qs = 10**lg_qs
     _bound_params = (lg_qt, qs, lg_drop, lg_rejuv)
     return 10 ** _quenching_kern(lgt, *_bound_params)
 
@@ -93,7 +95,7 @@ def _quenching_kern(lgt, lg_qt, q_dt, q_drop, q_rejuv):
 
 @jjit
 def _jax_tw(y):
-    v = -5 * y ** 7 / 69984 + 7 * y ** 5 / 2592 - 35 * y ** 3 / 864 + 35 * y / 96 + 0.5
+    v = -5 * y**7 / 69984 + 7 * y**5 / 2592 - 35 * y**3 / 864 + 35 * y / 96 + 0.5
     res = jnp.where(y < -3, 0, v)
     res = jnp.where(y > 3, 1, res)
     return res
