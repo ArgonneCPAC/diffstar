@@ -51,7 +51,8 @@ def _dmhalo_dt_scalar(t, log_mah, lgt0, logmp, logtc, mah_k, early, late):
     return dmhdt
 
 
-def _lax_ms_sfh_scalar_kern(t_form, mah_params, u_ms_params, n_steps, lgt0, t_min, fb):
+@jjit
+def _lax_ms_sfh_scalar_kern(t_form, mah_params, ms_params, lgt0, fb, t_table):
 
     mah_k = DEFAULT_MAH_PARAMS["mah_k"]
     logmp, logtc, early, late = mah_params
@@ -59,15 +60,12 @@ def _lax_ms_sfh_scalar_kern(t_form, mah_params, u_ms_params, n_steps, lgt0, t_mi
     lgt_form = jnp.log10(t_form)
     log_mah_at_tform = _rolling_plaw_vs_logt(lgt_form, *all_mah_params)
 
-    ms_params = _get_bounded_sfr_params(*u_ms_params)
     sfr_eff_params = ms_params[:4]
     sfr_eff = _sfr_eff_plaw(log_mah_at_tform, *sfr_eff_params)
 
     tau_dep = ms_params[4]
     tau_dep_max = SFR_PARAM_BOUNDS["tau_dep"][3]
 
-    t_min = jnp.max(jnp.array((t_min, t_form - tau_dep)))
-    t_table = jnp.linspace(t_min, t_form, n_steps)
     dtarr = _jax_get_dt_array(t_table)
 
     @jjit
