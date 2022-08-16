@@ -1,24 +1,15 @@
 """
 """
-from jax import numpy as jnp
-from jax import jit as jjit
 from collections import OrderedDict
+from jax import jit as jjit
+from jax import numpy as jnp
+from jax import vmap
 import numpy as np
-from .utils import _get_dt_array
-from .kernels import sfr_kernels as sfrk
-
-TODAY = 13.8
-LGT0 = jnp.log10(TODAY)
-INDX_K = 9.0  # Main sequence efficiency transition speed.
-
-DEFAULT_SFR_PARAMS = OrderedDict(
-    lgmcrit=12.0,
-    lgy_at_mcrit=-1.0,
-    indx_lo=1.0,
-    indx_hi=-1.0,
-    tau_dep=2.0,
-)
-
+from diffmah.individual_halo_assembly import _calc_halo_history
+from ..utils import _sigmoid, _inverse_sigmoid
+from ..utils import jax_np_interp
+from ..gas import _get_lagged_gas
+from .quenching_kernels import quenching_function
 
 _SFR_PARAM_BOUNDS = OrderedDict(
     lgmcrit=(9.0, 13.5),
@@ -27,6 +18,10 @@ _SFR_PARAM_BOUNDS = OrderedDict(
     indx_hi=(-5.0, 0.0),
     tau_dep=(0.0, 20.0),
 )
+
+TODAY = 13.8
+LGT0 = jnp.log10(TODAY)
+INDX_K = 9.0  # Main sequence efficiency transition speed.
 
 
 def calculate_sigmoid_bounds(param_bounds):
@@ -107,17 +102,10 @@ def calculate_sm_sfr_fstar_history_from_mah(
         SFH averaged over timescale fstar_tdelay in units of Msun/yr assuming h=1
 
     """
-    return sfrk.calculate_sm_sfr_fstar_history_from_mah(
-        lgt,
-        dt,
-        dmhdt,
-        log_mah,
-        sfr_ms_params,
-        q_params,
-        index_select,
-        index_high,
-        fstar_tdelay,
-    )
+    sfr = _sfr_history_from_mah(lgt, dt, dmhdt, log_mah, sfr_ms_params, q_params)
+    mstar = _integrate_sfr(sfr, dt)
+    fstar = compute_fstar(10**lgt, mstar, index_select, index_high, fstar_tdelay)
+    return mstar, sfr, fstar
 
 
 @jjit
@@ -167,14 +155,9 @@ def calculate_sm_sfr_history_from_mah(
         Star formation rate history in units of Msun/yr assuming h=1
 
     """
-    return sfrk.calculate_sm_sfr_history_from_mah(
-        lgt,
-        dt,
-        dmhdt,
-        log_mah,
-        sfr_ms_params,
-        q_params,
-    )
+    sfr = _sfr_history_from_mah(lgt, dt, dmhdt, log_mah, sfr_ms_params, q_params)
+    mstar = _integrate_sfr(sfr, dt)
+    return mstar, sfr
 
 
 @jjit
@@ -244,117 +227,24 @@ def calculate_histories(
         Base-10 log of cumulative peak halo mass in units of Msun assuming h=1
 
     """
-    return sfrk.calculate_histories(
+    dmhdt, log_mah = _calc_halo_history(lgt, *mah_params)
+    mstar, sfr, fstar = calculate_sm_sfr_fstar_history_from_mah(
         lgt,
         dt,
-        mah_params,
+        dmhdt,
+        log_mah,
         sfr_ms_params,
         q_params,
         index_select,
         index_high,
         fstar_tdelay,
     )
-
-
-calculate_histories_vmap = sfrk.calculate_histories_vmap
-
-
-def calculate_histories_batch(t_sim, mah_params, sfr_params, q_params, fstar_tdelay):
-    """Calculate MAH and SFH histories for a large population of halos.
-
-
-    Parameters
-    ----------
-    t_sim : ndarray of shape (n_times, )
-        Cosmic time of each simulated snapshot in Gyr
-
-    mah_params : ndarray of shape (ng, 6)
-        Best fit diffmah halo parameters. Includes
-        (logt0, logmp, logtc, k, early, late)
-
-    sfr_params : ndarray of shape (ng, 5)
-        Star formation efficiency model unbounded parameters. Includes
-        (u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_tau_dep)
-
-    q_params : ndarray of shape (ng, 4)
-        Quenching model unbounded parameters. Includes
-        (u_qt, u_qs, u_drop, u_rejuv)
-
-    fstar_tdelay: float
-        Time interval in Gyr for fstar definition, where:
-        fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay[Gyr]
-
-    Returns
-    -------
-    mstar : ndarray of shape (ng, n_times)
-        Cumulative stellar mass history in units of Msun assuming h=1
-
-    sfr : ndarray of shape (ng, n_times)
-        Star formation rate history in units of Msun/yr assuming h=1
-
-    fstar : ndarray of shape (ng, n_times_fstar)
-        SFH averaged over timescale fstar_tdelay in units of Msun/yr assuming h=1
-
-    dmhdt : ndarray of shape (ng, n_times)
-        Mass accretion rate in units of Msun/yr assuming h=1
-
-    log_mah : ndarray of shape (ng, n_times)
-        Base-10 log of cumulative peak halo mass in units of Msun assuming h=1
-
-    Notes
-    -----
-    Histories are calculated from Diffmah and Diffstar parameters in small batches
-    for memory efficiency in small systems.
-
-    The input tsim array is in units of Gyr and should be strictly monotonically
-    increasing. The tsim array should begin at roughly t[0]~0.1, and have spacing
-    at least as fine as dt~0.25. The input tsim array is used to integrate SFR to
-    compute Mstar, and so tsim should be finely-spaced enough for the desired
-    accuracy of the integration.
-
-    Note that mstar[0] = sfr[0] * (t_sim[1] - t_sim[0]) * 1e9, and so by definition
-    sSFR[0] = sfr[0] / mstar[0] = 1 / (t_sim[1] - t_sim[0]) / 1e9.
-    """
-    assert np.all(
-        np.diff(t_sim) > 0.0
-    ), "t_sim needs to be strictly monotonically increasing"
-    assert np.all(t_sim > 0.0), "t_sim needs to be strictly positive"
-    _msg = "Diffmah and Diffstar parameters need to have the same number of galaxies"
-    assert len(mah_params) == len(sfr_params) == len(q_params), _msg
-
-    dt = _get_dt_array(t_sim)
-    lgt = np.log10(t_sim)
-    index_select, index_high = fstar_tools(t_sim, fstar_tdelay=fstar_tdelay)
-
-    ng = len(mah_params)
-    nt = len(lgt)
-    nt2 = len(index_high)
-    indices = np.array_split(np.arange(ng), max(int(ng / 5000), 1))
-
-    mstar = np.zeros((ng, nt))
-    sfr = np.zeros((ng, nt))
-    fstar = np.zeros((ng, nt2))
-    dmhdt = np.zeros((ng, nt))
-    log_mah = np.zeros((ng, nt))
-
-    for inds in indices:
-        _res = calculate_histories_vmap(
-            lgt,
-            dt,
-            mah_params[inds],
-            sfr_params[inds],
-            q_params[inds],
-            index_select,
-            index_high,
-            fstar_tdelay,
-        )
-        mstar[inds] = _res[0]
-        sfr[inds] = _res[1]
-        fstar[inds] = _res[2]
-        dmhdt[inds] = _res[3]
-        log_mah[inds] = _res[4]
-
     return mstar, sfr, fstar, dmhdt, log_mah
+
+
+calculate_histories_vmap = jjit(
+    vmap(calculate_histories, in_axes=(None, None, 0, 0, 0, None, None, None))
+)
 
 
 @jjit
@@ -365,13 +255,19 @@ def _get_bounded_sfr_params(
     u_indx_hi,
     u_tau_dep,
 ):
-    return sfrk._get_bounded_sfr_params(
-        u_lgmcrit,
-        u_lgy_at_mcrit,
-        u_indx_lo,
-        u_indx_hi,
-        u_tau_dep,
+    lgmcrit = _sigmoid(u_lgmcrit, *SFR_PARAM_BOUNDS["lgmcrit"])
+    lgy_at_mcrit = _sigmoid(u_lgy_at_mcrit, *SFR_PARAM_BOUNDS["lgy_at_mcrit"])
+    indx_lo = _sigmoid(u_indx_lo, *SFR_PARAM_BOUNDS["indx_lo"])
+    indx_hi = _sigmoid(u_indx_hi, *SFR_PARAM_BOUNDS["indx_hi"])
+    tau_dep = _sigmoid(u_tau_dep, *SFR_PARAM_BOUNDS["tau_dep"])
+    bounded_params = (
+        lgmcrit,
+        lgy_at_mcrit,
+        indx_lo,
+        indx_hi,
+        tau_dep,
     )
+    return bounded_params
 
 
 @jjit
@@ -382,23 +278,29 @@ def _get_unbounded_sfr_params(
     indx_hi,
     tau_dep,
 ):
-    return sfrk._get_unbounded_sfr_params(
-        lgmcrit,
-        lgy_at_mcrit,
-        indx_lo,
-        indx_hi,
-        tau_dep,
+    u_lgmcrit = _inverse_sigmoid(lgmcrit, *SFR_PARAM_BOUNDS["lgmcrit"])
+    u_lgy_at_mcrit = _inverse_sigmoid(lgy_at_mcrit, *SFR_PARAM_BOUNDS["lgy_at_mcrit"])
+    u_indx_lo = _inverse_sigmoid(indx_lo, *SFR_PARAM_BOUNDS["indx_lo"])
+    u_indx_hi = _inverse_sigmoid(indx_hi, *SFR_PARAM_BOUNDS["indx_hi"])
+    u_tau_dep = _inverse_sigmoid(tau_dep, *SFR_PARAM_BOUNDS["tau_dep"])
+    bounded_params = (
+        u_lgmcrit,
+        u_lgy_at_mcrit,
+        u_indx_lo,
+        u_indx_hi,
+        u_tau_dep,
     )
+    return bounded_params
 
 
-_get_bounded_sfr_params_vmap = sfrk._get_bounded_sfr_params_vmap
-_get_unbounded_sfr_params_vmap = sfrk._get_unbounded_sfr_params_vmap
+_get_bounded_sfr_params_vmap = jjit(vmap(_get_bounded_sfr_params, (0,) * 5, 0))
+_get_unbounded_sfr_params_vmap = jjit(vmap(_get_unbounded_sfr_params, (0,) * 5, 0))
 
 
 @jjit
 def _integrate_sfr(sfr, dt):
     """Calculate the cumulative stellar mass history."""
-    return sfrk._integrate_sfr(sfr, dt)
+    return jnp.cumsum(sfr * dt) * 1e9
 
 
 @jjit
@@ -430,10 +332,15 @@ def compute_fstar(tarr, mstar, index_select, index_high, fstar_tdelay):
         SFH averaged over timescale fstar_tdelay in units of Msun/yr assuming h=1
 
     """
-    return sfrk.compute_fstar(tarr, mstar, index_select, index_high, fstar_tdelay)
+    mstar_high = mstar[index_select]
+    mstar_low = jax_np_interp(
+        tarr[index_select] - fstar_tdelay, tarr, mstar, index_high
+    )
+    fstar = (mstar_high - mstar_low) / fstar_tdelay / 1e9
+    return fstar
 
 
-compute_fstar_vmap = sfrk.compute_fstar_vmap
+compute_fstar_vmap = jjit(vmap(compute_fstar, in_axes=(None, 0, *[None] * 3)))
 
 
 @jjit
@@ -471,14 +378,26 @@ def _sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params, q_params):
         Star formation rate history in units of Msun/yr assuming h=1.
 
     """
-    return sfrk._sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params, q_params)
+    ms_sfr = _ms_sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params)
+    qfrac = quenching_function(lgt, *q_params)
+    sfr = qfrac * ms_sfr
+    return sfr
 
 
 @jjit
 def _ms_sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params):
     """Main Sequence formation history of an individual galaxy."""
 
-    return sfrk._ms_sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params)
+    bounded_params = _get_bounded_sfr_params(*sfr_params)
+    sfr_ms_params = bounded_params[:4]
+    tau_dep = bounded_params[4]
+    efficiency = _sfr_eff_plaw(log_mah, *sfr_ms_params)
+
+    tau_dep_max = SFR_PARAM_BOUNDS["tau_dep"][3]
+    lagged_mgas = _get_lagged_gas(lgt, dtarr, dmhdt, tau_dep, tau_dep_max)
+
+    ms_sfr = lagged_mgas * efficiency
+    return ms_sfr
 
 
 @jjit
@@ -509,32 +428,6 @@ def _sfr_eff_plaw(lgm, lgmcrit, lgy_at_mcrit, indx_lo, indx_hi):
         Main sequence efficiency value at each snapshot
 
     """
-    return sfrk._sfr_eff_plaw(lgm, lgmcrit, lgy_at_mcrit, indx_lo, indx_hi)
-
-
-def fstar_tools(t_sim, fstar_tdelay=1.0):
-    """Calculate the snapshots used by fstar.
-
-    Parameters
-    ----------
-        t_sim: ndarray of shape (nt, )
-            Cosmic time of each simulated snapshot in Gyr
-
-        fstar_tdelay: float
-            Time interval in Gyr for fstar definition.
-            fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay[Gyr]
-
-    Returns
-    -------
-        index_select: ndarray of shape (n_times_fstar, )
-            Snapshot indices used in fstar computation
-
-        fstar_indx_high: ndarray of shape (n_times_fstar, )
-            Indices of np.searchsorted(t, t - fstar_tdelay)[index_select]
-
-    """
-    fstar_indx_high = np.searchsorted(t_sim, t_sim - fstar_tdelay)
-    _mask = t_sim > fstar_tdelay + fstar_tdelay / 2.0
-    index_select = np.arange(len(t_sim))[_mask]
-    fstar_indx_high = fstar_indx_high[_mask]
-    return index_select, fstar_indx_high
+    slope = _sigmoid(lgm, lgmcrit, INDX_K, indx_lo, indx_hi)
+    eff = lgy_at_mcrit + slope * (lgm - lgmcrit)
+    return 10**eff
