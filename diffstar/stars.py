@@ -7,8 +7,6 @@ from .utils import _get_dt_array
 from .kernels import sfr_kernels as sfrk
 from .kernels import main_sequence_kernels as msk
 
-INDX_K = 9.0  # Main sequence efficiency transition speed.
-
 DEFAULT_SFR_PARAMS = OrderedDict(
     lgmcrit=12.0,
     lgy_at_mcrit=-1.0,
@@ -18,28 +16,8 @@ DEFAULT_SFR_PARAMS = OrderedDict(
 )
 
 
-_SFR_PARAM_BOUNDS = OrderedDict(
-    lgmcrit=(9.0, 13.5),
-    lgy_at_mcrit=(-3.0, 0.0),
-    indx_lo=(0.0, 5.0),
-    indx_hi=(-5.0, 0.0),
-    tau_dep=(0.0, 20.0),
-)
-
-
-def calculate_sigmoid_bounds(param_bounds):
-    bounds_out = OrderedDict()
-
-    for key in param_bounds:
-        _bounds = (
-            float(np.mean(param_bounds[key])),
-            abs(float(4.0 / np.diff(param_bounds[key]))),
-        )
-        bounds_out[key] = _bounds + param_bounds[key]
-    return bounds_out
-
-
-SFR_PARAM_BOUNDS = calculate_sigmoid_bounds(_SFR_PARAM_BOUNDS)
+_SFR_PARAM_BOUNDS = msk._SFR_PARAM_BOUNDS
+SFR_PARAM_BOUNDS = msk.SFR_PARAM_BOUNDS
 
 
 @jjit
