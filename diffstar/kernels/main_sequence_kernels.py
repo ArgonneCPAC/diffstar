@@ -51,9 +51,7 @@ def _dmhalo_dt_scalar(t, log_mah, lgt0, logmp, logtc, mah_k, early, late):
     return dmhdt
 
 
-def _lax_ms_sfh_from_mah_closure_input(
-    t_form, mah_params, u_ms_params, n_steps, lgt0, t_min, fb
-):
+def _lax_ms_sfh_scalar_kern(t_form, mah_params, u_ms_params, n_steps, lgt0, t_min, fb):
 
     mah_k = DEFAULT_MAH_PARAMS["mah_k"]
     logmp, logtc, early, late = mah_params

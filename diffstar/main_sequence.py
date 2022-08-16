@@ -7,7 +7,7 @@ from jax import vmap
 from .constants import LGT0
 from .kernels.gas_consumption import FB
 from .kernels.main_sequence_kernels import DEFAULT_N_STEPS, DEFAULT_T_MIN
-from .kernels.main_sequence_kernels import _lax_ms_sfh_from_mah_closure_input
+from .kernels.main_sequence_kernels import _lax_ms_sfh_scalar_kern
 
 
 def get_lax_ms_sfh_from_mah_kern(
@@ -21,7 +21,7 @@ def get_lax_ms_sfh_from_mah_kern(
     @jjit
     def _lax_ms_sfh_from_mah_kern(t_form, mah_params, u_ms_params):
         args = t_form, mah_params, u_ms_params, n_steps, lgt0, t_min, fb
-        return _lax_ms_sfh_from_mah_closure_input(*args)
+        return _lax_ms_sfh_scalar_kern(*args)
 
     if time_array == "vmap":
         _t = [0, None, None]
