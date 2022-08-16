@@ -199,4 +199,4 @@ def test_sfh_is_frozen_on_example_bpl_sample():
 
         sfh_test_sample.append(sfh_ih)
     sfh_test_sample = np.array(sfh_test_sample)
-    assert np.allclose(frozen_sfhs, sfh_test_sample, rtol=1e-5)
+    assert np.allclose(frozen_sfhs, sfh_test_sample, rtol=1e-4)
