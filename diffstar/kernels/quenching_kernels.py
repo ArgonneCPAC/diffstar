@@ -28,7 +28,7 @@ Q_PARAM_BOUNDS = calculate_sigmoid_bounds(_Q_PARAM_BOUNDS)
 
 
 @jjit
-def _quenching_function(lgt, u_lg_qt, u_lg_qs, u_lg_drop, u_lg_rejuv):
+def quenching_function(lgt, u_lg_qt, u_lg_qs, u_lg_drop, u_lg_rejuv):
     """Quenching function halting the star formation of main sequence galaxies.
 
     After some time, galaxies might experience a rejuvenated star formation.
