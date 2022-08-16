@@ -17,7 +17,7 @@ def _get_all_default_params():
     return mah_params, u_ms_params, u_q_params
 
 
-def test_get_main_sequence_kernel(n_t=400, n_steps=100):
+def test_get_main_sequence_kernel_agrees_with_vmap_tacc(n_t=400, n_steps=100):
     """Enforce that when looping over tacc, vmap vs scan results agree within 5%"""
     args, sfh = calc_sfh_on_default_params(n_t=n_t)
     lgt, dt, dmhdt, log_mah, u_ms_params, u_q_params = args
