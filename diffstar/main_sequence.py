@@ -11,7 +11,7 @@ from .kernels.main_sequence_kernels import _lax_ms_sfh_scalar_kern
 from .kernels.main_sequence_kernels import _get_bounded_sfr_params
 
 
-def get_lax_ms_sfh_from_mah_kern(
+def get_ms_sfh_from_mah_kern(
     n_steps=DEFAULT_N_STEPS,
     lgt0=LGT0,
     tacc_integration_min=DEFAULT_T_MIN,
