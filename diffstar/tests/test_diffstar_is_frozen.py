@@ -7,7 +7,8 @@ from diffmah.individual_halo_assembly import DEFAULT_MAH_PARAMS
 from diffmah.individual_halo_assembly import _get_early_late
 from diffmah.individual_halo_assembly import _calc_halo_history
 
-from ..stars import _sfr_history_from_mah, LGT0
+from ..constants import LGT0
+from ..stars import _sfr_history_from_mah
 from ..stars import _get_unbounded_sfr_params
 from ..stars import DEFAULT_SFR_PARAMS as DEFAULT_SFR_PARAMS_DICT
 from ..quenching import DEFAULT_Q_PARAMS as DEFAULT_Q_PARAMS_DICT
@@ -36,19 +37,24 @@ def _get_default_mah_params():
     return default_mah_params
 
 
-def calc_sfh_on_default_params():
+def _get_default_sfr_u_params():
+    u_ms_params = jnp.array(_get_unbounded_sfr_params(*DEFAULT_MS_PARAMS))
+    u_q_params = jnp.array(_get_unbounded_q_params(*DEFAULT_Q_PARAMS))
+    return u_ms_params, u_q_params
+
+
+def calc_sfh_on_default_params(n_t=100):
     """Calculate SFH for the Diffstar and Diffmah default parameters.
 
     This function is used to generate the unit-testing data used in this module
     to freeze the behavior of Diffstar evaluated on the default parameters.
     """
     mah_params = _get_default_mah_params()
-    n_t = 100
+
     lgt = jnp.linspace(-1, LGT0, n_t)
     dt = _get_dt_array(10**lgt)
     dmhdt, log_mah = _calc_halo_history(lgt, *mah_params)
-    u_ms_params = jnp.array(_get_unbounded_sfr_params(*DEFAULT_MS_PARAMS))
-    u_q_params = jnp.array(_get_unbounded_q_params(*DEFAULT_Q_PARAMS))
+    u_ms_params, u_q_params = _get_default_sfr_u_params()
     args = lgt, dt, dmhdt, log_mah, u_ms_params, u_q_params
     sfh = _sfr_history_from_mah(*args)
     return args, sfh
