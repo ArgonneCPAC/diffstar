@@ -1,6 +1,5 @@
 """
 """
-from jax import numpy as jnp
 from jax import jit as jjit
 from collections import OrderedDict
 import numpy as np
@@ -8,8 +7,6 @@ from .utils import _get_dt_array
 from .kernels import sfr_kernels as sfrk
 from .kernels import main_sequence_kernels as msk
 
-TODAY = 13.8
-LGT0 = jnp.log10(TODAY)
 INDX_K = 9.0  # Main sequence efficiency transition speed.
 
 DEFAULT_SFR_PARAMS = OrderedDict(

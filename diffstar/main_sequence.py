@@ -4,10 +4,10 @@ from jax import jit as jjit
 from jax import lax
 from jax import numpy as jnp
 from jax import vmap
-from ..stars import LGT0
-from .gas_consumption import FB
-from .main_sequence_kernels import DEFAULT_N_STEPS, DEFAULT_T_MIN
-from .main_sequence_kernels import _lax_ms_sfh_from_mah_closure_input
+from .constants import LGT0
+from .kernels.gas_consumption import FB
+from .kernels.main_sequence_kernels import DEFAULT_N_STEPS, DEFAULT_T_MIN
+from .kernels.main_sequence_kernels import _lax_ms_sfh_from_mah_closure_input
 
 
 def get_lax_ms_sfh_from_mah_kern(

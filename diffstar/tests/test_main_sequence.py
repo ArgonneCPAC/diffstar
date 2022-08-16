@@ -3,7 +3,7 @@
 import numpy as np
 from jax import vmap
 from jax import jit as jjit
-from ..kernels.main_sequence import get_lax_ms_sfh_from_mah_kern
+from ..main_sequence import get_lax_ms_sfh_from_mah_kern
 from .test_diffstar_is_frozen import calc_sfh_on_default_params, _get_default_mah_params
 
 

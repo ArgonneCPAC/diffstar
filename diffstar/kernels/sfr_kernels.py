@@ -8,9 +8,6 @@ from ..utils import jax_np_interp
 from .quenching_kernels import quenching_function
 from .main_sequence_kernels import _ms_sfr_history_from_mah
 
-TODAY = 13.8
-LGT0 = jnp.log10(TODAY)
-
 
 @jjit
 def calculate_sm_sfr_fstar_history_from_mah(
