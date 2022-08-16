@@ -20,6 +20,42 @@ def get_sfh_from_mah_kern(
     tobs_loop=None,
     galpop_loop=None,
 ):
+    """Build a JAX-jitted kernel to calculate SFHs of a galaxy population.
+
+    Parameters
+    ----------
+    n_steps : int, optional
+        Number of timesteps to use in the tacc integration
+
+    lgt0 : float, optional
+        Base-10 log of present-day age of the universe
+
+    tacc_integration_min : float, optional
+        Earliest time to use in the tacc integrations. Default is 0.01 Gyr.
+
+    tobs_loop : string, optional
+        Argument specifies whether the input time of observation is a scalar or array
+        Default argument is None, for a JAX kernel that assumes scalar input for tobs
+        For a JAX kernel that assumes an array input for tobs,
+        options are either 'vmap' or 'scan', specifying the calculation method
+
+    galpop_loop : string, optional
+        Argument specifies whether the input galaxy/halo parameters assumed by the
+        returned JAX kernel pertain to a single galaxy or a population.
+        Default argument is None, for a single-galaxy JAX kernel
+        For a JAX kernel that assumes galaxy population,
+        options are either 'vmap' or 'scan', specifying the calculation method
+
+    Returns
+    -------
+    sfh_from_mah_kern : function
+        JAX-jitted function that calculates SFH in accord with the input arguments
+        Function signature is as follows:
+
+        def sfh_from_mah_kern(t, mah_params, u_ms_params, u_q_params):
+            return sfh
+
+    """
     uniform_table = jnp.linspace(0, 1, n_steps)
 
     @jjit
@@ -36,9 +72,9 @@ def get_sfh_from_mah_kern(
         return sfr
 
     kern_with_tobs_loop = _get_kern_with_tobs_loop(_kern, tobs_loop)
-    lax_sfh_from_mah_kern = _get_kern_with_galpop_loop(kern_with_tobs_loop, galpop_loop)
+    sfh_from_mah_kern = _get_kern_with_galpop_loop(kern_with_tobs_loop, galpop_loop)
 
-    return lax_sfh_from_mah_kern
+    return sfh_from_mah_kern
 
 
 def _get_kern_with_tobs_loop(kern, tobs_loop):
