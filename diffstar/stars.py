@@ -6,6 +6,7 @@ from collections import OrderedDict
 import numpy as np
 from .utils import _get_dt_array
 from .kernels import sfr_kernels as sfrk
+from .kernels import main_sequence_kernels as msk
 
 TODAY = 13.8
 LGT0 = jnp.log10(TODAY)
@@ -365,7 +366,7 @@ def _get_bounded_sfr_params(
     u_indx_hi,
     u_tau_dep,
 ):
-    return sfrk._get_bounded_sfr_params(
+    return msk._get_bounded_sfr_params(
         u_lgmcrit,
         u_lgy_at_mcrit,
         u_indx_lo,
@@ -382,7 +383,7 @@ def _get_unbounded_sfr_params(
     indx_hi,
     tau_dep,
 ):
-    return sfrk._get_unbounded_sfr_params(
+    return msk._get_unbounded_sfr_params(
         lgmcrit,
         lgy_at_mcrit,
         indx_lo,
@@ -391,8 +392,8 @@ def _get_unbounded_sfr_params(
     )
 
 
-_get_bounded_sfr_params_vmap = sfrk._get_bounded_sfr_params_vmap
-_get_unbounded_sfr_params_vmap = sfrk._get_unbounded_sfr_params_vmap
+_get_bounded_sfr_params_vmap = msk._get_bounded_sfr_params_vmap
+_get_unbounded_sfr_params_vmap = msk._get_unbounded_sfr_params_vmap
 
 
 @jjit
