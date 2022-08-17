@@ -4,7 +4,7 @@ from jax import jit as jjit
 from jax import lax
 from jax import numpy as jnp
 from jax import vmap
-from .utils import tw_bin_jax_kern
+from ..utils import tw_bin_jax_kern
 
 FB = 0.156
 
