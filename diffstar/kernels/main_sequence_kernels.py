@@ -3,17 +3,16 @@
 import numpy as np
 from collections import OrderedDict
 from jax import jit as jjit
-from jax import grad
 from jax import numpy as jnp
 from jax import lax
 from jax import vmap
 from ..utils import _sigmoid, _inverse_sigmoid, _jax_get_dt_array
 from diffmah.individual_halo_assembly import DEFAULT_MAH_PARAMS
-from diffmah.individual_halo_assembly import _rolling_plaw_vs_t, _rolling_plaw_vs_logt
+from diffmah.individual_halo_assembly import _rolling_plaw_vs_logt
+from diffmah.individual_halo_assembly import _calc_halo_history_scalar
+
 from .gas_consumption import _gas_conversion_kern, _get_lagged_gas
 
-
-_d_log_mh_dt_scalar = jjit(grad(_rolling_plaw_vs_t, argnums=0))
 
 INDX_K = 9.0  # Main sequence efficiency transition speed.
 
@@ -45,13 +44,6 @@ SFR_PARAM_BOUNDS = calculate_sigmoid_bounds(_SFR_PARAM_BOUNDS)
 
 
 @jjit
-def _dmhalo_dt_scalar(t, log_mah, lgt0, logmp, logtc, mah_k, early, late):
-    d_log_mh_dt = _d_log_mh_dt_scalar(t, lgt0, logmp, logtc, mah_k, early, late)
-    dmhdt = d_log_mh_dt * (10.0 ** (log_mah - 9.0)) / jnp.log10(jnp.e)
-    return dmhdt
-
-
-@jjit
 def _lax_ms_sfh_scalar_kern(t_form, mah_params, ms_params, lgt0, fb, t_table):
 
     mah_k = DEFAULT_MAH_PARAMS["mah_k"]
@@ -73,11 +65,10 @@ def _lax_ms_sfh_scalar_kern(t_form, mah_params, ms_params, lgt0, fb, t_table):
         tacc, dt = el
         dmgas_dt = carryover
 
-        log_mah_at_tacc = _rolling_plaw_vs_logt(jnp.log10(tacc), *all_mah_params)
-        dmhdt = _dmhalo_dt_scalar(
-            tacc, log_mah_at_tacc, lgt0, logmp, logtc, mah_k, early, late
-        )
-        dmgdt_inst = fb * dmhdt
+        lgtacc = jnp.log10(tacc)
+        res = _calc_halo_history_scalar(lgtacc, *all_mah_params)
+        dmhdt_at_tacc, log_mah_at_tacc = res
+        dmgdt_inst = fb * dmhdt_at_tacc
 
         lag_factor = _gas_conversion_kern(t_form, tacc, dt, tau_dep, tau_dep_max)
         dmgas_dt_from_tacc = dmgdt_inst * lag_factor * dt
