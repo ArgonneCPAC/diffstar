@@ -1,21 +1,26 @@
 # diffstar
 
 ## Installation
-For a typical development environment in conda:
-
+The latest release of diffstar on conda-forge is 0.1.0:
 ```
-$ conda config --add channels conda-forge
-$ conda config --prepend channels conda-forge
-$ conda create -n diffit python=3.9 numpy numba flake8 pytest jax ipython jupyter matplotlib scipy h5py diffmah diffstar
+$ conda install diffstar
 ```
 
 Alternatively, to install diffstar into your environment from the source code:
+
 ```
-$ conda activate my_env_name
 $ cd /path/to/root/diffstar
 $ python setup.py install
 ```
 
+### Environment configuration
+For a typical development environment in conda:
+
+```
+$ conda create -n diffit python=3.9 numpy numba flake8 pytest jax ipython jupyter matplotlib scipy h5py diffmah diffstar
+```
+
+## Project data
 Data for this project can be found [at this URL](https://portal.nersc.gov/project/hacc/aphearin/diffstar_data/).
 
 ## Scripts and demo notebooks
@@ -42,6 +47,4 @@ archivePrefix = {arXiv},
        adsurl = {https://ui.adsabs.harvard.edu/abs/2022arXiv220504273A},
       adsnote = {Provided by the SAO/NASA Astrophysics Data System}
 }
-
-
 ```
