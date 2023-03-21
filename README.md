@@ -29,22 +29,24 @@ The `diffstar_fitter_demo.ipynb` notebook demonstrates how to fit the SFH of a s
 See `history_fitting_script.py` for an example of how to fit the SFHs of a large number of simulated galaxies in parallel with mpi4py.
 
 ## Citing diffstar
-You can find a preprint of the diffstar paper in [arXiv](https://arxiv.org/abs/2205.04273). Citation information for the paper can be found at [this ADS link](https://ui.adsabs.harvard.edu/abs/2022arXiv220504273A/abstract), copied below for convenience:
+[The Diffstar paper](https://arxiv.org/abs/2205.04273) has been published in [Monthly Notices of the Royal Astronomical Society](https://academic.oup.com/mnras/article-abstract/518/1/562/6795944?redirectedFrom=fulltext). Citation information for the paper can be found at [this ADS link](https://ui.adsabs.harvard.edu/abs/2023MNRAS.518..562A/abstract), copied below for convenience:
 
 ```
-@ARTICLE{2022arXiv220504273A,
+@ARTICLE{2023MNRAS.518..562A,
        author = {{Alarcon}, Alex and {Hearin}, Andrew P. and {Becker}, Matthew R. and {Chaves-Montero}, Jon{\'a}s},
-        title = "{Diffstar: A Fully Parametric Physical Model for Galaxy Assembly History}",
-      journal = {arXiv:2205.04273},
-     keywords = {Astrophysics - Astrophysics of Galaxies, Astrophysics - Cosmology and Nongalactic Astrophysics},
-         year = 2022,
-        month = may,
-          eid = {arXiv:2205.04273},
-        pages = {arXiv:2205.04273},
+        title = "{Diffstar: a fully parametric physical model for galaxy assembly history}",
+      journal = {MNRAS},
+     keywords = {galaxies: evolution, galaxies: fundamental parameters, galaxies: star formation, Astrophysics - Astrophysics of Galaxies, Astrophysics - Cosmology and Nongalactic Astrophysics},
+         year = 2023,
+        month = jan,
+       volume = {518},
+       number = {1},
+        pages = {562-584},
+          doi = {10.1093/mnras/stac3118},
 archivePrefix = {arXiv},
        eprint = {2205.04273},
  primaryClass = {astro-ph.GA},
-       adsurl = {https://ui.adsabs.harvard.edu/abs/2022arXiv220504273A},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/2023MNRAS.518..562A},
       adsnote = {Provided by the SAO/NASA Astrophysics Data System}
 }
 ```
