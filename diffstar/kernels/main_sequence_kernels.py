@@ -24,7 +24,7 @@ _SFR_PARAM_BOUNDS = OrderedDict(
     lgy_at_mcrit=(-3.0, 0.0),
     indx_lo=(0.0, 5.0),
     indx_hi=(-5.0, 0.0),
-    tau_dep=(0.0, 20.0),
+    tau_dep=(0.01, 20.0),
 )
 
 
@@ -116,16 +116,12 @@ def _sfr_eff_plaw(lgm, lgmcrit, lgy_at_mcrit, indx_lo, indx_hi):
     """
     slope = _sigmoid(lgm, lgmcrit, INDX_K, indx_lo, indx_hi)
     eff = lgy_at_mcrit + slope * (lgm - lgmcrit)
-    return 10**eff
+    return 10 ** eff
 
 
 @jjit
 def _get_bounded_sfr_params(
-    u_lgmcrit,
-    u_lgy_at_mcrit,
-    u_indx_lo,
-    u_indx_hi,
-    u_tau_dep,
+    u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_tau_dep,
 ):
     lgmcrit = _sigmoid(u_lgmcrit, *SFR_PARAM_BOUNDS["lgmcrit"])
     lgy_at_mcrit = _sigmoid(u_lgy_at_mcrit, *SFR_PARAM_BOUNDS["lgy_at_mcrit"])
@@ -144,11 +140,7 @@ def _get_bounded_sfr_params(
 
 @jjit
 def _get_unbounded_sfr_params(
-    lgmcrit,
-    lgy_at_mcrit,
-    indx_lo,
-    indx_hi,
-    tau_dep,
+    lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, tau_dep,
 ):
     u_lgmcrit = _inverse_sigmoid(lgmcrit, *SFR_PARAM_BOUNDS["lgmcrit"])
     u_lgy_at_mcrit = _inverse_sigmoid(lgy_at_mcrit, *SFR_PARAM_BOUNDS["lgy_at_mcrit"])
