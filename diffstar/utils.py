@@ -141,12 +141,7 @@ def return_random_pinit(p_init, loss_data, loss_func_deriv):
 
 
 def minimizer_wrapper(
-    loss_func,
-    loss_func_deriv,
-    p_init,
-    loss_data,
-    loss_tol=0.1,
-    max_iter=10,
+    loss_func, loss_func_deriv, p_init, loss_data, loss_tol=0.1, max_iter=10,
 ):
     """Convenience function wrapping scipy's L-BFGS-B optimizer
 
@@ -413,7 +408,8 @@ def _sigmoid(x, x0, k, ymin, ymax):
 
     """
     height_diff = ymax - ymin
-    return ymin + height_diff / (1 + jnp.exp(-k * (x - x0)))
+    # return ymin + height_diff / (1 + jnp.exp(-k * (x - x0)))
+    return ymin + height_diff * lax.logistic(k * (x - x0))
 
 
 @jjit
@@ -425,7 +421,7 @@ def _inverse_sigmoid(y, x0, k, ymin, ymax):
 @jjit
 def sigmoid_poly(x, x0, k, ymin, ymax):
     arg = k * (x - x0)
-    body = 0.5 * arg / jnp.sqrt(1 + arg**2) + 0.5
+    body = 0.5 * arg / jnp.sqrt(1 + arg ** 2) + 0.5
     return ymin + (ymax - ymin) * body
 
 
@@ -456,9 +452,9 @@ def tw_cuml_jax_kern(x, m, h):
             x > 3,
             lambda xx: 1.0,
             lambda xx: (
-                -5 * xx**7 / 69984
-                + 7 * xx**5 / 2592
-                - 35 * xx**3 / 864
+                -5 * xx ** 7 / 69984
+                + 7 * xx ** 5 / 2592
+                - 35 * xx ** 3 / 864
                 + 35 * xx / 96
                 + 1 / 2
             ),
