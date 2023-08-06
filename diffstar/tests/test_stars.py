@@ -1,6 +1,6 @@
 """
 """
-from ..stars import DEFAULT_SFR_PARAMS, _SFR_PARAM_BOUNDS
+from ..stars import _SFR_PARAM_BOUNDS, DEFAULT_SFR_PARAMS
 
 
 def test_sfh_parameter_bounds():

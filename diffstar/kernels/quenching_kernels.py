@@ -1,11 +1,13 @@
 """
 """
 from collections import OrderedDict
+
+import numpy as np
 from jax import jit as jjit
 from jax import numpy as jnp
 from jax import vmap
-import numpy as np
-from ..utils import _sigmoid, _inverse_sigmoid
+
+from ..utils import _inverse_sigmoid, _sigmoid
 
 _Q_PARAM_BOUNDS = OrderedDict(
     u_lg_qt=(0.1, 2.0), u_lg_qs=(-3.0, -0.01), u_lg_drop=(-3, 0.0), u_lg_rejuv=(-3, 0.0)

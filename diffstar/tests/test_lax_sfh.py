@@ -1,11 +1,15 @@
 """
 """
 import numpy as np
-from jax import vmap
 from jax import jit as jjit
+from jax import vmap
+
 from ..sfh import get_sfh_from_mah_kern
-from .test_diffstar_is_frozen import calc_sfh_on_default_params
-from .test_diffstar_is_frozen import _get_default_mah_params, _get_default_sfr_u_params
+from .test_diffstar_is_frozen import (
+    _get_default_mah_params,
+    _get_default_sfr_u_params,
+    calc_sfh_on_default_params,
+)
 
 
 def _get_all_default_params():

@@ -2,7 +2,8 @@
 """
 import numpy as np
 from jax import random as jran
-from ..utils import _jax_get_dt_array, _get_dt_array
+
+from ..utils import _get_dt_array, _jax_get_dt_array
 
 
 def test_jax_get_dt_array_linspace():

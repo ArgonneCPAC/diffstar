@@ -1,18 +1,20 @@
 """
 """
-import numpy as np
 from collections import OrderedDict
+
+import numpy as np
+from diffmah.individual_halo_assembly import (
+    DEFAULT_MAH_PARAMS,
+    _calc_halo_history_scalar,
+    _rolling_plaw_vs_logt,
+)
 from jax import jit as jjit
-from jax import numpy as jnp
 from jax import lax
+from jax import numpy as jnp
 from jax import vmap
-from ..utils import _sigmoid, _inverse_sigmoid, _jax_get_dt_array
-from diffmah.individual_halo_assembly import DEFAULT_MAH_PARAMS
-from diffmah.individual_halo_assembly import _rolling_plaw_vs_logt
-from diffmah.individual_halo_assembly import _calc_halo_history_scalar
 
+from ..utils import _inverse_sigmoid, _jax_get_dt_array, _sigmoid
 from .gas_consumption import _gas_conversion_kern, _get_lagged_gas
-
 
 INDX_K = 9.0  # Main sequence efficiency transition speed.
 
@@ -45,7 +47,6 @@ SFR_PARAM_BOUNDS = calculate_sigmoid_bounds(_SFR_PARAM_BOUNDS)
 
 @jjit
 def _lax_ms_sfh_scalar_kern(t_form, mah_params, ms_params, lgt0, fb, t_table):
-
     mah_k = DEFAULT_MAH_PARAMS["mah_k"]
     logmp, logtc, early, late = mah_params
     all_mah_params = lgt0, logmp, logtc, mah_k, early, late
@@ -116,12 +117,16 @@ def _sfr_eff_plaw(lgm, lgmcrit, lgy_at_mcrit, indx_lo, indx_hi):
     """
     slope = _sigmoid(lgm, lgmcrit, INDX_K, indx_lo, indx_hi)
     eff = lgy_at_mcrit + slope * (lgm - lgmcrit)
-    return 10 ** eff
+    return 10**eff
 
 
 @jjit
 def _get_bounded_sfr_params(
-    u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_tau_dep,
+    u_lgmcrit,
+    u_lgy_at_mcrit,
+    u_indx_lo,
+    u_indx_hi,
+    u_tau_dep,
 ):
     lgmcrit = _sigmoid(u_lgmcrit, *SFR_PARAM_BOUNDS["lgmcrit"])
     lgy_at_mcrit = _sigmoid(u_lgy_at_mcrit, *SFR_PARAM_BOUNDS["lgy_at_mcrit"])
@@ -140,7 +145,11 @@ def _get_bounded_sfr_params(
 
 @jjit
 def _get_unbounded_sfr_params(
-    lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, tau_dep,
+    lgmcrit,
+    lgy_at_mcrit,
+    indx_lo,
+    indx_hi,
+    tau_dep,
 ):
     u_lgmcrit = _inverse_sigmoid(lgmcrit, *SFR_PARAM_BOUNDS["lgmcrit"])
     u_lgy_at_mcrit = _inverse_sigmoid(lgy_at_mcrit, *SFR_PARAM_BOUNDS["lgy_at_mcrit"])

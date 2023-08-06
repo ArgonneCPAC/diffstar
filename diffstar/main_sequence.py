@@ -4,11 +4,15 @@ from jax import jit as jjit
 from jax import lax
 from jax import numpy as jnp
 from jax import vmap
+
 from .constants import LGT0
 from .kernels.gas_consumption import FB
-from .kernels.main_sequence_kernels import DEFAULT_N_STEPS, DEFAULT_T_MIN
-from .kernels.main_sequence_kernels import _lax_ms_sfh_scalar_kern
-from .kernels.main_sequence_kernels import _get_bounded_sfr_params
+from .kernels.main_sequence_kernels import (
+    DEFAULT_N_STEPS,
+    DEFAULT_T_MIN,
+    _get_bounded_sfr_params,
+    _lax_ms_sfh_scalar_kern,
+)
 
 
 def get_ms_sfh_from_mah_kern(

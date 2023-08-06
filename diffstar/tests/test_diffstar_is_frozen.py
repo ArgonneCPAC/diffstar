@@ -1,18 +1,20 @@
 """Unit tests enforcing that the behavior of Diffstar on the default params is frozen.
 """
 import os
+
 import numpy as np
+from diffmah.individual_halo_assembly import (
+    DEFAULT_MAH_PARAMS,
+    _calc_halo_history,
+    _get_early_late,
+)
 from jax import numpy as jnp
-from diffmah.individual_halo_assembly import DEFAULT_MAH_PARAMS
-from diffmah.individual_halo_assembly import _get_early_late
-from diffmah.individual_halo_assembly import _calc_halo_history
 
 from ..constants import LGT0
-from ..stars import _sfr_history_from_mah
-from ..stars import _get_unbounded_sfr_params
-from ..stars import DEFAULT_SFR_PARAMS as DEFAULT_SFR_PARAMS_DICT
-from ..quenching import DEFAULT_Q_PARAMS as DEFAULT_Q_PARAMS_DICT
 from ..kernels.quenching_kernels import _get_unbounded_q_params
+from ..quenching import DEFAULT_Q_PARAMS as DEFAULT_Q_PARAMS_DICT
+from ..stars import DEFAULT_SFR_PARAMS as DEFAULT_SFR_PARAMS_DICT
+from ..stars import _get_unbounded_sfr_params, _sfr_history_from_mah
 from ..utils import _get_dt_array
 
 DEFAULT_MS_PARAMS = jnp.array(list(DEFAULT_SFR_PARAMS_DICT.values()))
