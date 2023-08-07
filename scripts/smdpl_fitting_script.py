@@ -6,6 +6,9 @@ from time import time
 
 import h5py
 import numpy as np
+from diffmah.fit_mah_helpers import get_loss_data as get_diffmah_loss_data
+from diffmah.fit_mah_helpers import log_mah_mse_loss_and_grads
+from diffmah.utils import jax_adam_wrapper as diffmah_fitter
 from mpi4py import MPI
 
 from diffstar.fit_smah_helpers import (
@@ -100,8 +103,17 @@ if __name__ == "__main__":
             halo_id = halo_ids_for_rank[i]
             lgsmah = log_smahs_for_rank[i, :]
             sfrh = sfrhs_for_rank[i, :]
-            mah_params = mah_params_for_rank[i]
             logmp_halo = logmp_for_rank[i]
+
+            dmah_p_init, dmah_loss_data = get_diffmah_loss_data(tarr, lgmah, lgm_min)
+            _res = diffmah_fitter(
+                log_mah_mse_loss_and_grads,
+                dmah_p_init,
+                dmah_loss_data,
+                diffmah_nstep,
+                n_warmup=1,
+            )
+            dmah_p_best, dmah_loss_best, __, __, dmah_fit_terminates = _res
 
             p_init, loss_data = get_loss_data(
                 tarr, dt, sfrh, lgsmah, logmp_halo, mah_params, **kwargs
