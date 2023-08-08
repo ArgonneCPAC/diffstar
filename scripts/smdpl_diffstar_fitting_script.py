@@ -79,10 +79,10 @@ if __name__ == "__main__":
 
     if args.diffmah_indir == "TASSO":
         diffmah_indir = TASSO_DIFFMAH
-    elif args.indir == "BEBOP":
-        indir = BEBOP_DIFFMAH
+    elif args.diffmah_indir == "BEBOP":
+        diffmah_indir = BEBOP_DIFFMAH
     else:
-        indir = args.indir
+        diffmah_indir = args.diffmah_indir
 
     all_avail_subvol_names = [
         os.path.basename(drn) for drn in glob(os.path.join(indir, "subvol_*"))
