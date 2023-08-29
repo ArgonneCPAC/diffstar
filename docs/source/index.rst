@@ -1,20 +1,24 @@
-.. diffstar documentation master file, created by
-   sphinx-quickstart on Tue Aug 29 11:55:19 2023.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+Diffstar: Differentiable Star Formation Histories
+=================================================
+Diffstar is a python library written in 
+`JAX <https://jax.readthedocs.io/>`__ implementing a parametric model of 
+galaxy star formation history based on a physical connection between 
+the galaxy and its dark matter halo.
+You can find more information about Diffstar in 
+`our paper <https://arxiv.org/abs/2205.04273/>`__.
 
-Welcome to diffstar's documentation!
-====================================
+Diffstar is open-source code that is publicly available on
+`GitHub <https://github.com/ArgonneCPAC/diffstar/>`__. 
+These docs show you how to predict SFHs for individual and populations of galaxies
+based on the Diffstar model.
+
+User Guide
+----------
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 1
 
+   installation.rst
+   reference.rst
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+See :ref:`Citation Information <cite_info>` for how to acknowledge Diffstar.
