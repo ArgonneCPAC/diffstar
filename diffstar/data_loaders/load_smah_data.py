@@ -1,11 +1,12 @@
 """
 """
-import numpy as np
 import os
-import h5py
 import warnings
-from diffstar.utils import _get_dt_array
 
+import h5py
+import numpy as np
+
+from ..utils import _get_dt_array
 
 TASSO = "/Users/aphearin/work/DATA/diffmah_data"
 BEBOP = "/lcrc/project/halotools/diffmah_data"
@@ -17,22 +18,25 @@ H_MDPL = H_BPL
 
 
 def load_fit_mah(filename, data_drn=BEBOP):
-    """ Load the best fit diffmah parameter data.
+    """Load the best fit diffmah parameter data
 
     Parameters
     ----------
     filename : string
-        Name of the h5 file where the diffmah best fit parameters are stored.
+        Name of the h5 file where the diffmah best fit parameters are stored
+
     data_drn : string
-        Filepath where the Diffstar best-fit parameters are stored.
+        Filepath where the Diffstar best-fit parameters are stored
 
     Returns
     -------
     mah_fit_params:  ndarray of shape (n_gal, 4)
         Best fit parameters for each halo:
             (logtc, k, early_index, late_index)
+
     logmp:  ndarray of shape (n_gal, )
-        Base-10 logarithm of the present day peak halo mass.
+        Base-10 logarithm of the present day peak halo mass
+
     """
     fitting_data = dict()
 
@@ -76,21 +80,27 @@ def load_bolshoi_data(gal_type, data_drn=BEBOP):
             'cens': central galaxies
             'sats': satellite galaxies
             'orphans': orphan galaxies
+
     data_drn : string
         Filepath where the Diffstar best-fit parameters are stored.
 
     Returns
     -------
     halo_ids:  ndarray of shape (n_gal, )
-        IDs of the halos in the file.
+        IDs of the halos in the file
+
     log_smahs: ndarray of shape (n_gal, n_times)
-        Cumulative stellar mass history in units of Msun assuming h=1.
+        Cumulative stellar mass history in units of Msun assuming h=1
+
     sfrh: ndarray of shape (n_gal, n_times)
-        Star formation rate history in units of Msun/yr assuming h=1.
+        Star formation rate history in units of Msun/yr assuming h=1
+
     bpl_t : ndarray of shape (n_times, )
         Cosmic time of each simulated snapshot in Gyr
+
     dt : ndarray of shape (n_times, )
         Cosmic time steps between each simulated snapshot in Gyr
+
     """
     basename = "bpl_diffmah_{}.npy".format(gal_type)
     fn = os.path.join(data_drn, basename)
@@ -128,21 +138,28 @@ def load_bolshoi_small_data(gal_type, data_drn=BEBOP):
             'cens': central galaxies
             'sats': satellite galaxies
             'orphans': orphan galaxies
+
     data_drn : string
         Filepath where the Diffstar best-fit parameters are stored.
 
     Returns
     -------
     halo_ids:  ndarray of shape (n_gal, )
-        IDs of the halos in the file.
+        IDs of the halos in the file
+
     log_smahs: ndarray of shape (n_gal, n_times)
-        Cumulative stellar mass history in units of Msun assuming h=1.
+        Cumulative stellar mass history in units of Msun assuming h=1
+
     sfrh: ndarray of shape (n_gal, n_times)
-        Star formation rate history in units of Msun/yr assuming h=1.
+        Star formation rate history in units of Msun/yr assuming h=1
+
     bpl_t : ndarray of shape (n_times, )
+
         Cosmic time of each simulated snapshot in Gyr
+
     dt : ndarray of shape (n_times, )
         Cosmic time steps between each simulated snapshot in Gyr
+
     """
     basename = "um_histories_subsample_dr1_bpl_{}_diffmah.npy".format(gal_type)
     fn = os.path.join(data_drn, basename)
@@ -179,21 +196,27 @@ def load_tng_data(gal_type, data_drn=BEBOP):
             'cens': central galaxies
             'sats': satellite galaxies
             'orphans': orphan galaxies
+
     data_drn : string
         Filepath where the Diffstar best-fit parameters are stored.
 
     Returns
     -------
     halo_ids:  ndarray of shape (n_gal, )
-        IDs of the halos in the file.
+        IDs of the halos in the file
+
     log_smahs: ndarray of shape (n_gal, n_times)
-        Cumulative stellar mass history in units of Msun assuming h=1.
+        Cumulative stellar mass history in units of Msun assuming h=1
+
     sfrh: ndarray of shape (n_gal, n_times)
-        Star formation rate history in units of Msun/yr assuming h=1.
+        Star formation rate history in units of Msun/yr assuming h=1
+
     tng_t : ndarray of shape (n_times, )
         Cosmic time of each simulated snapshot in Gyr
+
     dt : ndarray of shape (n_times, )
         Cosmic time steps between each simulated snapshot in Gyr
+
     """
     basename = "tng_diffmah.npy"
     fn = os.path.join(data_drn, basename)

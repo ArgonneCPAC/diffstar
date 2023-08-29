@@ -6,14 +6,18 @@ as the code evolves, then we will find out about it.
 """
 import argparse
 import os
-import numpy as np
-from diffstar.tests.test_diffstar_is_frozen import calc_sfh_on_default_params
-from diffstar.tests.test_diffstar_is_frozen import _get_default_mah_params
-from load_bpl import load_bpl_diffstar_data, TASSO_BPL_DRN, LGT0 as LGT0_BPL
-from diffmah.individual_halo_assembly import _calc_halo_history, DEFAULT_MAH_PARAMS
-from diffstar.stars import _sfr_history_from_mah
-from diffstar.utils import _jax_get_dt_array
 
+import numpy as np
+from diffmah.individual_halo_assembly import DEFAULT_MAH_PARAMS, _calc_halo_history
+
+from diffstar.data_loaders.load_bpl import LGT0 as LGT0_BPL
+from diffstar.data_loaders.load_bpl import TASSO_BPL_DRN, load_bpl_diffstar_data
+from diffstar.stars import _sfr_history_from_mah
+from diffstar.tests.test_diffstar_is_frozen import (
+    _get_default_mah_params,
+    calc_sfh_on_default_params,
+)
+from diffstar.utils import _jax_get_dt_array
 
 MAH_K = DEFAULT_MAH_PARAMS["mah_k"]
 
@@ -101,6 +105,10 @@ if __name__ == "__main__":
         os.path.join(testing_drn, "q_u_params_test_sample.txt"), q_u_params_test_sample
     )
     np.savetxt(
+        os.path.join(testing_drn, "halo_ids_test_sample.txt"), halo_ids_test_sample
+    )
+    np.savetxt(os.path.join(testing_drn, "lgt_bpl.txt"), lgt_bpl)
+    np.savetxt(os.path.join(testing_drn, "dt_bpl.txt"), dt_bpl)
         os.path.join(testing_drn, "halo_ids_test_sample.txt"), halo_ids_test_sample
     )
     np.savetxt(os.path.join(testing_drn, "lgt_bpl.txt"), lgt_bpl)
