@@ -38,8 +38,8 @@ SSFRH_FLOOR = 1e-12  # Clip SFH to this minimum sSFR value. 1/yr units.
 def get_header():
     out = """\
 # halo_id \
-lgmcrit lgy_at_mcrit indx_lo indx_hi tau_dep \
-qt qs q_drop q_rejuv \
+u_lgmcrit u_lgy_at_mcrit u_indx_lo u_indx_hi u_tau_dep \
+u_qt u_qs u_q_drop u_q_rejuv \
 loss success\n\
 """
     return out
