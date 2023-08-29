@@ -1,13 +1,15 @@
 """
 """
 import os
-import numpy as np
-import h5py
 from collections import OrderedDict
+
+import h5py
+import numpy as np
 from astropy.table import Table
-from diffstar.utils import _jax_get_dt_array
-from diffstar.stars import _get_bounded_sfr_params_vmap
-from diffstar.quenching import _get_bounded_q_params_vmap
+
+from ..quenching import _get_bounded_q_params_vmap
+from ..stars import _get_bounded_sfr_params_vmap
+from ..utils import _jax_get_dt_array
 
 LGT0 = 1.13980
 

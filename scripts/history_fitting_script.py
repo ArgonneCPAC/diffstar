@@ -1,61 +1,58 @@
 """Script to fit Bolshoi or Multidark MAHs with a smooth model."""
-import numpy as np
-import os
-from mpi4py import MPI
 import argparse
-from time import time
-from load_smah_data import (
-    TASSO,
-    BEBOP,
-    load_fit_mah,
-    load_bolshoi_data,
-    load_tng_data,
-    load_mdpl_data,
-    load_bolshoi_small_data,
-    load_tng_small_data,
-    load_mdpl_small_data,
-)
-
-from diffstar.fit_smah_helpers import get_header, MIN_MASS_CUT, SSFRH_FLOOR
-from diffstar.fit_smah_helpers import (
-    get_loss_data_default,
-    get_loss_data_free,
-    get_loss_data_fixed_noquench,
-    get_loss_data_fixed_hi,
-    get_loss_data_fixed_hi_rej,
-    get_loss_data_fixed_hi_depl,
-    get_loss_data_fixed_depl_noquench,
-)
-from diffstar.fit_smah_helpers import (
-    loss_default,
-    loss_free,
-    loss_fixed_noquench,
-    loss_fixed_hi,
-    loss_fixed_hi_rej,
-    loss_fixed_hi_depl,
-    loss_fixed_depl_noquench,
-    loss_grad_default_np,
-    loss_free_deriv_np,
-    loss_fixed_noquench_deriv_np,
-    loss_fixed_hi_deriv_np,
-    loss_fixed_hi_rej_deriv_np,
-    loss_fixed_hi_depl_deriv_np,
-    loss_fixed_depl_noquench_deriv_np,
-)
-from diffstar.fit_smah_helpers import (
-    get_outline_default,
-    get_outline_free,
-    get_outline_fixed_noquench,
-    get_outline_fixed_hi,
-    get_outline_fixed_hi_rej,
-    get_outline_fixed_hi_depl,
-    get_outline_fixed_depl_noquench,
-)
-
-from diffstar.utils import minimizer_wrapper
+import os
 import subprocess
-import h5py
+from time import time
 
+import h5py
+import numpy as np
+from mpi4py import MPI
+
+from diffstar.data_loaders.load_smah_data import (
+    BEBOP,
+    TASSO,
+    load_bolshoi_data,
+    load_bolshoi_small_data,
+    load_fit_mah,
+    load_mdpl_data,
+    load_mdpl_small_data,
+    load_tng_data,
+    load_tng_small_data,
+)
+from diffstar.fit_smah_helpers import (
+    MIN_MASS_CUT,
+    SSFRH_FLOOR,
+    get_header,
+    get_loss_data_default,
+    get_loss_data_fixed_depl_noquench,
+    get_loss_data_fixed_hi,
+    get_loss_data_fixed_hi_depl,
+    get_loss_data_fixed_hi_rej,
+    get_loss_data_fixed_noquench,
+    get_loss_data_free,
+    get_outline_default,
+    get_outline_fixed_depl_noquench,
+    get_outline_fixed_hi,
+    get_outline_fixed_hi_depl,
+    get_outline_fixed_hi_rej,
+    get_outline_fixed_noquench,
+    get_outline_free,
+    loss_default,
+    loss_fixed_depl_noquench,
+    loss_fixed_depl_noquench_deriv_np,
+    loss_fixed_hi,
+    loss_fixed_hi_depl,
+    loss_fixed_hi_depl_deriv_np,
+    loss_fixed_hi_deriv_np,
+    loss_fixed_hi_rej,
+    loss_fixed_hi_rej_deriv_np,
+    loss_fixed_noquench,
+    loss_fixed_noquench_deriv_np,
+    loss_free,
+    loss_free_deriv_np,
+    loss_grad_default_np,
+)
+from diffstar.utils import minimizer_wrapper
 
 TMP_OUTPAT = "_tmp_smah_fits_rank_{0}.dat"
 TODAY = 13.8
@@ -119,7 +116,10 @@ if __name__ == "__main__":
         default=MIN_MASS_CUT,
     )
     parser.add_argument(
-        "-ssfrh_floor", help="Clipping floor for sSFH", type=float, default=SSFRH_FLOOR,
+        "-ssfrh_floor",
+        help="Clipping floor for sSFH",
+        type=float,
+        default=SSFRH_FLOOR,
     )
     args = parser.parse_args()
 
