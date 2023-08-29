@@ -1,30 +1,32 @@
 """
 """
+import os
 import warnings
+
+import h5py
 import numpy as np
-from jax import jit as jjit
+from diffmah.individual_halo_assembly import _calc_halo_history
 from jax import grad
+from jax import jit as jjit
 from jax import numpy as jnp
-from .stars import (
-    _get_unbounded_sfr_params,
-    calculate_sm_sfr_fstar_history_from_mah,
-    DEFAULT_SFR_PARAMS,
-    compute_fstar,
-    _get_bounded_sfr_params_vmap,
-    calculate_histories_batch,
-)
+
 from .quenching import (
     DEFAULT_Q_PARAMS,
+    _get_bounded_lg_drop,
+    _get_bounded_q_params_vmap,
     _get_bounded_qt,
     _get_unbounded_q_params,
-    _get_bounded_lg_drop,
     _get_unbounded_qrejuv,
-    _get_bounded_q_params_vmap,
+)
+from .stars import (
+    DEFAULT_SFR_PARAMS,
+    _get_bounded_sfr_params_vmap,
+    _get_unbounded_sfr_params,
+    calculate_histories_batch,
+    calculate_sm_sfr_fstar_history_from_mah,
+    compute_fstar,
 )
 from .utils import _sigmoid
-from diffmah.individual_halo_assembly import _calc_halo_history
-import os
-import h5py
 
 T_FIT_MIN = 1.0  # Only fit snapshots above this threshold. Gyr units.
 DLOGM_CUT = 3.5  # Only fit SMH within this dex of the present day stellar mass.
@@ -44,7 +46,11 @@ loss success\n\
 
 
 def load_diffstar_data(
-    run_name, t_sim, fstar_tdelay, mah_params, data_drn,
+    run_name,
+    t_sim,
+    fstar_tdelay,
+    mah_params,
+    data_drn,
 ):
     """Calculate Diffstar histories and best-fit parameters.
 
@@ -115,7 +121,11 @@ def load_diffstar_data(
     sfr_fitdata["success"] = success_names[sfr_fitdata["success"].astype(int)]
 
     hists = calculate_histories_batch(
-        t_sim, mah_params, u_sfr_fit_params, u_q_fit_params, fstar_tdelay,
+        t_sim,
+        mah_params,
+        u_sfr_fit_params,
+        u_q_fit_params,
+        fstar_tdelay,
     )
     mstars_fit, sfrs_fit, fstars_fit, dmhdts_fit, log_mahs_fit = hists
     print(hists[0].shape, np.unique(sfr_fitdata["success"], return_counts=True))
@@ -401,7 +411,7 @@ def get_loss_data_free(
     index_select = np.arange(len(t_sim))[_mask]
     fstar_indx_high = fstar_indx_high[_mask]
 
-    smh = 10 ** log_smah_sim
+    smh = 10**log_smah_sim
 
     fstar_sim = compute_fstar(t_sim, smh, index_select, fstar_indx_high, fstar_tdelay)
 
@@ -655,7 +665,7 @@ def get_loss_data_fixed_noquench(
     index_select = np.arange(len(t_sim))[_mask]
     fstar_indx_high = fstar_indx_high[_mask]
 
-    smh = 10 ** log_smah_sim
+    smh = 10**log_smah_sim
 
     fstar_sim = compute_fstar(t_sim, smh, index_select, fstar_indx_high, fstar_tdelay)
 
@@ -910,7 +920,7 @@ def get_loss_data_fixed_hi(
     index_select = np.arange(len(t_sim))[_mask]
     fstar_indx_high = fstar_indx_high[_mask]
 
-    smh = 10 ** log_smah_sim
+    smh = 10**log_smah_sim
 
     fstar_sim = compute_fstar(t_sim, smh, index_select, fstar_indx_high, fstar_tdelay)
 
@@ -1185,7 +1195,7 @@ def get_loss_data_fixed_hi_rej(
     index_select = np.arange(len(t_sim))[_mask]
     fstar_indx_high = fstar_indx_high[_mask]
 
-    smh = 10 ** log_smah_sim
+    smh = 10**log_smah_sim
 
     fstar_sim = compute_fstar(t_sim, smh, index_select, fstar_indx_high, fstar_tdelay)
 
@@ -1465,7 +1475,7 @@ def get_loss_data_fixed_hi_depl(
     index_select = np.arange(len(t_sim))[_mask]
     fstar_indx_high = fstar_indx_high[_mask]
 
-    smh = 10 ** log_smah_sim
+    smh = 10**log_smah_sim
 
     fstar_sim = compute_fstar(t_sim, smh, index_select, fstar_indx_high, fstar_tdelay)
 
@@ -1734,7 +1744,7 @@ def get_loss_data_fixed_depl_noquench(
     index_select = np.arange(len(t_sim))[_mask]
     fstar_indx_high = fstar_indx_high[_mask]
 
-    smh = 10 ** log_smah_sim
+    smh = 10**log_smah_sim
 
     fstar_sim = compute_fstar(t_sim, smh, index_select, fstar_indx_high, fstar_tdelay)
 

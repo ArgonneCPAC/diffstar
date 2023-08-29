@@ -1,0 +1,7 @@
+[run]
+source= diffstar/
+
+omit =
+    diffstar/__init__.py
+    diffstar/_version.py
+    diffstar/tests/*.py

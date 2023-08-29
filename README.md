@@ -10,7 +10,7 @@ Alternatively, to install diffstar into your environment from the source code:
 
 ```
 $ cd /path/to/root/diffstar
-$ python setup.py install
+$ pip install .
 ```
 
 ### Environment configuration

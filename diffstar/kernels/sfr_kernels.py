@@ -1,12 +1,13 @@
 """
 """
+from diffmah.individual_halo_assembly import _calc_halo_history
 from jax import jit as jjit
 from jax import numpy as jnp
 from jax import vmap
-from diffmah.individual_halo_assembly import _calc_halo_history
+
 from ..utils import jax_np_interp
-from .quenching_kernels import quenching_function
 from .main_sequence_kernels import _ms_sfr_history_from_mah
+from .quenching_kernels import quenching_function
 
 
 @jjit
