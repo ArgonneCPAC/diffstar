@@ -12,7 +12,7 @@ from diffmah.individual_halo_assembly import DEFAULT_MAH_PARAMS, _calc_halo_hist
 
 from diffstar.data_loaders.load_bpl import LGT0 as LGT0_BPL
 from diffstar.data_loaders.load_bpl import TASSO_BPL_DRN, load_bpl_diffstar_data
-from diffstar.stars import _sfr_history_from_mah
+from diffstar.fitting_helpers.stars import _sfr_history_from_mah
 from diffstar.tests.test_diffstar_is_frozen import (
     _get_default_mah_params,
     calc_sfh_on_default_params,

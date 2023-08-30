@@ -10,7 +10,7 @@ from jax import grad
 from jax import jit as jjit
 from jax import numpy as jnp
 
-from .quenching import (
+from ..quenching import (
     DEFAULT_Q_PARAMS,
     _get_bounded_lg_drop,
     _get_bounded_q_params_vmap,
@@ -18,6 +18,7 @@ from .quenching import (
     _get_unbounded_q_params,
     _get_unbounded_qrejuv,
 )
+from ..utils import _sigmoid
 from .stars import (
     DEFAULT_SFR_PARAMS,
     _get_bounded_sfr_params_vmap,
@@ -26,7 +27,6 @@ from .stars import (
     calculate_sm_sfr_fstar_history_from_mah,
     compute_fstar,
 )
-from .utils import _sigmoid
 
 T_FIT_MIN = 1.0  # Only fit snapshots above this threshold. Gyr units.
 DLOGM_CUT = 3.5  # Only fit SMH within this dex of the present day stellar mass.

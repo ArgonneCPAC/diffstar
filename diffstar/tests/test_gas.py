@@ -1,7 +1,7 @@
 """
 """
+from ..fitting_helpers.stars import SFR_PARAM_BOUNDS
 from ..kernels.gas_consumption import _get_lagged_gas
-from ..stars import SFR_PARAM_BOUNDS
 from .test_diffstar_is_frozen import calc_sfh_on_default_params
 
 

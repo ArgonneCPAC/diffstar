@@ -5,9 +5,9 @@ from collections import OrderedDict
 import numpy as np
 from jax import jit as jjit
 
-from .kernels import main_sequence_kernels as msk
-from .kernels import sfr_kernels as sfrk
-from .utils import _get_dt_array
+from ..kernels import main_sequence_kernels as msk
+from ..kernels import sfr_kernels as sfrk
+from ..utils import _get_dt_array
 
 DEFAULT_SFR_PARAMS = OrderedDict(
     lgmcrit=12.0,

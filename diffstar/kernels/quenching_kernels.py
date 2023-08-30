@@ -157,7 +157,7 @@ def _get_bounded_lg_rejuv(u_lg_rejuv, lg_drop):
         u_lg_rejuv,
         *Q_PARAM_BOUNDS["u_lg_rejuv"][:2],
         lg_drop,
-        Q_PARAM_BOUNDS["u_lg_rejuv"][3]
+        Q_PARAM_BOUNDS["u_lg_rejuv"][3],
     )
     return lg_rejuv
 
@@ -187,6 +187,6 @@ def _get_unbounded_qrejuv(lg_rejuv, lg_drop):
         lg_rejuv,
         *Q_PARAM_BOUNDS["u_lg_rejuv"][:2],
         lg_drop,
-        Q_PARAM_BOUNDS["u_lg_rejuv"][3]
+        Q_PARAM_BOUNDS["u_lg_rejuv"][3],
     )
     return u_lg_rejuv

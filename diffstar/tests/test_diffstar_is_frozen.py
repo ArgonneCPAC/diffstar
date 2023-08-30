@@ -11,10 +11,10 @@ from diffmah.individual_halo_assembly import (
 from jax import numpy as jnp
 
 from ..constants import LGT0
+from ..fitting_helpers.stars import DEFAULT_SFR_PARAMS as DEFAULT_SFR_PARAMS_DICT
+from ..fitting_helpers.stars import _get_unbounded_sfr_params, _sfr_history_from_mah
 from ..kernels.quenching_kernels import _get_unbounded_q_params
 from ..quenching import DEFAULT_Q_PARAMS as DEFAULT_Q_PARAMS_DICT
-from ..stars import DEFAULT_SFR_PARAMS as DEFAULT_SFR_PARAMS_DICT
-from ..stars import _get_unbounded_sfr_params, _sfr_history_from_mah
 from ..utils import _get_dt_array
 
 DEFAULT_MS_PARAMS = jnp.array(list(DEFAULT_SFR_PARAMS_DICT.values()))
