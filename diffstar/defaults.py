@@ -1,20 +1,16 @@
 """
 """
+# flake8: noqa
+
 from collections import OrderedDict
 
 import numpy as np
 
-from .kernels.main_sequence_kernels import INDX_K, _get_unbounded_sfr_params
-
-DEFAULT_MS_PDICT = OrderedDict(
-    lgmcrit=12.0,
-    lgy_at_mcrit=-1.0,
-    indx_lo=1.0,
-    indx_hi=-1.0,
-    tau_dep=2.0,
+from .kernels.main_sequence_kernels import (
+    DEFAULT_MS_PARAMS,
+    DEFAULT_U_MS_PARAMS,
+    INDX_K,
 )
-DEFAULT_MS_PARAMS = np.array(list(DEFAULT_MS_PDICT.values()))
-DEFAULT_U_MS_PARAMS = _get_unbounded_sfr_params(*DEFAULT_MS_PARAMS)
 
 DEFAULT_U_Q_PDICT = OrderedDict(
     u_lg_qt=1.0, u_lg_qs=-0.3, u_lg_drop=-1.0, u_lg_rejuv=-0.5

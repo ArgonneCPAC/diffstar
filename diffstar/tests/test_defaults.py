@@ -23,3 +23,7 @@ def test_default_ms_params_bounded_consistent_with_unbounded():
 
     u_p2 = _get_unbounded_sfr_params(*p)
     assert np.allclose(u_p, u_p2, rtol=0.01)
+
+
+def test_default_indx_k():
+    assert defaults.INDX_K == 9.0

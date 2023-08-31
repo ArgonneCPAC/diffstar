@@ -16,6 +16,15 @@ from jax import vmap
 from ..utils import _inverse_sigmoid, _jax_get_dt_array, _sigmoid
 from .gas_consumption import _gas_conversion_kern, _get_lagged_gas
 
+DEFAULT_MS_PDICT = OrderedDict(
+    lgmcrit=12.0,
+    lgy_at_mcrit=-1.0,
+    indx_lo=1.0,
+    indx_hi=-1.0,
+    tau_dep=2.0,
+)
+DEFAULT_MS_PARAMS = np.array(list(DEFAULT_MS_PDICT.values()))
+
 _SFR_PARAM_BOUNDS = OrderedDict(
     lgmcrit=(9.0, 13.5),
     lgy_at_mcrit=(-3.0, 0.0),
@@ -181,3 +190,6 @@ def _ms_sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params):
 
     ms_sfr = lagged_mgas * efficiency
     return ms_sfr
+
+
+DEFAULT_U_MS_PARAMS = _get_unbounded_sfr_params(*DEFAULT_MS_PARAMS)
