@@ -1,6 +1,7 @@
 """
 """
 import numpy as np
+from jax import jit as jjit
 from jax import value_and_grad
 from jax.example_libraries import optimizers as jax_opt
 from scipy.optimize import minimize
