@@ -11,15 +11,10 @@ from diffmah.individual_halo_assembly import (
 from jax import numpy as jnp
 
 from ..constants import LGT0
-from ..fitting_helpers.stars import DEFAULT_SFR_PARAMS as DEFAULT_SFR_PARAMS_DICT
+from ..defaults import DEFAULT_MS_PARAMS, DEFAULT_U_Q_PARAMS
 from ..fitting_helpers.stars import _get_unbounded_sfr_params, _sfr_history_from_mah
 from ..kernels.quenching_kernels import _get_unbounded_q_params
-from ..quenching import DEFAULT_Q_PARAMS as DEFAULT_Q_PARAMS_DICT
 from ..utils import _get_dt_array
-
-DEFAULT_MS_PARAMS = jnp.array(list(DEFAULT_SFR_PARAMS_DICT.values()))
-DEFAULT_Q_PARAMS = jnp.array(list(DEFAULT_Q_PARAMS_DICT.values()))
-
 
 DEFAULT_LOGM0 = 12.0
 
@@ -41,7 +36,7 @@ def _get_default_mah_params():
 
 def _get_default_sfr_u_params():
     u_ms_params = jnp.array(_get_unbounded_sfr_params(*DEFAULT_MS_PARAMS))
-    u_q_params = jnp.array(_get_unbounded_q_params(*DEFAULT_Q_PARAMS))
+    u_q_params = jnp.array(_get_unbounded_q_params(*DEFAULT_U_Q_PARAMS))
     return u_ms_params, u_q_params
 
 

@@ -1,13 +1,8 @@
 """Model for the quenching of individual galaxies."""
-from collections import OrderedDict
 
 from jax import jit as jjit
 
 from .kernels import quenching_kernels as qk
-
-DEFAULT_Q_PARAMS = OrderedDict(
-    u_lg_qt=1.0, u_lg_qs=-0.3, u_lg_drop=-1.0, u_lg_rejuv=-0.5
-)
 
 
 @jjit
