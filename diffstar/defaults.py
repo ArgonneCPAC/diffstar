@@ -8,6 +8,7 @@ import numpy as np
 
 from .kernels.main_sequence_kernels import (
     DEFAULT_MS_PARAMS,
+    DEFAULT_MS_PDICT,
     DEFAULT_U_MS_PARAMS,
     INDX_K,
 )

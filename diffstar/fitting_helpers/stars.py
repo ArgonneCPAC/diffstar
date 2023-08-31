@@ -1,25 +1,11 @@
 """
 """
-from collections import OrderedDict
-
 import numpy as np
 from jax import jit as jjit
 
 from ..kernels import main_sequence_kernels as msk
 from ..kernels import sfr_kernels as sfrk
 from ..utils import _get_dt_array
-
-DEFAULT_SFR_PARAMS = OrderedDict(
-    lgmcrit=12.0,
-    lgy_at_mcrit=-1.0,
-    indx_lo=1.0,
-    indx_hi=-1.0,
-    tau_dep=2.0,
-)
-
-
-_SFR_PARAM_BOUNDS = msk._SFR_PARAM_BOUNDS
-SFR_PARAM_BOUNDS = msk.SFR_PARAM_BOUNDS
 
 
 @jjit
