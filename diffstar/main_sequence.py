@@ -5,7 +5,7 @@ from jax import lax
 from jax import numpy as jnp
 from jax import vmap
 
-from .constants import DEFAULT_N_STEPS, LGT0, T_BIRTH_MIN
+from .defaults import DEFAULT_N_STEPS, LGT0, T_BIRTH_MIN
 from .kernels.gas_consumption import FB
 from .kernels.main_sequence_kernels import (
     _get_bounded_sfr_params,
