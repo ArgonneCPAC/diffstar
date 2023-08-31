@@ -4,7 +4,7 @@ from collections import OrderedDict
 
 import numpy as np
 
-from .kernels.main_sequence_kernels import _get_unbounded_sfr_params
+from .kernels.main_sequence_kernels import INDX_K, _get_unbounded_sfr_params
 
 DEFAULT_MS_PDICT = OrderedDict(
     lgmcrit=12.0,

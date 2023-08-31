@@ -16,11 +16,6 @@ from jax import vmap
 from ..utils import _inverse_sigmoid, _jax_get_dt_array, _sigmoid
 from .gas_consumption import _gas_conversion_kern, _get_lagged_gas
 
-INDX_K = 9.0  # Main sequence efficiency transition speed.
-
-DEFAULT_N_STEPS = 50
-DEFAULT_T_MIN = 0.01
-
 _SFR_PARAM_BOUNDS = OrderedDict(
     lgmcrit=(9.0, 13.5),
     lgy_at_mcrit=(-3.0, 0.0),
@@ -28,6 +23,8 @@ _SFR_PARAM_BOUNDS = OrderedDict(
     indx_hi=(-5.0, 0.0),
     tau_dep=(0.01, 20.0),
 )
+
+INDX_K = 9.0  # Main sequence efficiency transition speed.
 
 
 def calculate_sigmoid_bounds(param_bounds):

@@ -5,11 +5,9 @@ from jax import lax
 from jax import numpy as jnp
 from jax import vmap
 
-from .constants import LGT0
+from .constants import DEFAULT_N_STEPS, LGT0, T_BIRTH_MIN
 from .kernels.gas_consumption import FB
 from .kernels.main_sequence_kernels import (
-    DEFAULT_N_STEPS,
-    DEFAULT_T_MIN,
     _get_bounded_sfr_params,
     _lax_ms_sfh_scalar_kern,
 )
@@ -19,7 +17,7 @@ from .kernels.quenching_kernels import quenching_function
 def get_sfh_from_mah_kern(
     n_steps=DEFAULT_N_STEPS,
     lgt0=LGT0,
-    tacc_integration_min=DEFAULT_T_MIN,
+    tacc_integration_min=T_BIRTH_MIN,
     fb=FB,
     tobs_loop=None,
     galpop_loop=None,
