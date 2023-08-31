@@ -439,7 +439,7 @@ def get_loss_data_free(
 
     t_fstar_max = logt[index_select][np.argmax(log_fstar_sim)]
 
-    default_sfr_params = np.array(list(DEFAULT_U_MS_PARAMS.values()))
+    default_sfr_params = np.array(DEFAULT_U_MS_PARAMS)
     default_sfr_params[0] = np.clip(0.3 * (logmp - 11.0) + 11.4, 11.0, 13.0)
     default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 0.7, -1.5, -0.2)
     default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) - 0.3, 0.2, 3.0)
@@ -450,7 +450,7 @@ def get_loss_data_free(
 
     sfr_ms_params_err = np.array([0.5, 0.5, 1.0, 0.3, 3.0])
 
-    default_q_params = np.array(list(DEFAULT_U_Q_PARAMS.values()))
+    default_q_params = np.array(DEFAULT_U_Q_PARAMS)
     default_q_params[0] = np.clip(-0.5 * (logmp - 11.0) + 1.5, 0.7, 1.5)
     default_q_params[2] = -2.0
     q_params = np.array(_get_unbounded_q_params(*default_q_params))
@@ -693,7 +693,7 @@ def get_loss_data_fixed_noquench(
 
     t_fstar_max = logt[index_select][np.argmax(log_fstar_sim)]
 
-    default_sfr_params = np.array(list(DEFAULT_U_MS_PARAMS.values()))
+    default_sfr_params = np.array(DEFAULT_U_MS_PARAMS)
     default_sfr_params[0] = np.clip(0.3 * (logmp - 11.0) + 11.4, 11.0, 13.0)
     default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 0.7, -1.5, -0.2)
     default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) - 0.3, 0.2, 3.0)
@@ -704,7 +704,7 @@ def get_loss_data_fixed_noquench(
 
     sfr_ms_params_err = np.array([0.5, 0.5, 1.0, 0.3, 3.0])
 
-    default_q_params = np.array(list(DEFAULT_U_Q_PARAMS.values()))
+    default_q_params = np.array(DEFAULT_U_Q_PARAMS)
     default_q_params[0] = 1.8
     default_q_params[1] = -2.0
     q_params = np.array(_get_unbounded_q_params(*default_q_params))
@@ -948,7 +948,7 @@ def get_loss_data_fixed_hi(
 
     t_fstar_max = logt[index_select][np.argmax(log_fstar_sim)]
 
-    default_sfr_params = np.array(list(DEFAULT_U_MS_PARAMS.values()))
+    default_sfr_params = np.array(DEFAULT_U_MS_PARAMS)
     default_sfr_params[0] = np.clip(0.3 * (logmp - 11.0) + 11.4, 11.0, 13.0)
     default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 0.7, -1.5, -0.2)
     default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) - 0.3, 0.2, 3.0)
@@ -962,7 +962,7 @@ def get_loss_data_fixed_hi(
 
     sfr_ms_params_err = np.array([0.5, 0.5, 1.0, 3.0])
 
-    default_q_params = np.array(list(DEFAULT_U_Q_PARAMS.values()))
+    default_q_params = np.array(DEFAULT_U_Q_PARAMS)
     default_q_params[0] = np.clip(-0.5 * (logmp - 11.0) + 1.5, 0.7, 1.5)
     default_q_params[2] = -2.0
     q_params = np.array(_get_unbounded_q_params(*default_q_params))
@@ -1223,7 +1223,7 @@ def get_loss_data_fixed_hi_rej(
 
     t_fstar_max = logt[index_select][np.argmax(log_fstar_sim)]
 
-    default_sfr_params = np.array(list(DEFAULT_U_MS_PARAMS.values()))
+    default_sfr_params = np.array(DEFAULT_U_MS_PARAMS)
     default_sfr_params[0] = np.clip(0.3 * (logmp - 11.0) + 11.4, 11.0, 13.0)
     default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 0.7, -1.5, -0.2)
     default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) - 0.3, 0.2, 3.0)
@@ -1237,7 +1237,7 @@ def get_loss_data_fixed_hi_rej(
 
     sfr_ms_params_err = np.array([0.5, 0.5, 1.0, 3.0])
 
-    default_q_params = np.array(list(DEFAULT_U_Q_PARAMS.values()))
+    default_q_params = np.array(DEFAULT_U_Q_PARAMS)
     default_q_params[0] = np.clip(-0.5 * (logmp - 11.0) + 1.5, 0.7, 1.5)
     default_q_params[2] = -2.0
     default_q_params[3] = -2.9
@@ -1503,7 +1503,7 @@ def get_loss_data_fixed_hi_depl(
 
     t_fstar_max = logt[index_select][np.argmax(log_fstar_sim)]
 
-    default_sfr_params = np.array(list(DEFAULT_U_MS_PARAMS.values()))
+    default_sfr_params = np.array(DEFAULT_U_MS_PARAMS)
     default_sfr_params[0] = np.clip(0.3 * (logmp - 11.0) + 11.4, 11.0, 13.0)
     default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 0.7, -1.5, -0.2)
     default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) - 0.3, 0.2, 3.0)
@@ -1516,7 +1516,7 @@ def get_loss_data_fixed_hi_depl(
 
     sfr_ms_params_err = np.array([0.5, 0.5, 1.0])
 
-    default_q_params = np.array(list(DEFAULT_U_Q_PARAMS.values()))
+    default_q_params = np.array(DEFAULT_U_Q_PARAMS)
     default_q_params[0] = np.clip(-0.5 * (logmp - 11.0) + 1.5, 0.7, 1.5)
     default_q_params[2] = -2.0
     q_params = np.array(_get_unbounded_q_params(*default_q_params))
@@ -1772,7 +1772,7 @@ def get_loss_data_fixed_depl_noquench(
 
     t_fstar_max = logt[index_select][np.argmax(log_fstar_sim)]
 
-    default_sfr_params = np.array(list(DEFAULT_U_MS_PARAMS.values()))
+    default_sfr_params = np.array(DEFAULT_U_MS_PARAMS)
     default_sfr_params[0] = np.clip(0.3 * (logmp - 11.0) + 11.4, 11.0, 13.0)
     default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 0.7, -1.5, -0.2)
     default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) - 0.3, 0.2, 3.0)
@@ -1784,7 +1784,7 @@ def get_loss_data_fixed_depl_noquench(
 
     sfr_ms_params_err = np.array([0.5, 0.5, 1.0, 0.3])
 
-    default_q_params = np.array(list(DEFAULT_U_Q_PARAMS.values()))
+    default_q_params = np.array(DEFAULT_U_Q_PARAMS)
     default_q_params[0] = 1.8
     default_q_params[1] = -2.0
     q_params = np.array(_get_unbounded_q_params(*default_q_params))
