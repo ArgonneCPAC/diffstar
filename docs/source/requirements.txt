@@ -5,3 +5,5 @@ sphinx-copybutton
 numpy
 jax
 jaxlib
+diffmah
+h5py

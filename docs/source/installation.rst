@@ -5,7 +5,8 @@ Dependencies
 ------------
 
 ``diffstar`` requires `numpy <https://numpy.org/>`__, 
-`jax <https://jax.readthedocs.io/en/latest/>`__, and 
+`jax <https://jax.readthedocs.io/en/latest/>`__, 
+`h5py <https://docs.h5py.org/en/stable/>`__, and 
 `diffmah <https://github.com/ArgonneCPAC/diffmah/>`__.
 
 Installing the latest release
