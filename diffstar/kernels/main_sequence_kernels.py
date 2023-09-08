@@ -16,18 +16,24 @@ from jax import vmap
 from ..utils import _inverse_sigmoid, _jax_get_dt_array, _sigmoid
 from .gas_consumption import _gas_conversion_kern, _get_lagged_gas
 
-INDX_K = 9.0  # Main sequence efficiency transition speed.
+DEFAULT_MS_PDICT = OrderedDict(
+    lgmcrit=12.0,
+    lgy_at_mcrit=-1.0,
+    indx_lo=1.0,
+    indx_hi=-1.0,
+    tau_dep=2.0,
+)
+DEFAULT_MS_PARAMS = np.array(list(DEFAULT_MS_PDICT.values()))
 
-DEFAULT_N_STEPS = 50
-DEFAULT_T_MIN = 0.01
-
-_SFR_PARAM_BOUNDS = OrderedDict(
+MS_PARAM_BOUNDS_PDICT = OrderedDict(
     lgmcrit=(9.0, 13.5),
     lgy_at_mcrit=(-3.0, 0.0),
     indx_lo=(0.0, 5.0),
     indx_hi=(-5.0, 0.0),
     tau_dep=(0.01, 20.0),
 )
+
+INDX_K = 9.0  # Main sequence efficiency transition speed.
 
 
 def calculate_sigmoid_bounds(param_bounds):
@@ -42,7 +48,7 @@ def calculate_sigmoid_bounds(param_bounds):
     return bounds_out
 
 
-SFR_PARAM_BOUNDS = calculate_sigmoid_bounds(_SFR_PARAM_BOUNDS)
+MS_BOUNDING_SIGMOID_PDICT = calculate_sigmoid_bounds(MS_PARAM_BOUNDS_PDICT)
 
 
 @jjit
@@ -57,7 +63,7 @@ def _lax_ms_sfh_scalar_kern(t_form, mah_params, ms_params, lgt0, fb, t_table):
     sfr_eff = _sfr_eff_plaw(log_mah_at_tform, *sfr_eff_params)
 
     tau_dep = ms_params[4]
-    tau_dep_max = SFR_PARAM_BOUNDS["tau_dep"][3]
+    tau_dep_max = MS_BOUNDING_SIGMOID_PDICT["tau_dep"][3]
 
     dtarr = _jax_get_dt_array(t_table)
 
@@ -128,11 +134,11 @@ def _get_bounded_sfr_params(
     u_indx_hi,
     u_tau_dep,
 ):
-    lgmcrit = _sigmoid(u_lgmcrit, *SFR_PARAM_BOUNDS["lgmcrit"])
-    lgy_at_mcrit = _sigmoid(u_lgy_at_mcrit, *SFR_PARAM_BOUNDS["lgy_at_mcrit"])
-    indx_lo = _sigmoid(u_indx_lo, *SFR_PARAM_BOUNDS["indx_lo"])
-    indx_hi = _sigmoid(u_indx_hi, *SFR_PARAM_BOUNDS["indx_hi"])
-    tau_dep = _sigmoid(u_tau_dep, *SFR_PARAM_BOUNDS["tau_dep"])
+    lgmcrit = _sigmoid(u_lgmcrit, *MS_BOUNDING_SIGMOID_PDICT["lgmcrit"])
+    lgy_at_mcrit = _sigmoid(u_lgy_at_mcrit, *MS_BOUNDING_SIGMOID_PDICT["lgy_at_mcrit"])
+    indx_lo = _sigmoid(u_indx_lo, *MS_BOUNDING_SIGMOID_PDICT["indx_lo"])
+    indx_hi = _sigmoid(u_indx_hi, *MS_BOUNDING_SIGMOID_PDICT["indx_hi"])
+    tau_dep = _sigmoid(u_tau_dep, *MS_BOUNDING_SIGMOID_PDICT["tau_dep"])
     bounded_params = (
         lgmcrit,
         lgy_at_mcrit,
@@ -151,11 +157,13 @@ def _get_unbounded_sfr_params(
     indx_hi,
     tau_dep,
 ):
-    u_lgmcrit = _inverse_sigmoid(lgmcrit, *SFR_PARAM_BOUNDS["lgmcrit"])
-    u_lgy_at_mcrit = _inverse_sigmoid(lgy_at_mcrit, *SFR_PARAM_BOUNDS["lgy_at_mcrit"])
-    u_indx_lo = _inverse_sigmoid(indx_lo, *SFR_PARAM_BOUNDS["indx_lo"])
-    u_indx_hi = _inverse_sigmoid(indx_hi, *SFR_PARAM_BOUNDS["indx_hi"])
-    u_tau_dep = _inverse_sigmoid(tau_dep, *SFR_PARAM_BOUNDS["tau_dep"])
+    u_lgmcrit = _inverse_sigmoid(lgmcrit, *MS_BOUNDING_SIGMOID_PDICT["lgmcrit"])
+    u_lgy_at_mcrit = _inverse_sigmoid(
+        lgy_at_mcrit, *MS_BOUNDING_SIGMOID_PDICT["lgy_at_mcrit"]
+    )
+    u_indx_lo = _inverse_sigmoid(indx_lo, *MS_BOUNDING_SIGMOID_PDICT["indx_lo"])
+    u_indx_hi = _inverse_sigmoid(indx_hi, *MS_BOUNDING_SIGMOID_PDICT["indx_hi"])
+    u_tau_dep = _inverse_sigmoid(tau_dep, *MS_BOUNDING_SIGMOID_PDICT["tau_dep"])
     bounded_params = (
         u_lgmcrit,
         u_lgy_at_mcrit,
@@ -179,8 +187,11 @@ def _ms_sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params):
     tau_dep = bounded_params[4]
     efficiency = _sfr_eff_plaw(log_mah, *sfr_ms_params)
 
-    tau_dep_max = SFR_PARAM_BOUNDS["tau_dep"][3]
+    tau_dep_max = MS_BOUNDING_SIGMOID_PDICT["tau_dep"][3]
     lagged_mgas = _get_lagged_gas(lgt, dtarr, dmhdt, tau_dep, tau_dep_max)
 
     ms_sfr = lagged_mgas * efficiency
     return ms_sfr
+
+
+DEFAULT_U_MS_PARAMS = _get_unbounded_sfr_params(*DEFAULT_MS_PARAMS)

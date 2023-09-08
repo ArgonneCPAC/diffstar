@@ -19,7 +19,7 @@ from diffstar.data_loaders.load_smah_data import (
     load_tng_data,
     load_tng_small_data,
 )
-from diffstar.fit_smah_helpers import (
+from diffstar.fitting_helpers.fit_smah_helpers import (
     MIN_MASS_CUT,
     SSFRH_FLOOR,
     get_header,

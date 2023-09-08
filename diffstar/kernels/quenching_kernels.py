@@ -9,7 +9,12 @@ from jax import vmap
 
 from ..utils import _inverse_sigmoid, _sigmoid
 
-_Q_PARAM_BOUNDS = OrderedDict(
+DEFAULT_U_Q_PDICT = OrderedDict(
+    u_lg_qt=1.0, u_lg_qs=-0.3, u_lg_drop=-1.0, u_lg_rejuv=-0.5
+)
+DEFAULT_U_Q_PARAMS = np.array(list(DEFAULT_U_Q_PDICT.values()))
+
+Q_PARAM_BOUNDS_PDICT = OrderedDict(
     u_lg_qt=(0.1, 2.0), u_lg_qs=(-3.0, -0.01), u_lg_drop=(-3, 0.0), u_lg_rejuv=(-3, 0.0)
 )
 
@@ -26,7 +31,7 @@ def calculate_sigmoid_bounds(param_bounds):
     return bounds_out
 
 
-Q_PARAM_BOUNDS = calculate_sigmoid_bounds(_Q_PARAM_BOUNDS)
+MS_BOUNDING_SIGMOID_PDICT = calculate_sigmoid_bounds(Q_PARAM_BOUNDS_PDICT)
 
 
 @jjit
@@ -132,22 +137,22 @@ def _jax_partial_u_tw_kern(x, m, h, f1, f2):
 
 @jjit
 def _get_bounded_q_params(u_lg_qt, u_lg_qs, u_lg_drop, u_lg_rejuv):
-    lg_qt = _sigmoid(u_lg_qt, *Q_PARAM_BOUNDS["u_lg_qt"])
-    qs = _sigmoid(u_lg_qs, *Q_PARAM_BOUNDS["u_lg_qs"])
-    lg_drop = _sigmoid(u_lg_drop, *Q_PARAM_BOUNDS["u_lg_drop"])
+    lg_qt = _sigmoid(u_lg_qt, *MS_BOUNDING_SIGMOID_PDICT["u_lg_qt"])
+    qs = _sigmoid(u_lg_qs, *MS_BOUNDING_SIGMOID_PDICT["u_lg_qs"])
+    lg_drop = _sigmoid(u_lg_drop, *MS_BOUNDING_SIGMOID_PDICT["u_lg_drop"])
     lg_rejuv = _get_bounded_lg_rejuv(u_lg_rejuv, lg_drop)
     return lg_qt, qs, lg_drop, lg_rejuv
 
 
 @jjit
 def _get_bounded_lg_drop(u_lg_drop):
-    lg_drop = _sigmoid(u_lg_drop, *Q_PARAM_BOUNDS["u_lg_drop"])
+    lg_drop = _sigmoid(u_lg_drop, *MS_BOUNDING_SIGMOID_PDICT["u_lg_drop"])
     return lg_drop
 
 
 @jjit
 def _get_unbounded_lg_drop(lg_drop):
-    u_lg_drop = _inverse_sigmoid(lg_drop, *Q_PARAM_BOUNDS["u_lg_drop"])
+    u_lg_drop = _inverse_sigmoid(lg_drop, *MS_BOUNDING_SIGMOID_PDICT["u_lg_drop"])
     return u_lg_drop
 
 
@@ -155,24 +160,24 @@ def _get_unbounded_lg_drop(lg_drop):
 def _get_bounded_lg_rejuv(u_lg_rejuv, lg_drop):
     lg_rejuv = _sigmoid(
         u_lg_rejuv,
-        *Q_PARAM_BOUNDS["u_lg_rejuv"][:2],
+        *MS_BOUNDING_SIGMOID_PDICT["u_lg_rejuv"][:2],
         lg_drop,
-        Q_PARAM_BOUNDS["u_lg_rejuv"][3]
+        MS_BOUNDING_SIGMOID_PDICT["u_lg_rejuv"][3],
     )
     return lg_rejuv
 
 
 @jjit
 def _get_bounded_qt(u_lg_qt):
-    lg_qt = _sigmoid(u_lg_qt, *Q_PARAM_BOUNDS["u_lg_qt"])
+    lg_qt = _sigmoid(u_lg_qt, *MS_BOUNDING_SIGMOID_PDICT["u_lg_qt"])
     return lg_qt
 
 
 @jjit
 def _get_unbounded_q_params(lg_qt, lg_qs, lg_drop, lg_rejuv):
-    u_lg_qt = _inverse_sigmoid(lg_qt, *Q_PARAM_BOUNDS["u_lg_qt"])
-    u_lg_qs = _inverse_sigmoid(lg_qs, *Q_PARAM_BOUNDS["u_lg_qs"])
-    u_lg_drop = _inverse_sigmoid(lg_drop, *Q_PARAM_BOUNDS["u_lg_drop"])
+    u_lg_qt = _inverse_sigmoid(lg_qt, *MS_BOUNDING_SIGMOID_PDICT["u_lg_qt"])
+    u_lg_qs = _inverse_sigmoid(lg_qs, *MS_BOUNDING_SIGMOID_PDICT["u_lg_qs"])
+    u_lg_drop = _inverse_sigmoid(lg_drop, *MS_BOUNDING_SIGMOID_PDICT["u_lg_drop"])
     u_lg_rejuv = _get_unbounded_qrejuv(lg_rejuv, lg_drop)
     return u_lg_qt, u_lg_qs, u_lg_drop, u_lg_rejuv
 
@@ -185,8 +190,11 @@ _get_unbounded_q_params_vmap = jjit(vmap(_get_unbounded_q_params, (0,) * 4, 0))
 def _get_unbounded_qrejuv(lg_rejuv, lg_drop):
     u_lg_rejuv = _inverse_sigmoid(
         lg_rejuv,
-        *Q_PARAM_BOUNDS["u_lg_rejuv"][:2],
+        *MS_BOUNDING_SIGMOID_PDICT["u_lg_rejuv"][:2],
         lg_drop,
-        Q_PARAM_BOUNDS["u_lg_rejuv"][3]
+        MS_BOUNDING_SIGMOID_PDICT["u_lg_rejuv"][3],
     )
     return u_lg_rejuv
+
+
+DEFAULT_Q_PARAMS = _get_bounded_q_params(*DEFAULT_U_Q_PARAMS)

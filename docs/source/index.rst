@@ -20,5 +20,6 @@ User Guide
 
    installation.rst
    reference.rst
+   demos.rst
 
 See :ref:`Citation Information <cite_info>` for how to acknowledge Diffstar.

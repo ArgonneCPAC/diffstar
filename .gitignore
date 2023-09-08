@@ -1,5 +1,8 @@
 diffstar/_version.py
 
+docs/source/tng_cosmic_time.txt
+docs/source/tng_diffstar_example_data.h5
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -6,6 +6,7 @@ import warnings
 import h5py
 import numpy as np
 
+from ..defaults import SFR_MIN
 from ..utils import _get_dt_array
 
 TASSO = "/Users/aphearin/work/DATA/diffmah_data"
@@ -110,6 +111,7 @@ def load_bolshoi_data(gal_type, data_drn=BEBOP):
     halo_ids = halos["halo_id"]
     dt = _get_dt_array(bpl_t)
     sfrh = halos["sfr_history_main_prog"]
+    sfrh = np.where(sfrh < SFR_MIN, SFR_MIN, sfrh)
     sm_cumsum = np.cumsum(sfrh * dt, axis=1) * 1e9
 
     with warnings.catch_warnings():
@@ -169,6 +171,7 @@ def load_bolshoi_small_data(gal_type, data_drn=BEBOP):
     halo_ids = halos["halo_id"]
     dt = _get_dt_array(bpl_t)
     sfrh = halos["sfr_history_main_prog"]
+    sfrh = np.where(sfrh < SFR_MIN, SFR_MIN, sfrh)
     sm_cumsum = np.cumsum(sfrh * dt, axis=1) * 1e9
 
     with warnings.catch_warnings():
@@ -226,6 +229,7 @@ def load_tng_data(gal_type, data_drn=BEBOP):
     halo_ids = np.arange(len(halos["mpeak"])).astype("i8")
     dt = _get_dt_array(tng_t)
     sfrh = halos["sfh"]
+    sfrh = np.where(sfrh < SFR_MIN, SFR_MIN, sfrh)
     sm_cumsum = np.cumsum(sfrh * dt, axis=1) * 1e9
 
     with warnings.catch_warnings():
@@ -278,6 +282,7 @@ def load_tng_small_data(gal_type, data_drn=BEBOP):
     halo_ids = np.arange(len(halos["mpeak"])).astype("i8")
     dt = _get_dt_array(tng_t)
     sfrh = halos["sfh"]
+    sfrh = np.where(sfrh < SFR_MIN, SFR_MIN, sfrh)
     sm_cumsum = np.cumsum(sfrh * dt, axis=1) * 1e9
 
     with warnings.catch_warnings():
@@ -330,6 +335,7 @@ def load_mdpl_data(gal_type, data_drn=BEBOP):
     halo_ids = halos["halo_id"]
     dt = _get_dt_array(mdpl_t)
     sfrh = halos["sfr_history_main_prog"]
+    sfrh = np.where(sfrh < SFR_MIN, SFR_MIN, sfrh)
     sm_cumsum = np.cumsum(sfrh * dt, axis=1) * 1e9
 
     with warnings.catch_warnings():
@@ -383,6 +389,7 @@ def load_mdpl_small_data(gal_type, data_drn=BEBOP):
     halo_ids = halos["halo_id"]
     dt = _get_dt_array(mdpl_t)
     sfrh = halos["sfr_history_main_prog"]
+    sfrh = np.where(sfrh < SFR_MIN, SFR_MIN, sfrh)
     sm_cumsum = np.cumsum(sfrh * dt, axis=1) * 1e9
 
     with warnings.catch_warnings():
