@@ -1,3 +1,4 @@
+pandoc
 nbsphinx
 jupyter
 matplotlib
