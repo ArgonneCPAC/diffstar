@@ -1,4 +1,4 @@
-pandoc == 3
+pandoc == 3.1.7
 nbsphinx
 jupyter
 matplotlib
