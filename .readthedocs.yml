@@ -4,12 +4,9 @@ sphinx:
   configuration: docs/source/conf.py
 
 build:
-  os: ubuntu-22.04
+  os: "ubuntu-22.04"
   tools:
-    python: "3.9"
+    python: "mambaforge-22.9"
 
-python:
-  install:
-    - method: pip
-      path: .
-    - requirements: docs/source/requirements.txt
+conda:
+  environment: rtd_environment.yaml
