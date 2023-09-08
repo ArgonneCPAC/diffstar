@@ -9,4 +9,4 @@ build:
     python: "mambaforge-22.9"
 
 conda:
-  environment: rtd_environment.yaml
+  environment: docs/source/rtd_environment.yaml
