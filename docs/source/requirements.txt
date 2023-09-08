@@ -1,4 +1,4 @@
-pandoc
+pandoc == 3
 nbsphinx
 jupyter
 matplotlib
