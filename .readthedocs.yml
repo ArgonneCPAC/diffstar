@@ -10,3 +10,8 @@ build:
 
 conda:
   environment: docs/source/rtd_environment.yaml
+
+python:
+  install:
+    - method: pip
+      path: .
