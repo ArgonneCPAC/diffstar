@@ -9,6 +9,7 @@ dependencies:
   - nbsphinx
   - jupyter
   - matplotlib
+  - sphinx=7.2.4
   - sphinx-copybutton
   - numpy
   - jax
