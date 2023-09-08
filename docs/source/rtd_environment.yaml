@@ -5,7 +5,7 @@ channels:
 dependencies:
   - python=3.11
   - pip
-  - pandoc==3.1.7
+  - pandoc
   - nbsphinx
   - jupyter
   - matplotlib
