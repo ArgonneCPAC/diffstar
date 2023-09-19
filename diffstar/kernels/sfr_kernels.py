@@ -7,7 +7,7 @@ from jax import vmap
 
 from ..utils import jax_np_interp
 from .main_sequence_kernels import _ms_sfr_history_from_mah
-from .quenching_kernels import quenching_function
+from .quenching_kernels import _quenching_kern_u_params
 
 
 @jjit
@@ -300,6 +300,6 @@ def _sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params, q_params):
 
     """
     ms_sfr = _ms_sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params)
-    qfrac = quenching_function(lgt, *q_params)
+    qfrac = _quenching_kern_u_params(lgt, *q_params)
     sfr = qfrac * ms_sfr
     return sfr
