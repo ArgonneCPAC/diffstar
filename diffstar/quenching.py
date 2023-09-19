@@ -34,7 +34,7 @@ def quenching_function(lgt, u_lg_qt, u_lg_qs, u_lg_drop, u_lg_rejuv):
     History of the multiplicative change of SFR
 
     """
-    return qk.quenching_function(lgt, u_lg_qt, u_lg_qs, u_lg_drop, u_lg_rejuv)
+    return qk._quenching_kern_u_params(lgt, u_lg_qt, u_lg_qs, u_lg_drop, u_lg_rejuv)
 
 
 @jjit

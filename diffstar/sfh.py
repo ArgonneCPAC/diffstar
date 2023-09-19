@@ -11,7 +11,7 @@ from .kernels.main_sequence_kernels import (
     _get_bounded_sfr_params,
     _lax_ms_sfh_scalar_kern,
 )
-from .kernels.quenching_kernels import quenching_function
+from .kernels.quenching_kernels import _quenching_kern_u_params
 
 
 def get_sfh_from_mah_kern(
@@ -69,7 +69,7 @@ def get_sfh_from_mah_kern(
         args = t_form, mah_params, ms_params, lgt0, fb, t_table
         ms_sfr = _lax_ms_sfh_scalar_kern(*args)
         lgt_form = jnp.log10(t_form)
-        qfunc = quenching_function(lgt_form, *u_q_params)
+        qfunc = _quenching_kern_u_params(lgt_form, *u_q_params)
         sfr = qfunc * ms_sfr
         return sfr
 
