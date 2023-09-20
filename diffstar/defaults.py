@@ -14,6 +14,7 @@ N_T_LGSM_INTEGRATION = 100
 DEFAULT_N_STEPS = 50
 
 
+from .kernels.gas_consumption import FB
 from .kernels.main_sequence_kernels import (
     DEFAULT_MS_PARAMS,
     DEFAULT_MS_PDICT,
