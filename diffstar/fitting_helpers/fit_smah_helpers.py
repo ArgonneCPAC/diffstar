@@ -11,7 +11,7 @@ from jax import jit as jjit
 from jax import numpy as jnp
 
 from ..defaults import DEFAULT_U_MS_PARAMS, DEFAULT_U_Q_PARAMS
-from ..quenching import (
+from ..kernels.quenching_kernels import (
     _get_bounded_lg_drop,
     _get_bounded_q_params_vmap,
     _get_bounded_qt,

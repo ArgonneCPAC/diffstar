@@ -5,7 +5,7 @@ from jax import jit as jjit
 from jax import vmap
 
 from ..kernel_builders import get_ms_sfh_from_mah_kern
-from ..quenching import quenching_function
+from ..kernels.quenching_kernels import _quenching_kern_u_params
 from .test_diffstar_is_frozen import (
     _get_default_mah_params,
     _get_default_sfr_u_params,
@@ -27,7 +27,7 @@ def test_get_main_sequence_kernel_agrees_with_vmap_tacc(n_t=400, n_steps=100):
     lgt, dt, dmhdt, log_mah, u_ms_params, u_q_params = args
     tarr = 10**lgt
 
-    qfunc = quenching_function(lgt, *u_q_params)
+    qfunc = _quenching_kern_u_params(lgt, *u_q_params)
     ms_sfh = sfh / qfunc
 
     all_mah_params = _get_default_mah_params()
