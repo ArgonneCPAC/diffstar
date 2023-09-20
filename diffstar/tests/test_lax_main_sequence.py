@@ -4,6 +4,7 @@ import numpy as np
 from jax import jit as jjit
 from jax import vmap
 
+from ..defaults import FB, LGT0
 from ..kernel_builders import get_ms_sfh_from_mah_kern
 from ..kernels.quenching_kernels import _quenching_kern_u_params
 from .test_diffstar_is_frozen import (
@@ -34,9 +35,11 @@ def test_get_main_sequence_kernel_agrees_with_vmap_tacc(n_t=400, n_steps=100):
     lgt0, logmp, mah_logtc, k, early_index, late_index = all_mah_params
     mah_params = logmp, mah_logtc, early_index, late_index
 
-    ms_sfh_from_mah_kern = get_ms_sfh_from_mah_kern(lgt0=lgt0, n_steps=n_steps)
-    ms_sfh_from_mah_vmap = jjit(vmap(ms_sfh_from_mah_kern, in_axes=[0, None, None]))
-    lax_ms_sfh = ms_sfh_from_mah_vmap(tarr, mah_params, u_ms_params)
+    ms_sfh_from_mah_kern = get_ms_sfh_from_mah_kern(n_steps=n_steps)
+    ms_sfh_from_mah_vmap = jjit(
+        vmap(ms_sfh_from_mah_kern, in_axes=[0, None, None, None, None])
+    )
+    lax_ms_sfh = ms_sfh_from_mah_vmap(tarr, mah_params, u_ms_params, LGT0, FB)
 
     assert np.allclose(ms_sfh, lax_ms_sfh, rtol=0.05)
 
@@ -51,18 +54,20 @@ def test_main_sequence_kernel_builder_tobs_loops_are_self_consistent():
     tarr = np.linspace(0.1, 13.7, n_tobs)
 
     sfh_scalar_kern = get_ms_sfh_from_mah_kern()
-    sfr_at_t0 = sfh_scalar_kern(tarr[0], mah_params, u_ms_params)
+    sfr_at_t0 = sfh_scalar_kern(tarr[0], mah_params, u_ms_params, LGT0, FB)
     assert sfr_at_t0.shape == ()
 
-    sfh_python_loop = [sfh_scalar_kern(t, mah_params, u_ms_params) for t in tarr]
+    sfh_python_loop = [
+        sfh_scalar_kern(t, mah_params, u_ms_params, LGT0, FB) for t in tarr
+    ]
 
     sfh_vmap_tobs_kern = get_ms_sfh_from_mah_kern(tobs_loop="vmap")
-    sfh_vmap_tobs = sfh_vmap_tobs_kern(tarr, mah_params, u_ms_params)
+    sfh_vmap_tobs = sfh_vmap_tobs_kern(tarr, mah_params, u_ms_params, LGT0, FB)
     assert sfh_vmap_tobs.shape == (n_tobs,)
     assert np.allclose(sfh_python_loop, sfh_vmap_tobs, rtol=1e-4)
 
     sfh_scan_tobs_kern = get_ms_sfh_from_mah_kern(tobs_loop="scan")
-    sfh_scan_tobs = sfh_scan_tobs_kern(tarr, mah_params, u_ms_params)
+    sfh_scan_tobs = sfh_scan_tobs_kern(tarr, mah_params, u_ms_params, LGT0, FB)
     assert np.allclose(sfh_python_loop, sfh_scan_tobs, rtol=1e-4)
 
 
@@ -77,13 +82,13 @@ def test_main_sequence_kernel_builder_galpop_loops_are_self_consistent():
     tobs = 5.0
 
     sfh_scalar_kern = get_ms_sfh_from_mah_kern()
-    sfr_at_tobs = sfh_scalar_kern(tobs, mah_params, u_ms_params)
+    sfr_at_tobs = sfh_scalar_kern(tobs, mah_params, u_ms_params, LGT0, FB)
 
     n_galpop = 3
     outshape = (n_galpop,)
     mah_params_galpop = np.tile(mah_params, n_galpop).reshape((n_galpop, n_mah))
     u_ms_params_galpop = np.tile(u_ms_params, n_galpop).reshape((n_galpop, n_ms))
-    galpop_args = mah_params_galpop, u_ms_params_galpop
+    galpop_args = mah_params_galpop, u_ms_params_galpop, LGT0, FB
 
     sfr_at_tobs_galpop_python_loop = np.tile(sfr_at_tobs, n_galpop).reshape(outshape)
 
@@ -116,10 +121,12 @@ def test_main_sequence_kernel_builder_tobs_and_galpop_loops_are_self_consistent(
     outshape = (n_galpop, n_tobs)
     mah_params_galpop = np.tile(mah_params, n_galpop).reshape((n_galpop, n_mah))
     u_ms_params_galpop = np.tile(u_ms_params, n_galpop).reshape((n_galpop, n_ms))
-    galpop_args = mah_params_galpop, u_ms_params_galpop
+    galpop_args = mah_params_galpop, u_ms_params_galpop, LGT0, FB
 
     sfh_scalar_kern = get_ms_sfh_from_mah_kern()
-    sfh_python_loop = [sfh_scalar_kern(t, mah_params, u_ms_params) for t in tarr]
+    sfh_python_loop = [
+        sfh_scalar_kern(t, mah_params, u_ms_params, LGT0, FB) for t in tarr
+    ]
 
     sfh_python_loops = np.tile(sfh_python_loop, n_galpop).reshape(outshape)
 
