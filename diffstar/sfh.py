@@ -35,6 +35,14 @@ def sfh_singlegal(tarr, mah_params, u_ms_params, u_q_params, lgt0=LGT0, fb=FB):
     u_q_params : ndarray, shape (4, )
         u_q_params = (u_lg_qt, u_lg_qs, u_lg_drop, u_lg_rejuv)
 
+    lgt0 : float, optional
+        Base-10 log of the age of the universe in Gyr
+        Default value set by diffstar.defaults.LGT0
+
+    fb : float, optional
+        Cosmic baryon fraction
+        Default value set by diffstar.defaults.FB
+
     Returns
     -------
     sfh : ndarray, shape (n_t, )
@@ -61,6 +69,13 @@ def sfh_galpop(tarr, mah_params, u_ms_params, u_q_params, lgt0=LGT0, fb=FB):
     u_q_params : ndarray, shape (n_gals, 4)
         For each galaxy, u_q_params = (u_lg_qt, u_lg_qs, u_lg_drop, u_lg_rejuv)
 
+    lgt0 : float, optional
+        Base-10 log of the age of the universe in Gyr
+        Default value set by diffstar.defaults.LGT0
+
+    fb : float, optional
+        Cosmic baryon fraction
+        Default value set by diffstar.defaults.FB
 
     Returns
     -------
