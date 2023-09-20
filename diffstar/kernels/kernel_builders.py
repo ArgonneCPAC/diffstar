@@ -5,12 +5,11 @@ from jax import lax
 from jax import numpy as jnp
 from jax import vmap
 
-from .defaults import DEFAULT_N_STEPS, T_BIRTH_MIN
-from .kernels.main_sequence_kernels import (
-    _get_bounded_sfr_params,
-    _lax_ms_sfh_scalar_kern,
-)
-from .kernels.quenching_kernels import _quenching_kern_u_params
+from ..defaults import DEFAULT_N_STEPS, T_BIRTH_MIN
+from .main_sequence_kernels import _get_bounded_sfr_params, _lax_ms_sfh_scalar_kern
+from .quenching_kernels import _quenching_kern_u_params
+
+__all__ = ("get_sfh_from_mah_kern", "get_ms_sfh_from_mah_kern")
 
 
 def get_sfh_from_mah_kern(

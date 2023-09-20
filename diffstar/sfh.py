@@ -3,7 +3,7 @@
 from jax import jit as jjit
 
 from .defaults import DEFAULT_N_STEPS, FB, LGT0, T_BIRTH_MIN
-from .kernel_builders import get_sfh_from_mah_kern
+from .kernels.kernel_builders import get_sfh_from_mah_kern
 
 _sfh_singlegal_kern = get_sfh_from_mah_kern(
     n_steps=DEFAULT_N_STEPS,
