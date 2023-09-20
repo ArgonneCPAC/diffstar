@@ -4,7 +4,8 @@ import numpy as np
 from jax import jit as jjit
 from jax import vmap
 
-from ..sfh import get_sfh_from_mah_kern
+from ..defaults import FB, LGT0
+from ..kernels.kernel_builders import get_sfh_from_mah_kern
 from .test_diffstar_is_frozen import (
     _get_default_mah_params,
     _get_default_sfr_u_params,
@@ -30,9 +31,11 @@ def test_get_sfh_kernel_agrees_with_vmap_tacc(n_t=400, n_steps=100):
     lgt0, logmp, mah_logtc, k, early_index, late_index = all_mah_params
     mah_params = logmp, mah_logtc, early_index, late_index
 
-    sfh_from_mah_kern = get_sfh_from_mah_kern(lgt0=lgt0, n_steps=n_steps)
-    sfh_from_mah_vmap = jjit(vmap(sfh_from_mah_kern, in_axes=[0, None, None, None]))
-    lax_sfh = sfh_from_mah_vmap(tarr, mah_params, u_ms_params, u_q_params)
+    sfh_from_mah_kern = get_sfh_from_mah_kern(n_steps=n_steps)
+    sfh_from_mah_vmap = jjit(
+        vmap(sfh_from_mah_kern, in_axes=[0, None, None, None, None, None])
+    )
+    lax_sfh = sfh_from_mah_vmap(tarr, mah_params, u_ms_params, u_q_params, LGT0, FB)
 
     assert np.allclose(vmap_sfh, lax_sfh, rtol=0.05)
 
@@ -42,7 +45,7 @@ def test_sfh_kernel_builder_tobs_loops_are_self_consistent():
     regardless of whether scan or vmap is used
     """
     mah_params, u_ms_params, u_q_params = _get_all_default_params()
-    default_params = mah_params, u_ms_params, u_q_params
+    default_params = mah_params, u_ms_params, u_q_params, LGT0, FB
 
     n_tobs = 10
     tarr = np.linspace(0.1, 13.7, n_tobs)
@@ -68,7 +71,7 @@ def test_sfh_kernel_builder_galpop_loops_are_self_consistent():
     regardless of whether scan or vmap is used
     """
     mah_params, u_ms_params, u_q_params = _get_all_default_params()
-    default_params = mah_params, u_ms_params, u_q_params
+    default_params = mah_params, u_ms_params, u_q_params, LGT0, FB
     n_mah = len(mah_params)
     n_ms = len(u_ms_params)
     n_q = len(u_q_params)
@@ -83,7 +86,7 @@ def test_sfh_kernel_builder_galpop_loops_are_self_consistent():
     mah_params_galpop = np.tile(mah_params, n_galpop).reshape((n_galpop, n_mah))
     u_ms_params_galpop = np.tile(u_ms_params, n_galpop).reshape((n_galpop, n_ms))
     u_q_params_galpop = np.tile(u_q_params, n_galpop).reshape((n_galpop, n_q))
-    galpop_args = mah_params_galpop, u_ms_params_galpop, u_q_params_galpop
+    galpop_args = mah_params_galpop, u_ms_params_galpop, u_q_params_galpop, LGT0, FB
 
     sfr_at_tobs_galpop_python_loop = np.tile(sfr_at_tobs, n_galpop).reshape(outshape)
 
@@ -106,7 +109,7 @@ def test_main_sequence_kernel_builder_tobs_and_galpop_loops_are_self_consistent(
     whether scan or vmap is used
     """
     mah_params, u_ms_params, u_q_params = _get_all_default_params()
-    default_params = mah_params, u_ms_params, u_q_params
+    default_params = mah_params, u_ms_params, u_q_params, LGT0, FB
     n_mah = len(mah_params)
     n_ms = len(u_ms_params)
     n_q = len(u_q_params)
@@ -119,7 +122,7 @@ def test_main_sequence_kernel_builder_tobs_and_galpop_loops_are_self_consistent(
     mah_params_galpop = np.tile(mah_params, n_galpop).reshape((n_galpop, n_mah))
     u_ms_params_galpop = np.tile(u_ms_params, n_galpop).reshape((n_galpop, n_ms))
     u_q_params_galpop = np.tile(u_q_params, n_galpop).reshape((n_galpop, n_q))
-    galpop_args = mah_params_galpop, u_ms_params_galpop, u_q_params_galpop
+    galpop_args = mah_params_galpop, u_ms_params_galpop, u_q_params_galpop, LGT0, FB
 
     sfh_scalar_kern = get_sfh_from_mah_kern()
     sfh_python_loop = [sfh_scalar_kern(t, *default_params) for t in tarr]
