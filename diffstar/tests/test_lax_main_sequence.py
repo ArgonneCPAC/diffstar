@@ -4,7 +4,7 @@ import numpy as np
 from jax import jit as jjit
 from jax import vmap
 
-from ..main_sequence import get_ms_sfh_from_mah_kern
+from ..kernel_builders import get_ms_sfh_from_mah_kern
 from ..quenching import quenching_function
 from .test_diffstar_is_frozen import (
     _get_default_mah_params,

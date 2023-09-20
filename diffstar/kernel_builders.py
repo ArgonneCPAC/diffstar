@@ -32,15 +32,15 @@ def get_ms_sfh_from_mah_kern(
         args = t_form, mah_params, ms_params, lgt0, fb, t_table
         return _lax_ms_sfh_scalar_kern(*args)
 
-    kern_with_tobs_loop = _get_kern_with_tobs_loop(_kern, tobs_loop)
-    lax_ms_sfh_from_mah_kern = _get_kern_with_galpop_loop(
+    kern_with_tobs_loop = _get_ms_kern_with_tobs_loop(_kern, tobs_loop)
+    lax_ms_sfh_from_mah_kern = _get_ms_kern_with_galpop_loop(
         kern_with_tobs_loop, galpop_loop
     )
 
     return lax_ms_sfh_from_mah_kern
 
 
-def _get_kern_with_tobs_loop(kern, tobs_loop):
+def _get_ms_kern_with_tobs_loop(kern, tobs_loop):
     if tobs_loop == "vmap":
         _t = [0, None, None]
         new_kern = jjit(vmap(kern, in_axes=_t))
@@ -70,7 +70,7 @@ def _get_kern_with_tobs_loop(kern, tobs_loop):
     return new_kern
 
 
-def _get_kern_with_galpop_loop(kern, galpop_loop):
+def _get_ms_kern_with_galpop_loop(kern, galpop_loop):
     if galpop_loop == "vmap":
         _g = [None, 0, 0]
         new_kern = jjit(vmap(kern, in_axes=_g))
