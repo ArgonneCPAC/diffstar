@@ -4,18 +4,13 @@ import numpy as np
 from jax import jit as jjit
 from jax import vmap
 
-from ..defaults import FB, LGT0
+from ..defaults import DEFAULT_U_MS_PARAMS, DEFAULT_U_Q_PARAMS, FB, LGT0
 from ..kernels.kernel_builders import get_ms_sfh_from_mah_kern
-from ..kernels.quenching_kernels import _quenching_kern_u_params
-from .test_diffstar_is_frozen import (
-    _get_default_mah_params,
-    _get_default_sfr_u_params,
-    calc_sfh_on_default_params,
-)
+from .test_gas import _get_default_mah_params
 
 
 def _get_all_default_params():
-    u_ms_params, u_q_params = _get_default_sfr_u_params()
+    u_ms_params, u_q_params = DEFAULT_U_MS_PARAMS, DEFAULT_U_Q_PARAMS
     all_mah_params = _get_default_mah_params()
     lgt0, logmp, mah_logtc, k, early_index, late_index = all_mah_params
     mah_params = logmp, mah_logtc, early_index, late_index
@@ -24,24 +19,26 @@ def _get_all_default_params():
 
 def test_get_main_sequence_kernel_agrees_with_vmap_tacc(n_t=400, n_steps=100):
     """Enforce that when looping over tacc, vmap vs scan results agree within 5%"""
-    args, sfh = calc_sfh_on_default_params(n_t=n_t)
-    lgt, dt, dmhdt, log_mah, u_ms_params, u_q_params = args
-    tarr = 10**lgt
-
-    qfunc = _quenching_kern_u_params(lgt, *u_q_params)
-    ms_sfh = sfh / qfunc
+    u_ms_params = DEFAULT_U_MS_PARAMS
+    tarr = np.linspace(0.1, 10**LGT0, 100)
 
     all_mah_params = _get_default_mah_params()
     lgt0, logmp, mah_logtc, k, early_index, late_index = all_mah_params
     mah_params = logmp, mah_logtc, early_index, late_index
 
+    all_mah_params = _get_default_mah_params()
+    lgt0, logmp, mah_logtc, k, early_index, late_index = all_mah_params
+    mah_params = logmp, mah_logtc, early_index, late_index
+
+    ms_sfh_from_mah_scan = get_ms_sfh_from_mah_kern(n_steps=n_steps, tobs_loop="scan")
     ms_sfh_from_mah_kern = get_ms_sfh_from_mah_kern(n_steps=n_steps)
     ms_sfh_from_mah_vmap = jjit(
         vmap(ms_sfh_from_mah_kern, in_axes=[0, None, None, None, None])
     )
-    lax_ms_sfh = ms_sfh_from_mah_vmap(tarr, mah_params, u_ms_params, LGT0, FB)
+    vmap_ms_sfh = ms_sfh_from_mah_vmap(tarr, mah_params, u_ms_params, LGT0, FB)
+    lax_ms_sfh = ms_sfh_from_mah_scan(tarr, mah_params, u_ms_params, LGT0, FB)
 
-    assert np.allclose(ms_sfh, lax_ms_sfh, rtol=0.05)
+    assert np.allclose(vmap_ms_sfh, lax_ms_sfh, rtol=0.05)
 
 
 def test_main_sequence_kernel_builder_tobs_loops_are_self_consistent():

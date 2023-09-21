@@ -4,17 +4,13 @@ import numpy as np
 from jax import jit as jjit
 from jax import vmap
 
-from ..defaults import FB, LGT0
+from ..defaults import DEFAULT_U_MS_PARAMS, DEFAULT_U_Q_PARAMS, FB, LGT0
 from ..kernels.kernel_builders import get_sfh_from_mah_kern
-from .test_diffstar_is_frozen import (
-    _get_default_mah_params,
-    _get_default_sfr_u_params,
-    calc_sfh_on_default_params,
-)
+from .test_gas import _get_default_mah_params
 
 
 def _get_all_default_params():
-    u_ms_params, u_q_params = _get_default_sfr_u_params()
+    u_ms_params, u_q_params = DEFAULT_U_MS_PARAMS, DEFAULT_U_Q_PARAMS
     all_mah_params = _get_default_mah_params()
     lgt0, logmp, mah_logtc, k, early_index, late_index = all_mah_params
     mah_params = logmp, mah_logtc, early_index, late_index
@@ -23,19 +19,22 @@ def _get_all_default_params():
 
 def test_get_sfh_kernel_agrees_with_vmap_tacc(n_t=400, n_steps=100):
     """Enforce that when looping over tacc, vmap vs scan results agree within 5%"""
-    args, vmap_sfh = calc_sfh_on_default_params(n_t=n_t)
-    lgt, dt, dmhdt, log_mah, u_ms_params, u_q_params = args
-    tarr = 10**lgt
+    u_ms_params, u_q_params = DEFAULT_U_MS_PARAMS, DEFAULT_U_Q_PARAMS
+    tarr = np.linspace(0.1, 10**LGT0, 100)
 
     all_mah_params = _get_default_mah_params()
     lgt0, logmp, mah_logtc, k, early_index, late_index = all_mah_params
     mah_params = logmp, mah_logtc, early_index, late_index
 
+    sfh_from_mah_kern_scan = get_sfh_from_mah_kern(n_steps=n_steps, tobs_loop="scan")
     sfh_from_mah_kern = get_sfh_from_mah_kern(n_steps=n_steps)
     sfh_from_mah_vmap = jjit(
         vmap(sfh_from_mah_kern, in_axes=[0, None, None, None, None, None])
     )
-    lax_sfh = sfh_from_mah_vmap(tarr, mah_params, u_ms_params, u_q_params, LGT0, FB)
+    vmap_sfh = sfh_from_mah_vmap(tarr, mah_params, u_ms_params, u_q_params, LGT0, FB)
+    lax_sfh = sfh_from_mah_kern_scan(
+        tarr, mah_params, u_ms_params, u_q_params, LGT0, FB
+    )
 
     assert np.allclose(vmap_sfh, lax_sfh, rtol=0.05)
 

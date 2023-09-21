@@ -3,13 +3,13 @@
 import numpy as np
 
 from .. import sfh_galpop, sfh_singlegal
-from ..defaults import FB, LGT0, SFR_MIN
+from ..defaults import DEFAULT_U_MS_PARAMS, DEFAULT_U_Q_PARAMS, FB, LGT0, SFR_MIN
 from ..kernels.kernel_builders import get_sfh_from_mah_kern
-from .test_diffstar_is_frozen import _get_default_mah_params, _get_default_sfr_u_params
+from .test_gas import _get_default_mah_params
 
 
 def _get_all_default_params():
-    u_ms_params, u_q_params = _get_default_sfr_u_params()
+    u_ms_params, u_q_params = DEFAULT_U_MS_PARAMS, DEFAULT_U_Q_PARAMS
     all_mah_params = _get_default_mah_params()
     lgt0, logmp, mah_logtc, k, early_index, late_index = all_mah_params
     mah_params = logmp, mah_logtc, early_index, late_index
