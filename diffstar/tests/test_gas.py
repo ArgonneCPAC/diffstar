@@ -1,8 +1,10 @@
 """
 """
+from ..fitting_helpers.tests.test_fitting_kernels_are_frozen import (
+    calc_sfh_on_default_params,
+)
 from ..kernels.gas_consumption import _get_lagged_gas
 from ..kernels.main_sequence_kernels import MS_BOUNDING_SIGMOID_PDICT
-from .test_diffstar_is_frozen import calc_sfh_on_default_params
 
 
 def test_lagged_gas():

@@ -10,15 +10,17 @@ from diffmah.individual_halo_assembly import (
 )
 from jax import numpy as jnp
 
-from ..defaults import DEFAULT_U_MS_PARAMS, DEFAULT_U_Q_PARAMS, LGT0
-from ..fitting_helpers.fitting_kernels import _sfr_history_from_mah
-from ..kernels.quenching_kernels import _get_unbounded_q_params
-from ..utils import _get_dt_array
+from ...defaults import DEFAULT_U_MS_PARAMS, DEFAULT_U_Q_PARAMS, LGT0
+from ...kernels.quenching_kernels import _get_unbounded_q_params
+from ...utils import _get_dt_array
+from ..fitting_kernels import _sfr_history_from_mah
 
 DEFAULT_LOGM0 = 12.0
 
 _THIS_DRNAME = os.path.dirname(os.path.abspath(__file__))
-TESTING_DATA_DRN = os.path.join(_THIS_DRNAME, "testing_data")
+TESTING_DATA_DRN = os.path.join(
+    os.path.dirname(os.path.dirname(_THIS_DRNAME)), "tests", "testing_data"
+)
 
 
 def _get_default_mah_params():

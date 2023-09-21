@@ -4,8 +4,11 @@ import numpy as np
 
 from .. import sfh_galpop, sfh_singlegal
 from ..defaults import FB, LGT0, SFR_MIN
+from ..fitting_helpers.tests.test_fitting_kernels_are_frozen import (
+    _get_default_mah_params,
+    _get_default_sfr_u_params,
+)
 from ..kernels.kernel_builders import get_sfh_from_mah_kern
-from .test_diffstar_is_frozen import _get_default_mah_params, _get_default_sfr_u_params
 
 
 def _get_all_default_params():
