@@ -14,8 +14,8 @@ def calculate_sm_sfr_fstar_history_from_mah(
     dt,
     dmhdt,
     log_mah,
-    sfr_ms_params,
-    q_params,
+    u_ms_params,
+    u_q_params,
     index_select,
     index_high,
     fstar_tdelay,
@@ -42,11 +42,11 @@ def calculate_sm_sfr_fstar_history_from_mah(
     log_mah : ndarray of shape (n_times, )
         Diffmah halo mass accretion history in units of Msun
 
-    sfr_ms_params : ndarray of shape (5, )
+    u_ms_params : ndarray of shape (5, )
         Star formation efficiency model unbounded parameters. Includes
         (u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_tau_dep)
 
-    q_params : ndarray of shape (4, )
+    u_q_params : ndarray of shape (4, )
         Quenching model unbounded parameters. Includes (u_qt, u_qs, u_drop, u_rejuv)
 
     index_select: ndarray of shape (n_times_fstar, )
@@ -76,8 +76,8 @@ def calculate_sm_sfr_fstar_history_from_mah(
         dt,
         dmhdt,
         log_mah,
-        sfr_ms_params,
-        q_params,
+        u_ms_params,
+        u_q_params,
         index_select,
         index_high,
         fstar_tdelay,
@@ -90,8 +90,8 @@ def calculate_sm_sfr_history_from_mah(
     dt,
     dmhdt,
     log_mah,
-    sfr_ms_params,
-    q_params,
+    u_ms_params,
+    u_q_params,
 ):
     """Calculate individual galaxy SFH from precalculated halo MAH
 
@@ -115,11 +115,11 @@ def calculate_sm_sfr_history_from_mah(
     log_mah : ndarray of shape (n_times, )
         Diffmah halo mass accretion history in units of Msun
 
-    sfr_ms_params : ndarray of shape (5, )
+    u_ms_params : ndarray of shape (5, )
         Star formation efficiency model unbounded parameters. Includes
         (u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_tau_dep)
 
-    q_params : ndarray of shape (4, )
+    u_q_params : ndarray of shape (4, )
         Quenching model unbounded parameters. Includes (u_qt, u_qs, u_drop, u_rejuv)
 
     Returns
@@ -136,8 +136,8 @@ def calculate_sm_sfr_history_from_mah(
         dt,
         dmhdt,
         log_mah,
-        sfr_ms_params,
-        q_params,
+        u_ms_params,
+        u_q_params,
     )
 
 
@@ -146,8 +146,8 @@ def calculate_histories(
     lgt,
     dt,
     mah_params,
-    sfr_ms_params,
-    q_params,
+    u_ms_params,
+    u_q_params,
     index_select,
     index_high,
     fstar_tdelay,
@@ -172,11 +172,11 @@ def calculate_histories(
         Best fit diffmah halo parameters. Includes
         (logt0, logmp, logtc, k, early, late)
 
-    sfr_ms_params : ndarray of shape (5, )
+    u_ms_params : ndarray of shape (5, )
         Star formation efficiency model unbounded parameters. Includes
         (u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_tau_dep)
 
-    q_params : ndarray of shape (4, )
+    u_q_params : ndarray of shape (4, )
         Quenching model unbounded parameters. Includes
         (u_qt, u_qs, u_drop, u_rejuv)
 
@@ -212,8 +212,8 @@ def calculate_histories(
         lgt,
         dt,
         mah_params,
-        sfr_ms_params,
-        q_params,
+        u_ms_params,
+        u_q_params,
         index_select,
         index_high,
         fstar_tdelay,
@@ -223,7 +223,7 @@ def calculate_histories(
 calculate_histories_vmap = sfrk.calculate_histories_vmap
 
 
-def calculate_histories_batch(t_sim, mah_params, sfr_params, q_params, fstar_tdelay):
+def calculate_histories_batch(t_sim, mah_params, u_ms_params, u_q_params, fstar_tdelay):
     """Calculate MAH and SFH histories for a large population of halos.
 
 
@@ -236,11 +236,11 @@ def calculate_histories_batch(t_sim, mah_params, sfr_params, q_params, fstar_tde
         Best fit diffmah halo parameters. Includes
         (logt0, logmp, logtc, k, early, late)
 
-    sfr_params : ndarray of shape (ng, 5)
+    u_ms_params : ndarray of shape (ng, 5)
         Star formation efficiency model unbounded parameters. Includes
         (u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_tau_dep)
 
-    q_params : ndarray of shape (ng, 4)
+    u_q_params : ndarray of shape (ng, 4)
         Quenching model unbounded parameters. Includes
         (u_qt, u_qs, u_drop, u_rejuv)
 
@@ -284,7 +284,7 @@ def calculate_histories_batch(t_sim, mah_params, sfr_params, q_params, fstar_tde
     ), "t_sim needs to be strictly monotonically increasing"
     assert np.all(t_sim > 0.0), "t_sim needs to be strictly positive"
     _msg = "Diffmah and Diffstar parameters need to have the same number of galaxies"
-    assert len(mah_params) == len(sfr_params) == len(q_params), _msg
+    assert len(mah_params) == len(u_ms_params) == len(u_q_params), _msg
 
     dt = _get_dt_array(t_sim)
     lgt = np.log10(t_sim)
@@ -306,8 +306,8 @@ def calculate_histories_batch(t_sim, mah_params, sfr_params, q_params, fstar_tde
             lgt,
             dt,
             mah_params[inds],
-            sfr_params[inds],
-            q_params[inds],
+            u_ms_params[inds],
+            u_q_params[inds],
             index_select,
             index_high,
             fstar_tdelay,
@@ -401,7 +401,7 @@ compute_fstar_vmap = sfrk.compute_fstar_vmap
 
 
 @jjit
-def _sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params, q_params):
+def _sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, u_ms_params, u_q_params):
     """Star formation history of an individual galaxy.
 
     SFH(t) = Quenching(t) x epsilon(Mhalo) int Depletion(t|t') x Mgas(t') dt'.
@@ -421,11 +421,11 @@ def _sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params, q_params):
     log_mah : ndarray of shape (n_times, )
         Diffmah halo mass accretion history in units of Msun
 
-    sfr_ms_params : ndarray of shape (5, )
+    u_ms_params : ndarray of shape (5, )
         Star formation efficiency model unbounded parameters. Includes
         (u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_tau_dep)
 
-    q_params : ndarray of shape (4, )
+    u_q_params : ndarray of shape (4, )
         Quenching model unbounded parameters. Includes
         (u_qt, u_qs, u_drop, u_rejuv)
 
@@ -435,14 +435,16 @@ def _sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params, q_params):
         Star formation rate history in units of Msun/yr assuming h=1.
 
     """
-    return sfrk._sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params, q_params)
+    return sfrk._sfr_history_from_mah(
+        lgt, dtarr, dmhdt, log_mah, u_ms_params, u_q_params
+    )
 
 
 @jjit
-def _ms_sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params):
+def _ms_sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, u_ms_params):
     """Main Sequence formation history of an individual galaxy."""
 
-    return sfrk._ms_sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params)
+    return sfrk._ms_sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, u_ms_params)
 
 
 @jjit
