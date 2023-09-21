@@ -14,7 +14,7 @@ from jax import numpy as jnp
 from jax import vmap
 
 from ..utils import _inverse_sigmoid, _jax_get_dt_array, _sigmoid
-from .gas_consumption import _gas_conversion_kern, _get_lagged_gas
+from .gas_consumption import _gas_conversion_kern
 
 DEFAULT_MS_PDICT = OrderedDict(
     lgmcrit=12.0,
@@ -176,22 +176,6 @@ def _get_unbounded_sfr_params(
 
 _get_bounded_sfr_params_vmap = jjit(vmap(_get_bounded_sfr_params, (0,) * 5, 0))
 _get_unbounded_sfr_params_vmap = jjit(vmap(_get_unbounded_sfr_params, (0,) * 5, 0))
-
-
-@jjit
-def _ms_sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, u_ms_params):
-    """Main Sequence formation history of an individual galaxy."""
-
-    ms_params = _get_bounded_sfr_params(*u_ms_params)
-    sfr_ms_params = ms_params[:4]
-    tau_dep = ms_params[4]
-    efficiency = _sfr_eff_plaw(log_mah, *sfr_ms_params)
-
-    tau_dep_max = MS_BOUNDING_SIGMOID_PDICT["tau_dep"][3]
-    lagged_mgas = _get_lagged_gas(lgt, dtarr, dmhdt, tau_dep, tau_dep_max)
-
-    ms_sfr = lagged_mgas * efficiency
-    return ms_sfr
 
 
 DEFAULT_U_MS_PARAMS = _get_unbounded_sfr_params(*DEFAULT_MS_PARAMS)

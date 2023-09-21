@@ -5,9 +5,14 @@ from jax import jit as jjit
 from jax import numpy as jnp
 from jax import vmap
 
+from ..kernels.gas_consumption import _get_lagged_gas
+from ..kernels.main_sequence_kernels import (
+    MS_BOUNDING_SIGMOID_PDICT,
+    _get_bounded_sfr_params,
+    _sfr_eff_plaw,
+)
+from ..kernels.quenching_kernels import _quenching_kern_u_params
 from ..utils import jax_np_interp
-from .main_sequence_kernels import _ms_sfr_history_from_mah
-from .quenching_kernels import _quenching_kern_u_params
 
 
 @jjit
@@ -303,3 +308,19 @@ def _sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params, q_params):
     qfrac = _quenching_kern_u_params(lgt, *q_params)
     sfr = qfrac * ms_sfr
     return sfr
+
+
+@jjit
+def _ms_sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, u_ms_params):
+    """Main Sequence formation history of an individual galaxy."""
+
+    ms_params = _get_bounded_sfr_params(*u_ms_params)
+    sfr_ms_params = ms_params[:4]
+    tau_dep = ms_params[4]
+    efficiency = _sfr_eff_plaw(log_mah, *sfr_ms_params)
+
+    tau_dep_max = MS_BOUNDING_SIGMOID_PDICT["tau_dep"][3]
+    lagged_mgas = _get_lagged_gas(lgt, dtarr, dmhdt, tau_dep, tau_dep_max)
+
+    ms_sfr = lagged_mgas * efficiency
+    return ms_sfr

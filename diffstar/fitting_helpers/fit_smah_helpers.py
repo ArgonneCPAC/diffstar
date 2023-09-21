@@ -11,6 +11,10 @@ from jax import jit as jjit
 from jax import numpy as jnp
 
 from ..defaults import DEFAULT_U_MS_PARAMS, DEFAULT_U_Q_PARAMS
+from ..kernels.main_sequence_kernels import (
+    _get_bounded_sfr_params_vmap,
+    _get_unbounded_sfr_params,
+)
 from ..kernels.quenching_kernels import (
     _get_bounded_lg_drop,
     _get_bounded_q_params_vmap,
@@ -19,13 +23,8 @@ from ..kernels.quenching_kernels import (
     _get_unbounded_qrejuv,
 )
 from ..utils import _sigmoid
-from .stars import (
-    _get_bounded_sfr_params_vmap,
-    _get_unbounded_sfr_params,
-    calculate_histories_batch,
-    calculate_sm_sfr_fstar_history_from_mah,
-    compute_fstar,
-)
+from .fitting_kernels import calculate_sm_sfr_fstar_history_from_mah, compute_fstar
+from .stars import calculate_histories_batch
 
 T_FIT_MIN = 1.0  # Only fit snapshots above this threshold. Gyr units.
 DLOGM_CUT = 3.5  # Only fit SMH within this dex of the present day stellar mass.
