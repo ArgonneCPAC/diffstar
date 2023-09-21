@@ -42,7 +42,7 @@ def calculate_sigmoid_bounds(param_bounds):
     for key in param_bounds:
         _bounds = (
             float(np.mean(param_bounds[key])),
-            abs(float(4.0 / np.diff(param_bounds[key]))),
+            abs(float(4.0 / np.diff(param_bounds[key])[0])),
         )
         bounds_out[key] = _bounds + param_bounds[key]
     return bounds_out
