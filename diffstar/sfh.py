@@ -60,7 +60,7 @@ def sfh_singlegal(
         See notes for further details
 
     u_q_params : ndarray, shape (4, )
-        u_q_params = (u_lg_qt, u_lg_qs, u_lg_drop, u_lg_rejuv)
+        u_q_params = (u_lg_qt, u_lg_lg_q_dt, u_lg_drop, u_lg_rejuv)
 
     lgt0 : float, optional
         Base-10 log of the age of the universe in Gyr
@@ -138,11 +138,11 @@ def sfh_galpop(
     u_q_params : ndarray, shape (n_gals, 4)
         For each galaxy, by default the input u_q_params will be interpreted as the
         unbounded versions of the standard diffstar params:
-            u_q_params = (u_lg_qt, u_lg_qs, u_lg_drop, u_lg_rejuv)
+            u_q_params = (u_lg_qt, u_lg_lg_q_dt, u_lg_drop, u_lg_rejuv)
 
         However, if q_param_type="bounded", then the input parameters parameters
         will be interpreted as the standard diffstar params:
-            u_q_params = (lg_qt, lg_qs, lg_drop, lg_rejuv)
+            u_q_params = (lg_qt, lg_lg_q_dt, lg_drop, lg_rejuv)
 
     lgt0 : float, optional
         Base-10 log of the age of the universe in Gyr
