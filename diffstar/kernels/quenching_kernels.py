@@ -68,7 +68,7 @@ def _quenching_kern_u_params(lgt, u_lg_qt, u_lg_qs, u_lg_drop, u_lg_rejuv):
     )
     qs = 10**lg_qs
     _bound_params = (lg_qt, qs, lg_drop, lg_rejuv)
-    return 10 ** _quenching_kern(lgt, *_bound_params)
+    return _quenching_kern(lgt, *_bound_params)
 
 
 @jjit
@@ -103,7 +103,7 @@ def _quenching_kern(lgt, lg_qt, q_dt, q_drop, q_rejuv):
     """
     qs = q_dt / 12
     f2 = q_drop - q_rejuv
-    return _jax_partial_u_tw_kern(lgt, lg_qt, qs, q_drop, f2)
+    return 10 ** _jax_partial_u_tw_kern(lgt, lg_qt, qs, q_drop, f2)
 
 
 @jjit

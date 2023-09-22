@@ -7,13 +7,10 @@ from jax import jit as jjit
 from .defaults import DEFAULT_N_STEPS, FB, LGT0, T_BIRTH_MIN
 from .kernels.kernel_builders import get_sfh_from_mah_kern
 from .kernels.main_sequence_kernels import (
-    _get_unbounded_sfr_params,
-    _get_unbounded_sfr_params_vmap,
+    _get_bounded_sfr_params,
+    _get_bounded_sfr_params_vmap,
 )
-from .kernels.quenching_kernels import (
-    _get_unbounded_q_params,
-    _get_unbounded_q_params_vmap,
-)
+from .kernels.quenching_kernels import _get_bounded_q_params, _get_bounded_q_params_vmap
 
 _sfh_singlegal_kern = get_sfh_from_mah_kern(
     n_steps=DEFAULT_N_STEPS,
@@ -32,12 +29,12 @@ _sfh_galpop_kern = get_sfh_from_mah_kern(
 def sfh_singlegal(
     tarr,
     mah_params,
-    u_ms_params,
-    u_q_params,
+    ms_params,
+    q_params,
     lgt0=LGT0,
     fb=FB,
-    ms_param_type="unbounded",
-    q_param_type="unbounded",
+    ms_param_type="bounded",
+    q_param_type="bounded",
 ):
     """Calculate the star formation history of a single diffstar galaxy
 
@@ -48,19 +45,19 @@ def sfh_singlegal(
     mah_params : ndarray, shape (4, )
         mah_params = (lgm0, logtc, early_index, late_index)
 
-    u_ms_params : ndarray, shape (5, )
-        By default the input u_ms_params will be interpreted as the
-        unbounded versions of the standard diffstar params:
-            u_ms_params = (u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_tau_dep)
+    ms_params : ndarray, shape (5, )
+        By default the input ms_params will be interpreted as
+        the standard diffstar params:
+            ms_params = (lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, tau_dep)
 
-        However, if ms_param_type="bounded", then the input parameters parameters
-        will be interpreted as the standard diffstar params:
-            u_ms_params = (lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, tau_dep)
+        However, if ms_param_type="unbounded", then the input parameters parameters
+        will be interpreted as the unbounded versions of the diffstar params:
+            ms_params = (u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_tau_dep)
 
         See notes for further details
 
-    u_q_params : ndarray, shape (4, )
-        u_q_params = (u_lg_qt, u_lg_qs, u_lg_drop, u_lg_rejuv)
+    q_params : ndarray, shape (4, )
+        q_params = (lg_qt, lg_qs, lg_drop, lg_rejuv)
 
     lgt0 : float, optional
         Base-10 log of the age of the universe in Gyr
@@ -72,11 +69,11 @@ def sfh_singlegal(
 
     ms_param_type : bool, optional
         Determines whether to interpret the input main sequence parameters as being
-        unbounded version of the diffstar params. Default is "unbounded".
+        unbounded version of the diffstar params. Default is "bounded".
 
     q_param_type : bool, optional
         Determines whether to interpret the input quenching parameters as being
-        unbounded version of the diffstar params. Default is "unbounded".
+        unbounded version of the diffstar params. Default is "bounded".
 
     Returns
     -------
@@ -96,11 +93,11 @@ def sfh_singlegal(
     physically allowed range, or else infinities and NaNs can result.
 
     """
-    if ms_param_type == "bounded":
-        u_ms_params = _get_unbounded_sfr_params(*u_ms_params)
-    if q_param_type == "bounded":
-        u_q_params = _get_unbounded_q_params(*u_q_params)
-    return _sfh_singlegal_kern(tarr, mah_params, u_ms_params, u_q_params, lgt0, fb)
+    if ms_param_type == "unbounded":
+        ms_params = _get_bounded_sfr_params(*ms_params)
+    if q_param_type == "unbounded":
+        q_params = _get_bounded_q_params(*q_params)
+    return _sfh_singlegal_kern(tarr, mah_params, ms_params, q_params, lgt0, fb)
 
 
 @partial(jjit, static_argnames=["ms_param_type", "q_param_type"])
@@ -108,12 +105,12 @@ def sfh_singlegal(
 def sfh_galpop(
     tarr,
     mah_params,
-    u_ms_params,
-    u_q_params,
+    ms_params,
+    q_params,
     lgt0=LGT0,
     fb=FB,
-    ms_param_type="unbounded",
-    q_param_type="unbounded",
+    ms_param_type="bounded",
+    q_param_type="bounded",
 ):
     """Calculate the star formation history of a diffstar galaxy population
 
@@ -178,8 +175,8 @@ def sfh_galpop(
     physically allowed range, or else infinities and NaNs can result.
 
     """
-    if ms_param_type == "bounded":
-        u_ms_params = _get_unbounded_sfr_params_vmap(*u_ms_params)
-    if q_param_type == "bounded":
-        u_q_params = _get_unbounded_q_params_vmap(*u_q_params)
-    return _sfh_galpop_kern(tarr, mah_params, u_ms_params, u_q_params, lgt0, fb)
+    if ms_param_type == "unbounded":
+        ms_params = _get_bounded_sfr_params_vmap(*ms_params)
+    if q_param_type == "unbounded":
+        q_params = _get_bounded_q_params_vmap(*q_params)
+    return _sfh_galpop_kern(tarr, mah_params, ms_params, q_params, lgt0, fb)
