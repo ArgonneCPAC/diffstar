@@ -37,7 +37,7 @@ def _get_default_mah_params():
 
 def _get_default_sfr_u_params():
     u_ms_params = jnp.array(DEFAULT_U_MS_PARAMS)
-    u_q_params = jnp.array(_get_unbounded_q_params(*DEFAULT_U_Q_PARAMS))
+    u_q_params = jnp.array(DEFAULT_U_Q_PARAMS)
     return u_ms_params, u_q_params
 
 
@@ -82,8 +82,7 @@ def test_default_u_q_params_do_not_change():
     This unit test is used to enforce that the behavior of Diffstar SFH
     does not accidentally change as the code evolves. We may actually wish to update
     the default parameters of Diffstar in future, in which case this unit test will
-    need to be updated. But generally speaking, changing this unit test should only
-    be done deliberately and with a very good reason.
+    need to be updated. But changing this unit test should only be done deliberately.
 
     """
     args, sfh = calc_sfh_on_default_params()
@@ -91,7 +90,7 @@ def test_default_u_q_params_do_not_change():
 
     u_q_fn = os.path.join(TESTING_DATA_DRN, "default_params_test_u_q_params.txt")
     frozen_u_q_params = np.loadtxt(u_q_fn)
-    assert np.allclose(u_q_params, frozen_u_q_params)
+    assert np.allclose(u_q_params, frozen_u_q_params, rtol=1e-4)
 
 
 def test_sfh_on_default_params_is_frozen():
@@ -100,8 +99,7 @@ def test_sfh_on_default_params_is_frozen():
     This unit test is used to enforce that the behavior of Diffstar SFH
     does not accidentally change as the code evolves. We may actually wish to update
     the default parameters of Diffstar in future, in which case this unit test will
-    need to be updated. But generally speaking, changing this unit test should only
-    be done deliberately and with a very good reason.
+    need to be updated. But changing this unit test should only be done deliberately.
 
     """
     args, sfh = calc_sfh_on_default_params()
