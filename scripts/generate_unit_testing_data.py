@@ -12,8 +12,8 @@ from diffmah.individual_halo_assembly import DEFAULT_MAH_PARAMS, _calc_halo_hist
 
 from diffstar.data_loaders.load_bpl import LGT0 as LGT0_BPL
 from diffstar.data_loaders.load_bpl import TASSO_BPL_DRN, load_bpl_diffstar_data
-from diffstar.fitting_helpers.stars import _sfr_history_from_mah
-from diffstar.tests.test_diffstar_is_frozen import (
+from diffstar.fitting_helpers.fitting_kernels import _sfr_history_from_mah
+from diffstar.fitting_helpers.tests.test_fitting_kernels_are_frozen import (
     _get_default_mah_params,
     calc_sfh_on_default_params,
 )
@@ -26,7 +26,6 @@ TASSO = "/Users/aphearin/work/repositories/python/diffstar/diffstar/tests/testin
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser()
     parser.add_argument("testing_drn", help="Path to testing_data directory")
     args = parser.parse_args()
@@ -109,6 +108,7 @@ if __name__ == "__main__":
     )
     np.savetxt(os.path.join(testing_drn, "lgt_bpl.txt"), lgt_bpl)
     np.savetxt(os.path.join(testing_drn, "dt_bpl.txt"), dt_bpl)
+    np.savetxt(
         os.path.join(testing_drn, "halo_ids_test_sample.txt"), halo_ids_test_sample
     )
     np.savetxt(os.path.join(testing_drn, "lgt_bpl.txt"), lgt_bpl)

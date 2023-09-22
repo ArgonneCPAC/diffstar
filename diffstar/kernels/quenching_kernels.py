@@ -9,10 +9,10 @@ from jax import vmap
 
 from ..utils import _inverse_sigmoid, _sigmoid
 
-DEFAULT_U_Q_PDICT = OrderedDict(
-    u_lg_qt=1.0, u_lg_qs=-0.3, u_lg_drop=-1.0, u_lg_rejuv=-0.5
+DEFAULT_Q_PDICT = OrderedDict(
+    u_lg_qt=1.0, u_lg_qs=-0.50725, u_lg_drop=-1.01773, u_lg_rejuv=-0.212307
 )
-DEFAULT_U_Q_PARAMS = np.array(list(DEFAULT_U_Q_PDICT.values()))
+DEFAULT_Q_PARAMS = np.array(list(DEFAULT_Q_PDICT.values()))
 
 Q_PARAM_BOUNDS_PDICT = OrderedDict(
     u_lg_qt=(0.1, 2.0), u_lg_qs=(-3.0, -0.01), u_lg_drop=(-3, 0.0), u_lg_rejuv=(-3, 0.0)
@@ -198,4 +198,7 @@ def _get_unbounded_qrejuv(lg_rejuv, lg_drop):
     return u_lg_rejuv
 
 
-DEFAULT_Q_PARAMS = _get_bounded_q_params(*DEFAULT_U_Q_PARAMS)
+DEFAULT_U_Q_PARAMS = _get_unbounded_q_params(*DEFAULT_Q_PARAMS)
+DEFAULT_U_Q_PDICT = OrderedDict(
+    [(key, val) for key, val in zip(DEFAULT_Q_PDICT.keys(), DEFAULT_U_Q_PARAMS)]
+)
