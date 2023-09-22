@@ -37,7 +37,7 @@ def _get_default_mah_params():
 
 def _get_default_sfr_u_params():
     u_ms_params = jnp.array(DEFAULT_U_MS_PARAMS)
-    u_q_params = jnp.array(_get_unbounded_q_params(*DEFAULT_U_Q_PARAMS))
+    u_q_params = jnp.array(DEFAULT_U_Q_PARAMS)
     return u_ms_params, u_q_params
 
 

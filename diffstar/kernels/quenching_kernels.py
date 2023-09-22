@@ -63,16 +63,15 @@ def _quenching_kern_u_params(lgt, u_lg_qt, u_lg_qs, u_lg_drop, u_lg_rejuv):
     History of the multiplicative change of SFR
 
     """
-    lg_qt, lg_qs, lg_drop, lg_rejuv = _get_bounded_q_params(
+    lg_qt, qs, lg_drop, lg_rejuv = _get_bounded_q_params(
         u_lg_qt, u_lg_qs, u_lg_drop, u_lg_rejuv
     )
-    qs = 10**lg_qs
     _bound_params = (lg_qt, qs, lg_drop, lg_rejuv)
     return _quenching_kern(lgt, *_bound_params)
 
 
 @jjit
-def _quenching_kern(lgt, lg_qt, q_dt, q_drop, q_rejuv):
+def _quenching_kern(lgt, lg_qt, q_dt, lg_q_drop, lg_q_rejuv):
     """Base-10 logarithmic drop and symmetric rise in SFR over a time interval.
 
     Parameters
@@ -89,11 +88,11 @@ def _quenching_kern(lgt, lg_qt, q_dt, q_drop, q_rejuv):
         SFR first begins to drop below zero at lgt = lg_qt - q_dt/2
         SFR first attains its asymptotic final value at lgt = lg_qt + q_dt/2
 
-    q_drop : float
+    lg_q_drop : float
         Base-10 log of the lowest drop in SFR.
         The quenching function reaches this lowest point at t = t_q
 
-    q_rejuv : float
+    lg_q_rejuv : float
         Base-10 log of the asymptotic SFR value after rejuvenation completes
 
     Returns
@@ -102,8 +101,8 @@ def _quenching_kern(lgt, lg_qt, q_dt, q_drop, q_rejuv):
 
     """
     qs = q_dt / 12
-    f2 = q_drop - q_rejuv
-    return 10 ** _jax_partial_u_tw_kern(lgt, lg_qt, qs, q_drop, f2)
+    f2 = lg_q_drop - lg_q_rejuv
+    return 10 ** _jax_partial_u_tw_kern(lgt, lg_qt, qs, lg_q_drop, f2)
 
 
 @jjit
@@ -138,7 +137,8 @@ def _jax_partial_u_tw_kern(x, m, h, f1, f2):
 @jjit
 def _get_bounded_q_params(u_lg_qt, u_lg_qs, u_lg_drop, u_lg_rejuv):
     lg_qt = _sigmoid(u_lg_qt, *MS_BOUNDING_SIGMOID_PDICT["u_lg_qt"])
-    qs = _sigmoid(u_lg_qs, *MS_BOUNDING_SIGMOID_PDICT["u_lg_qs"])
+    lg_qs = _sigmoid(u_lg_qs, *MS_BOUNDING_SIGMOID_PDICT["u_lg_qs"])
+    qs = 10**lg_qs
     lg_drop = _sigmoid(u_lg_drop, *MS_BOUNDING_SIGMOID_PDICT["u_lg_drop"])
     lg_rejuv = _get_bounded_lg_rejuv(u_lg_rejuv, lg_drop)
     return lg_qt, qs, lg_drop, lg_rejuv
@@ -174,8 +174,9 @@ def _get_bounded_qt(u_lg_qt):
 
 
 @jjit
-def _get_unbounded_q_params(lg_qt, lg_qs, lg_drop, lg_rejuv):
+def _get_unbounded_q_params(lg_qt, qs, lg_drop, lg_rejuv):
     u_lg_qt = _inverse_sigmoid(lg_qt, *MS_BOUNDING_SIGMOID_PDICT["u_lg_qt"])
+    lg_qs = jnp.log10(qs)
     u_lg_qs = _inverse_sigmoid(lg_qs, *MS_BOUNDING_SIGMOID_PDICT["u_lg_qs"])
     u_lg_drop = _inverse_sigmoid(lg_drop, *MS_BOUNDING_SIGMOID_PDICT["u_lg_drop"])
     u_lg_rejuv = _get_unbounded_qrejuv(lg_rejuv, lg_drop)
