@@ -27,6 +27,7 @@ def test_bounding_function_returns_finite_results_on_default_u_q_params():
 
 
 def test_default_quenching_params_respect_bounds():
+    assert set(Q_PARAM_BOUNDS_PDICT.keys()) == set(DEFAULT_U_Q_PDICT.keys())
     for key, bounds in Q_PARAM_BOUNDS_PDICT.items():
         lo, hi = bounds
         default_val = DEFAULT_U_Q_PDICT[key]
