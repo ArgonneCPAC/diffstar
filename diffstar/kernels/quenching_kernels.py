@@ -10,12 +10,12 @@ from jax import vmap
 from ..utils import _inverse_sigmoid, _sigmoid
 
 DEFAULT_Q_PDICT = OrderedDict(
-    u_lg_qt=1.0, u_lg_qs=-0.50725, u_lg_drop=-1.01773, u_lg_rejuv=-0.212307
+    lg_qt=1.0, qlglgdt=-0.50725, lg_drop=-1.01773, lg_rejuv=-0.212307
 )
 DEFAULT_Q_PARAMS = np.array(list(DEFAULT_Q_PDICT.values()))
 
 Q_PARAM_BOUNDS_PDICT = OrderedDict(
-    u_lg_qt=(0.1, 2.0), u_lg_qs=(-3.0, -0.01), u_lg_drop=(-3, 0.0), u_lg_rejuv=(-3, 0.0)
+    lg_qt=(0.1, 2.0), qlglgdt=(-3.0, -0.01), lg_drop=(-3, 0.0), lg_rejuv=(-3, 0.0)
 )
 
 
@@ -35,7 +35,7 @@ Q_BOUNDING_SIGMOID_PDICT = calculate_sigmoid_bounds(Q_PARAM_BOUNDS_PDICT)
 
 
 @jjit
-def _quenching_kern_u_params(lgt, u_lg_qt, u_lg_lg_q_dt, u_lg_drop, u_lg_rejuv):
+def _quenching_kern_u_params(lgt, u_lg_qt, u_qlglgdt, u_lg_drop, u_lg_rejuv):
     """Quenching function halting the star formation of main sequence galaxies.
 
     After some time, galaxies might experience a rejuvenated star formation.
@@ -49,7 +49,7 @@ def _quenching_kern_u_params(lgt, u_lg_qt, u_lg_lg_q_dt, u_lg_drop, u_lg_rejuv):
         Unbounded base-10 log of the time at which the quenching event bottoms out,
         i.e., the center of the event, in Gyr units.
 
-    u_lg_lg_q_dt : float
+    u_qlglgdt : float
         Unbounded value of log10(log10(q_dt))
         Controls duration of quenching event
 
@@ -64,10 +64,10 @@ def _quenching_kern_u_params(lgt, u_lg_qt, u_lg_lg_q_dt, u_lg_drop, u_lg_rejuv):
     History of the multiplicative change of SFR
 
     """
-    lg_qt, lg_lg_q_dt, lg_drop, lg_rejuv = _get_bounded_q_params(
-        u_lg_qt, u_lg_lg_q_dt, u_lg_drop, u_lg_rejuv
+    lg_qt, qlglgdt, lg_drop, lg_rejuv = _get_bounded_q_params(
+        u_lg_qt, u_qlglgdt, u_lg_drop, u_lg_rejuv
     )
-    lg_q_dt = 10**lg_lg_q_dt
+    lg_q_dt = 10**qlglgdt
     _bound_params = (lg_qt, lg_q_dt, lg_drop, lg_rejuv)
     return 10 ** _quenching_kern(lgt, *_bound_params)
 
@@ -99,7 +99,7 @@ def _quenching_kern(lgt, lg_qt, lg_q_dt, q_drop, q_rejuv):
 
     Returns
     -------
-    History of the base-10 logarithmic change in SFR
+    History of the multiplicative change of SFR
 
     """
     lg_q_dt_by_12 = lg_q_dt / 12  # account for 6σ width of two successive triweights
@@ -137,23 +137,23 @@ def _jax_partial_u_tw_kern(x, m, h, f1, f2):
 
 
 @jjit
-def _get_bounded_q_params(u_lg_qt, u_lg_lg_q_dt, u_lg_drop, u_lg_rejuv):
-    lg_qt = _sigmoid(u_lg_qt, *Q_BOUNDING_SIGMOID_PDICT["u_lg_qt"])
-    lg_lg_q_dt = _sigmoid(u_lg_lg_q_dt, *Q_BOUNDING_SIGMOID_PDICT["u_lg_qs"])
-    lg_drop = _sigmoid(u_lg_drop, *Q_BOUNDING_SIGMOID_PDICT["u_lg_drop"])
+def _get_bounded_q_params(u_lg_qt, u_qlglgdt, u_lg_drop, u_lg_rejuv):
+    lg_qt = _sigmoid(u_lg_qt, *Q_BOUNDING_SIGMOID_PDICT["lg_qt"])
+    qlglgdt = _sigmoid(u_qlglgdt, *Q_BOUNDING_SIGMOID_PDICT["qlglgdt"])
+    lg_drop = _sigmoid(u_lg_drop, *Q_BOUNDING_SIGMOID_PDICT["lg_drop"])
     lg_rejuv = _get_bounded_lg_rejuv(u_lg_rejuv, lg_drop)
-    return lg_qt, lg_lg_q_dt, lg_drop, lg_rejuv
+    return lg_qt, qlglgdt, lg_drop, lg_rejuv
 
 
 @jjit
 def _get_bounded_lg_drop(u_lg_drop):
-    lg_drop = _sigmoid(u_lg_drop, *Q_BOUNDING_SIGMOID_PDICT["u_lg_drop"])
+    lg_drop = _sigmoid(u_lg_drop, *Q_BOUNDING_SIGMOID_PDICT["lg_drop"])
     return lg_drop
 
 
 @jjit
 def _get_unbounded_lg_drop(lg_drop):
-    u_lg_drop = _inverse_sigmoid(lg_drop, *Q_BOUNDING_SIGMOID_PDICT["u_lg_drop"])
+    u_lg_drop = _inverse_sigmoid(lg_drop, *Q_BOUNDING_SIGMOID_PDICT["lg_drop"])
     return u_lg_drop
 
 
@@ -161,41 +161,53 @@ def _get_unbounded_lg_drop(lg_drop):
 def _get_bounded_lg_rejuv(u_lg_rejuv, lg_drop):
     lg_rejuv = _sigmoid(
         u_lg_rejuv,
-        *Q_BOUNDING_SIGMOID_PDICT["u_lg_rejuv"][:2],
+        *Q_BOUNDING_SIGMOID_PDICT["lg_rejuv"][:2],
         lg_drop,
-        Q_BOUNDING_SIGMOID_PDICT["u_lg_rejuv"][3],
+        Q_BOUNDING_SIGMOID_PDICT["lg_rejuv"][3],
     )
     return lg_rejuv
 
 
 @jjit
 def _get_bounded_qt(u_lg_qt):
-    lg_qt = _sigmoid(u_lg_qt, *Q_BOUNDING_SIGMOID_PDICT["u_lg_qt"])
+    lg_qt = _sigmoid(u_lg_qt, *Q_BOUNDING_SIGMOID_PDICT["lg_qt"])
     return lg_qt
 
 
 @jjit
-def _get_unbounded_q_params(lg_qt, lg_lg_q_dt, lg_drop, lg_rejuv):
-    u_lg_qt = _inverse_sigmoid(lg_qt, *Q_BOUNDING_SIGMOID_PDICT["u_lg_qt"])
-    u_lg_lg_q_dt = _inverse_sigmoid(lg_lg_q_dt, *Q_BOUNDING_SIGMOID_PDICT["u_lg_qs"])
-    u_lg_drop = _inverse_sigmoid(lg_drop, *Q_BOUNDING_SIGMOID_PDICT["u_lg_drop"])
+def _get_unbounded_q_params(lg_qt, qlglgdt, lg_drop, lg_rejuv):
+    u_lg_qt = _inverse_sigmoid(lg_qt, *Q_BOUNDING_SIGMOID_PDICT["lg_qt"])
+    u_qlglgdt = _inverse_sigmoid(qlglgdt, *Q_BOUNDING_SIGMOID_PDICT["qlglgdt"])
+    u_lg_drop = _inverse_sigmoid(lg_drop, *Q_BOUNDING_SIGMOID_PDICT["lg_drop"])
     u_lg_rejuv = _get_unbounded_qrejuv(lg_rejuv, lg_drop)
-    return u_lg_qt, u_lg_lg_q_dt, u_lg_drop, u_lg_rejuv
-
-
-_get_bounded_q_params_vmap = jjit(vmap(_get_bounded_q_params, (0,) * 4, 0))
-_get_unbounded_q_params_vmap = jjit(vmap(_get_unbounded_q_params, (0,) * 4, 0))
+    return u_lg_qt, u_qlglgdt, u_lg_drop, u_lg_rejuv
 
 
 @jjit
 def _get_unbounded_qrejuv(lg_rejuv, lg_drop):
     u_lg_rejuv = _inverse_sigmoid(
         lg_rejuv,
-        *Q_BOUNDING_SIGMOID_PDICT["u_lg_rejuv"][:2],
+        *Q_BOUNDING_SIGMOID_PDICT["lg_rejuv"][:2],
         lg_drop,
-        Q_BOUNDING_SIGMOID_PDICT["u_lg_rejuv"][3],
+        Q_BOUNDING_SIGMOID_PDICT["lg_rejuv"][3],
     )
     return u_lg_rejuv
+
+
+@jjit
+def _get_bounded_q_params_galpop_kern(q_params):
+    return jnp.array(_get_bounded_q_params(*q_params))
+
+
+@jjit
+def _get_unbounded_q_params_galpop_kern(u_q_params):
+    return jnp.array(_get_unbounded_q_params(*u_q_params))
+
+
+_get_bounded_q_params_vmap = jjit(vmap(_get_bounded_q_params_galpop_kern, in_axes=(0,)))
+_get_unbounded_q_params_vmap = jjit(
+    vmap(_get_unbounded_q_params_galpop_kern, in_axes=(0,))
+)
 
 
 DEFAULT_U_Q_PARAMS = _get_unbounded_q_params(*DEFAULT_Q_PARAMS)
