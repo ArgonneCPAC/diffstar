@@ -3,6 +3,7 @@
 from functools import partial
 
 from jax import jit as jjit
+from jax import numpy as jnp
 
 from .defaults import DEFAULT_N_STEPS, FB, LGT0, T_BIRTH_MIN
 from .kernels.kernel_builders import get_sfh_from_mah_kern
@@ -104,7 +105,6 @@ def sfh_singlegal(
 
 
 @partial(jjit, static_argnames=["ms_param_type", "q_param_type"])
-@jjit
 def sfh_galpop(
     tarr,
     mah_params,
@@ -178,8 +178,14 @@ def sfh_galpop(
     physically allowed range, or else infinities and NaNs can result.
 
     """
+    n_gals, n_ms = u_ms_params.shape
+    n_q = u_q_params.shape[1]
     if ms_param_type == "bounded":
-        u_ms_params = _get_unbounded_sfr_params_vmap(*u_ms_params)
+        u_ms_param_list = [u_ms_params[:, i] for i in range(n_ms)]
+        u_ms_params_seq = _get_unbounded_sfr_params_vmap(*u_ms_param_list)
+        u_ms_params = jnp.vstack(u_ms_params_seq).T
     if q_param_type == "bounded":
-        u_q_params = _get_unbounded_q_params_vmap(*u_q_params)
+        u_q_param_list = [u_q_params[:, i] for i in range(n_q)]
+        u_q_params_seq = _get_unbounded_q_params_vmap(*u_q_param_list)
+        u_q_params = jnp.vstack(u_q_params_seq).T
     return _sfh_galpop_kern(tarr, mah_params, u_ms_params, u_q_params, lgt0, fb)
