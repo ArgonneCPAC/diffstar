@@ -107,3 +107,15 @@ def test_ms_param_unbounding_agrees_with_v0p1():
     u_ms_params_inferred = _get_unbounded_sfr_params_vmap(ms_params_testing)
     assert np.all(np.isfinite(u_ms_params_inferred))
     assert np.allclose(u_ms_params_testing, u_ms_params_inferred, rtol=0.01)
+
+
+def test_q_param_unbounding_agrees_with_v0p1():
+    q_params_testing = np.loadtxt(
+        os.path.join(TESTING_DATA_DRN, "q_params_testing_v0.1.0.txt")
+    )
+    u_q_params_testing = np.loadtxt(
+        os.path.join(TESTING_DATA_DRN, "u_q_params_testing_v0.1.0.txt")
+    )
+    u_q_params_inferred = _get_unbounded_q_params_vmap(q_params_testing)
+    assert np.all(np.isfinite(u_q_params_inferred))
+    assert np.allclose(u_q_params_testing, u_q_params_inferred, rtol=0.01)
