@@ -196,12 +196,12 @@ def _get_unbounded_qrejuv(lg_rejuv, lg_drop):
 
 @jjit
 def _get_bounded_q_params_galpop_kern(q_params):
-    return _get_bounded_q_params(*q_params)
+    return jnp.array(_get_bounded_q_params(*q_params))
 
 
 @jjit
 def _get_unbounded_q_params_galpop_kern(u_q_params):
-    return _get_unbounded_q_params(*u_q_params)
+    return jnp.array(_get_unbounded_q_params(*u_q_params))
 
 
 _get_bounded_q_params_vmap = jjit(vmap(_get_bounded_q_params_galpop_kern, in_axes=(0,)))
