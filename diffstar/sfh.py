@@ -3,7 +3,6 @@
 from functools import partial
 
 from jax import jit as jjit
-from jax import numpy as jnp
 
 from .defaults import DEFAULT_N_STEPS, FB, LGT0, T_BIRTH_MIN
 from .kernels.kernel_builders import get_sfh_from_mah_kern
