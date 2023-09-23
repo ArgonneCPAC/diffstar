@@ -193,3 +193,6 @@ _get_unbounded_sfr_params_vmap = jjit(
 
 
 DEFAULT_U_MS_PARAMS = _get_unbounded_sfr_params(*DEFAULT_MS_PARAMS)
+DEFAULT_U_MS_PDICT = OrderedDict(
+    [(key, val) for key, val in zip(DEFAULT_MS_PDICT.keys(), DEFAULT_U_MS_PARAMS)]
+)
