@@ -80,8 +80,8 @@ def test_ms_param_bounding_agrees_with_v0p1():
     )
     ms_params_inferred = _get_bounded_sfr_params_vmap(u_ms_params_testing)
 
-    assert np.allclose(ms_params_testing, ms_params_inferred, atol=0.01)
     assert np.all(np.isfinite(ms_params_inferred))
+    assert np.allclose(ms_params_testing, ms_params_inferred, atol=0.01)
 
 
 def test_q_param_bounding_agrees_with_v0p1():
@@ -93,8 +93,8 @@ def test_q_param_bounding_agrees_with_v0p1():
     )
 
     q_params_inferred = _get_bounded_q_params_vmap(u_q_params_testing)
-    assert np.allclose(q_params_testing, q_params_inferred, atol=0.01)
     assert np.all(np.isfinite(q_params_inferred))
+    assert np.allclose(q_params_testing, q_params_inferred, atol=0.01)
 
 
 def test_ms_param_unbounding_agrees_with_v0p1():
@@ -106,3 +106,4 @@ def test_ms_param_unbounding_agrees_with_v0p1():
     )
     u_ms_params_inferred = _get_unbounded_sfr_params_vmap(ms_params_testing)
     assert np.all(np.isfinite(u_ms_params_inferred))
+    assert np.allclose(u_ms_params_testing, u_ms_params_inferred, rtol=0.01)
