@@ -174,8 +174,22 @@ def _get_unbounded_sfr_params(
     return bounded_params
 
 
-_get_bounded_sfr_params_vmap = jjit(vmap(_get_bounded_sfr_params, (0,) * 5, 0))
-_get_unbounded_sfr_params_vmap = jjit(vmap(_get_unbounded_sfr_params, (0,) * 5, 0))
+@jjit
+def _get_bounded_sfr_params_galpop_kern(ms_params):
+    return jnp.array(_get_bounded_sfr_params(*ms_params))
+
+
+@jjit
+def _get_unbounded_sfr_params_galpop_kern(u_ms_params):
+    return jnp.array(_get_unbounded_sfr_params(*u_ms_params))
+
+
+_get_bounded_sfr_params_vmap = jjit(
+    vmap(_get_bounded_sfr_params_galpop_kern, in_axes=(0,))
+)
+_get_unbounded_sfr_params_vmap = jjit(
+    vmap(_get_unbounded_sfr_params_galpop_kern, in_axes=(0,))
+)
 
 
 DEFAULT_U_MS_PARAMS = _get_unbounded_sfr_params(*DEFAULT_MS_PARAMS)
