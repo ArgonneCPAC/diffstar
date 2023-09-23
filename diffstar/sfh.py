@@ -178,14 +178,8 @@ def sfh_galpop(
     physically allowed range, or else infinities and NaNs can result.
 
     """
-    n_gals, n_ms = u_ms_params.shape
-    n_q = u_q_params.shape[1]
     if ms_param_type == "bounded":
-        u_ms_param_list = [u_ms_params[:, i] for i in range(n_ms)]
-        u_ms_params_seq = _get_unbounded_sfr_params_vmap(*u_ms_param_list)
-        u_ms_params = jnp.vstack(u_ms_params_seq).T
+        u_ms_params = _get_unbounded_sfr_params_vmap(u_ms_params)
     if q_param_type == "bounded":
-        u_q_param_list = [u_q_params[:, i] for i in range(n_q)]
-        u_q_params_seq = _get_unbounded_q_params_vmap(*u_q_param_list)
-        u_q_params = jnp.vstack(u_q_params_seq).T
+        u_q_params = _get_unbounded_q_params_vmap(u_q_params)
     return _sfh_galpop_kern(tarr, mah_params, u_ms_params, u_q_params, lgt0, fb)
