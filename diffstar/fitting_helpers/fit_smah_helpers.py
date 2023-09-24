@@ -10,7 +10,12 @@ from jax import grad
 from jax import jit as jjit
 from jax import numpy as jnp
 
-from ..defaults import DEFAULT_U_MS_PARAMS, DEFAULT_U_Q_PARAMS
+from ..defaults import (
+    DEFAULT_MS_PDICT,
+    DEFAULT_Q_PDICT,
+    DEFAULT_U_MS_PARAMS,
+    DEFAULT_U_Q_PARAMS,
+)
 from ..kernels.main_sequence_kernels import (
     _get_bounded_sfr_params_vmap,
     _get_unbounded_sfr_params,
@@ -34,12 +39,12 @@ SSFRH_FLOOR = 1e-12  # Clip SFH to this minimum sSFR value. 1/yr units.
 
 
 def get_header():
-    out = """\
-# halo_id \
-u_lgmcrit u_lgy_at_mcrit u_indx_lo u_indx_hi u_tau_dep \
-u_qt u_qs u_q_drop u_q_rejuv \
-loss success\n\
-"""
+    """ """
+    colnames = ["halo_id"]
+    colnames.extend(["u_" + s for s in list(DEFAULT_MS_PDICT.keys())])
+    colnames.extend(["u_" + s for s in list(DEFAULT_Q_PDICT.keys())])
+    colnames.extend(["loss", "success"])
+    out = "# " + " ".join(colnames) + "\n"
     return out
 
 
