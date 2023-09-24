@@ -2,15 +2,29 @@
 """
 import numpy as np
 
+from ...defaults import DEFAULT_MS_PDICT, DEFAULT_Q_PDICT
 from ...utils import _jax_get_dt_array
 from ..fit_smah_helpers import get_header, get_loss_data_fixed_hi
 
 DIFFMAH_K = 3.5
 
 
-def test_get_header():
+def test_get_header_colnames_agree_with_model_param_names():
     header = get_header()
-    assert "halo_id" in header
+    assert header[0] == "#"
+    colnames = header[1:].strip().split()
+
+    assert colnames[0] == "halo_id"
+
+    u_ms_colnames_from_header = colnames[1:6]
+    ms_colnames_from_header = [s[2:] for s in u_ms_colnames_from_header]
+    assert ms_colnames_from_header == list(DEFAULT_MS_PDICT.keys())
+
+    u_q_colnames_from_header = colnames[6:10]
+    q_colnames_from_header = [s[2:] for s in u_q_colnames_from_header]
+    assert q_colnames_from_header == list(DEFAULT_Q_PDICT.keys())
+
+    assert colnames[10:] == ["loss", "success"]
 
 
 def test_get_loss_data_fixed_hi():

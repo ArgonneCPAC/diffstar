@@ -33,9 +33,9 @@ _depletion_kernel = jjit(vmap(vmap(_gas_conversion_kern, in_axes=_b), in_axes=_a
 
 
 @jjit
-def _get_lagged_gas(lgt, dt, dmhdt, tau_dep, tau_dep_max):
+def _get_lagged_gas(lgt, dt, dmhdt, tau_dep, tau_dep_max, fb=FB):
     t_table = 10**lgt
-    mgas_inst = FB * dmhdt
+    mgas_inst = fb * dmhdt
 
     depletion_matrix = _depletion_kernel(t_table, t_table, dt, tau_dep, tau_dep_max)
     depletion_matrix_inst = jnp.identity(len(lgt)) / dt
