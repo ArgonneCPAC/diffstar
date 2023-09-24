@@ -13,14 +13,8 @@ from ..defaults import (
     SFR_MIN,
 )
 from ..kernels.kernel_builders import get_sfh_from_mah_kern
-from ..kernels.main_sequence_kernels import (
-    _get_unbounded_sfr_params,
-    _get_unbounded_sfr_params_vmap,
-)
-from ..kernels.quenching_kernels import (
-    _get_unbounded_q_params,
-    _get_unbounded_q_params_vmap,
-)
+from ..kernels.main_sequence_kernels import _get_unbounded_sfr_params_vmap
+from ..kernels.quenching_kernels import _get_unbounded_q_params_vmap
 from .test_gas import _get_default_mah_params
 
 
