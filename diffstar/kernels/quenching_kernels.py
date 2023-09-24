@@ -116,19 +116,6 @@ def _jax_tw(y):
 
 
 @jjit
-def _jax_tw_cuml_kern(x, m, h):
-    y = (x - m) / h
-    return _jax_tw(y)
-
-
-@jjit
-def _jax_tw_qfunc_kern(lgt, lgqt, tw_h, lgdq):
-    tw_m = 3 * tw_h + lgqt
-    log_sfr_drop = lgdq * _jax_tw_cuml_kern(lgt, tw_m, tw_h)
-    return log_sfr_drop
-
-
-@jjit
 def _jax_partial_u_tw_kern(x, m, h, f1, f2):
     y = (x - m) / h
     z = f1 * _jax_tw(y + 3)
