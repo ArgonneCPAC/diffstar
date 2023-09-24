@@ -2,13 +2,9 @@
 """
 import numpy as np
 
-from ...defaults import (
-    DEFAULT_Q_PARAMS,
-    DEFAULT_U_Q_PARAMS,
-    DEFAULT_U_Q_PDICT,
-    Q_PARAM_BOUNDS_PDICT,
-)
+from ...defaults import DEFAULT_Q_PARAMS, DEFAULT_U_Q_PARAMS, Q_PARAM_BOUNDS_PDICT
 from ..quenching_kernels import (
+    DEFAULT_U_Q_PDICT,
     _get_bounded_q_params,
     _get_unbounded_q_params,
     _quenching_kern,
@@ -27,6 +23,7 @@ def test_bounding_function_returns_finite_results_on_default_u_q_params():
 
 
 def test_default_quenching_params_respect_bounds():
+    assert set(Q_PARAM_BOUNDS_PDICT.keys()) == set(DEFAULT_U_Q_PDICT.keys())
     for key, bounds in Q_PARAM_BOUNDS_PDICT.items():
         lo, hi = bounds
         default_val = DEFAULT_U_Q_PDICT[key]
@@ -42,8 +39,8 @@ def test_unbounded_and_bounded_quenching_functions_agree():
     lg_qt, lg_lg_q_dt, lg_drop, lg_rejuv = DEFAULT_Q_PARAMS
     lg_q_dt = 10**lg_lg_q_dt
     quenching_kern_arguments = lg_qt, lg_q_dt, lg_drop, lg_rejuv
-    lg_q = _quenching_kern(lgtarr, *quenching_kern_arguments)
-    assert np.allclose(10**lg_q, q2, rtol=1e-3)
+    q1 = _quenching_kern(lgtarr, *quenching_kern_arguments)
+    assert np.allclose(q1, q2, rtol=1e-3)
 
 
 def test_quenching_bounding_functions_correctly_invert():
@@ -75,8 +72,7 @@ def test_quenching_function_has_expected_behavior_on_default_params():
     lg_q_dt = 10**lg_lg_q_dt
     quenching_kern_arguments = lg_qt, lg_q_dt, lg_drop, lg_rejuv
 
-    lgq = _quenching_kern(lgtarr, *quenching_kern_arguments)
-    q = 10**lgq
+    q = _quenching_kern(lgtarr, *quenching_kern_arguments)
     assert np.all(np.isfinite(q))
     assert np.all(q >= 0)
     assert np.all(q <= 1)
@@ -84,5 +80,7 @@ def test_quenching_function_has_expected_behavior_on_default_params():
     assert np.any(q < 1)
 
     lg_qt, q_dt, lg_q_drop, lg_q_rejuv = DEFAULT_Q_PARAMS
-    actual_lg_q_drop = _quenching_kern(lg_qt, lg_qt, q_dt, lg_q_drop, lg_q_rejuv)
+    actual_lg_q_drop = np.log10(
+        _quenching_kern(lg_qt, lg_qt, q_dt, lg_q_drop, lg_q_rejuv)
+    )
     assert np.allclose(actual_lg_q_drop, lg_q_drop, rtol=1e-3)
