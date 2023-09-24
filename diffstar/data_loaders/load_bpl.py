@@ -46,13 +46,13 @@ def load_bpl_diffstar_data(
     bpl_fn = os.path.join(drn, "bpl_diffmah_cens.npy")
     trunks = np.load(bpl_fn)
 
-    diffmah_fn = os.path.join(drn, "run1_bpl_diffmah")
+    diffmah_fn = os.path.join(drn, "run1_bpl_diffmah.h5")
     diffmah_fits = OrderedDict()
     with h5py.File(diffmah_fn) as hdf:
         for key in hdf.keys():
             diffmah_fits[key] = hdf[key][...]
 
-    diffstar_fn = os.path.join(drn, "run1_bpl_diffstar_default.h5")
+    diffstar_fn = os.path.join(drn, "bpl_diffstar_fits_default.h5")
     diffstar_fits = OrderedDict()
     with h5py.File(diffstar_fn) as hdf:
         for key in hdf.keys():
@@ -89,20 +89,20 @@ def load_bpl_diffstar_data(
     bpl.rename_column("mah_fit_logmp_fit", "mah_fit_logmp")
 
     diffstar_param_keys = [
-        "lgmcrit",
-        "lgy_at_mcrit",
-        "indx_lo",
-        "indx_hi",
-        "tau_dep",
-        "qt",
-        "qs",
-        "q_drop",
-        "q_rejuv",
+        "u_lgmcrit",
+        "u_lgy_at_mcrit",
+        "u_indx_lo",
+        "u_indx_hi",
+        "u_tau_dep",
+        "u_qt",
+        "u_qs",
+        "u_q_drop",
+        "u_q_rejuv",
         "loss",
         "success",
     ]
     for key in diffstar_param_keys:
-        bpl["sfh_fit_u_" + key] = diffstar_fits[key]
+        bpl["sfh_fit_" + key] = diffstar_fits[key]
 
     u_ms_colnames = [
         "sfh_fit_u_lgmcrit",
@@ -113,34 +113,35 @@ def load_bpl_diffstar_data(
     ]
     ms_u_params_list = [bpl[key] for key in ms_u_colnames]
 
-    u_q_colnames = [
-        "sfh_fit_u_qt",
-        "sfh_fit_u_qs",
-        "sfh_fit_u_q_drop",
-        "sfh_fit_u_q_rejuv",
-    ]
     q_u_params_list = [bpl[key] for key in q_u_colnames]
 
-    bounded_ms_params = _get_bounded_sfr_params_vmap(*ms_u_params_list)
-    lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, tau_dep = bounded_ms_params
+    ms_u_params = np.array(ms_u_params_list).T
+    bounded_ms_params = _get_bounded_sfr_params_vmap(ms_u_params).T
 
-    bounded_q_params = _get_bounded_q_params_vmap(*q_u_params_list)
-    lg_qt, lg_qs, lg_drop, lg_rejuv = bounded_q_params
+    q_u_params = np.array(q_u_params_list).T
+    bounded_q_params = _get_bounded_q_params_vmap(q_u_params).T
 
-    for key, arr in zip(u_ms_colnames, bounded_ms_params):
+    u_ms_colnames_v0p2 = u_ms_colnames
+    for key, arr in zip(u_ms_colnames_v0p2, bounded_ms_params):
         newkey = key.replace("_u_", "_")
         bpl[newkey] = arr
 
-    for key, arr in zip(u_q_colnames, bounded_q_params):
+    u_q_colnames_v0p2 = (
+        "sfh_fit_u_lg_qt",
+        "sfh_fit_u_qlglgdt",
+        "sfh_fit_u_lg_drop",
+        "sfh_fit_u_lg_rejuv",
+    )
+    for key, arr in zip(u_q_colnames_v0p2, bounded_q_params):
         newkey = key.replace("_u_", "_")
         bpl[newkey] = arr
 
-    bpl["sfh_fit_u_lg_qs"] = None
+    bpl.rename_column("sfh_fit_u_qt", "sfh_fit_u_lg_qt")
+    bpl.rename_column("sfh_fit_u_qs", "sfh_fit_u_qlglgdt")
+    bpl.rename_column("sfh_fit_u_q_drop", "sfh_fit_u_lg_drop")
+    bpl.rename_column("sfh_fit_u_q_rejuv", "sfh_fit_u_lg_rejuv")
 
-    bpl.rename_column("sfh_fit_qs", "sfh_fit_lg_qs")
-    bpl.rename_column("sfh_fit_qt", "sfh_fit_lg_qt")
-
-    all_param_colnames = mah_colnames, u_ms_colnames, u_q_colnames
+    all_param_colnames = mah_colnames, u_ms_colnames_v0p2, u_q_colnames_v0p2
     return bpl, t_bpl, all_param_colnames
 
 
