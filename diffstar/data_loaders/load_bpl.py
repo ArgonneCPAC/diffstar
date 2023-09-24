@@ -5,7 +5,13 @@ from collections import OrderedDict
 
 import h5py
 import numpy as np
-from astropy.table import Table
+
+try:
+    from astropy.table import Table
+
+    HAS_ASTROPY = True
+except ImportError:
+    HAS_ASTROPY = False
 
 from ..kernels.main_sequence_kernels import _get_bounded_sfr_params_vmap
 from ..kernels.quenching_kernels import _get_bounded_q_params_vmap
@@ -43,6 +49,7 @@ def load_bpl_diffstar_data(
     ms_u_colnames=MS_U_COLNAMES,
     q_u_colnames=Q_U_COLNAMES,
 ):
+    assert HAS_ASTROPY, "Must have astropy installed to use load_bpl_diffstar_data"
     bpl_fn = os.path.join(drn, "bpl_diffmah_cens.npy")
     trunks = np.load(bpl_fn)
 
