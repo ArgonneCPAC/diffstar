@@ -69,7 +69,7 @@ def _quenching_kern_u_params(lgt, u_lg_qt, u_qlglgdt, u_lg_drop, u_lg_rejuv):
     )
     lg_q_dt = 10**qlglgdt
     _bound_params = (lg_qt, lg_q_dt, lg_drop, lg_rejuv)
-    return 10 ** _quenching_kern(lgt, *_bound_params)
+    return _quenching_kern(lgt, *_bound_params)
 
 
 @jjit
@@ -104,7 +104,7 @@ def _quenching_kern(lgt, lg_qt, lg_q_dt, q_drop, q_rejuv):
     """
     lg_q_dt_by_12 = lg_q_dt / 12  # account for 6σ width of two successive triweights
     f2 = q_drop - q_rejuv
-    return _jax_partial_u_tw_kern(lgt, lg_qt, lg_q_dt_by_12, q_drop, f2)
+    return 10 ** _jax_partial_u_tw_kern(lgt, lg_qt, lg_q_dt_by_12, q_drop, f2)
 
 
 @jjit
