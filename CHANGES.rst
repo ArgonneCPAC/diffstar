@@ -1,4 +1,4 @@
-1.0.0 (unreleased)
+0.2.0 (unreleased)
 ------------------
 - Remove quenching.py module
 - Add new kernel_builders.py module
