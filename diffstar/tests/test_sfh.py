@@ -122,3 +122,32 @@ def test_sfh_galpop_evaluates_with_bounded_option():
     )
 
     assert np.allclose(sfh, u_sfh, rtol=1e-3)
+
+
+def test_fb_value_propagates_to_sfh_singlegal():
+    lgt0, mah_params, u_ms_params, u_q_params = _get_all_default_params()
+
+    n_t = 100
+    tarr = np.linspace(0.1, 10**lgt0, n_t)
+    sfh = sfh_singlegal(tarr, mah_params, u_ms_params, u_q_params, LGT0, FB)
+    x = 2.0
+    sfh2 = sfh_singlegal(tarr, mah_params, u_ms_params, u_q_params, LGT0, FB * x)
+    assert np.allclose(sfh2, x * sfh)
+
+
+def test_fb_value_propagates_to_sfh_galpop():
+    lgt0, mah_params, u_ms_params, u_q_params = _get_all_default_params()
+    ms_params, q_params = DEFAULT_MS_PARAMS, DEFAULT_Q_PARAMS
+
+    mah_params = np.array(mah_params).reshape((1, -1))
+    u_ms_params = np.array(u_ms_params).reshape((1, -1))
+    u_q_params = np.array(u_q_params).reshape((1, -1))
+    ms_params = np.array(ms_params).reshape((1, -1))
+    q_params = np.array(q_params).reshape((1, -1))
+
+    n_t = 100
+    tarr = np.linspace(0.1, 10**lgt0, n_t)
+    sfh = sfh_galpop(tarr, mah_params, u_ms_params, u_q_params, LGT0, FB)
+    x = 2.0
+    sfh2 = sfh_galpop(tarr, mah_params, u_ms_params, u_q_params, LGT0, FB * x)
+    assert np.allclose(sfh2, x * sfh)
