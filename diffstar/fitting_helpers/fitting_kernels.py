@@ -5,6 +5,7 @@ from jax import jit as jjit
 from jax import numpy as jnp
 from jax import vmap
 
+from ..defaults import FB
 from ..kernels.gas_consumption import _get_lagged_gas
 from ..kernels.main_sequence_kernels import (
     MS_BOUNDING_SIGMOID_PDICT,
@@ -21,11 +22,12 @@ def calculate_sm_sfr_fstar_history_from_mah(
     dt,
     dmhdt,
     log_mah,
-    sfr_ms_params,
-    q_params,
+    u_ms_params,
+    u_q_params,
     index_select,
     index_high,
     fstar_tdelay,
+    fb=FB,
 ):
     """Calculate individual galaxy SFH from precalculated halo MAH
 
@@ -49,11 +51,11 @@ def calculate_sm_sfr_fstar_history_from_mah(
     log_mah : ndarray of shape (n_times, )
         Diffmah halo mass accretion history in units of Msun
 
-    sfr_ms_params : ndarray of shape (5, )
+    u_ms_params : ndarray of shape (5, )
         Star formation efficiency model unbounded parameters. Includes
         (u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_tau_dep)
 
-    q_params : ndarray of shape (4, )
+    u_q_params : ndarray of shape (4, )
         Quenching model unbounded parameters. Includes (u_qt, u_qs, u_drop, u_rejuv)
 
     index_select: ndarray of shape (n_times_fstar, )
@@ -78,7 +80,7 @@ def calculate_sm_sfr_fstar_history_from_mah(
         SFH averaged over timescale fstar_tdelay in units of Msun/yr assuming h=1
 
     """
-    sfr = _sfr_history_from_mah(lgt, dt, dmhdt, log_mah, sfr_ms_params, q_params)
+    sfr = _sfr_history_from_mah(lgt, dt, dmhdt, log_mah, u_ms_params, u_q_params, fb=fb)
     mstar = _integrate_sfr(sfr, dt)
     fstar = compute_fstar(10**lgt, mstar, index_select, index_high, fstar_tdelay)
     return mstar, sfr, fstar
@@ -86,12 +88,7 @@ def calculate_sm_sfr_fstar_history_from_mah(
 
 @jjit
 def calculate_sm_sfr_history_from_mah(
-    lgt,
-    dt,
-    dmhdt,
-    log_mah,
-    sfr_ms_params,
-    q_params,
+    lgt, dt, dmhdt, log_mah, u_ms_params, u_q_params, fb=FB
 ):
     """Calculate individual galaxy SFH from precalculated halo MAH
 
@@ -115,11 +112,11 @@ def calculate_sm_sfr_history_from_mah(
     log_mah : ndarray of shape (n_times, )
         Diffmah halo mass accretion history in units of Msun
 
-    sfr_ms_params : ndarray of shape (5, )
+    u_ms_params : ndarray of shape (5, )
         Star formation efficiency model unbounded parameters. Includes
         (u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_tau_dep)
 
-    q_params : ndarray of shape (4, )
+    u_q_params : ndarray of shape (4, )
         Quenching model unbounded parameters. Includes (u_qt, u_qs, u_drop, u_rejuv)
 
     Returns
@@ -131,7 +128,7 @@ def calculate_sm_sfr_history_from_mah(
         Star formation rate history in units of Msun/yr assuming h=1
 
     """
-    sfr = _sfr_history_from_mah(lgt, dt, dmhdt, log_mah, sfr_ms_params, q_params)
+    sfr = _sfr_history_from_mah(lgt, dt, dmhdt, log_mah, u_ms_params, u_q_params, fb=fb)
     mstar = _integrate_sfr(sfr, dt)
     return mstar, sfr
 
@@ -141,11 +138,12 @@ def calculate_histories(
     lgt,
     dt,
     mah_params,
-    sfr_ms_params,
-    q_params,
+    u_ms_params,
+    u_q_params,
     index_select,
     index_high,
     fstar_tdelay,
+    fb=FB,
 ):
     """Calculate individual halo mass MAH and galaxy SFH
 
@@ -167,11 +165,11 @@ def calculate_histories(
         Best fit diffmah halo parameters. Includes
         (logt0, logmp, logtc, k, early, late)
 
-    sfr_ms_params : ndarray of shape (5, )
+    u_ms_params : ndarray of shape (5, )
         Star formation efficiency model unbounded parameters. Includes
         (u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_tau_dep)
 
-    q_params : ndarray of shape (4, )
+    u_q_params : ndarray of shape (4, )
         Quenching model unbounded parameters. Includes
         (u_qt, u_qs, u_drop, u_rejuv)
 
@@ -209,17 +207,18 @@ def calculate_histories(
         dt,
         dmhdt,
         log_mah,
-        sfr_ms_params,
-        q_params,
+        u_ms_params,
+        u_q_params,
         index_select,
         index_high,
         fstar_tdelay,
+        fb=fb,
     )
     return mstar, sfr, fstar, dmhdt, log_mah
 
 
 calculate_histories_vmap = jjit(
-    vmap(calculate_histories, in_axes=(None, None, 0, 0, 0, None, None, None))
+    vmap(calculate_histories, in_axes=(None, None, 0, 0, 0, None, None, None, None))
 )
 
 
@@ -234,6 +233,7 @@ def compute_fstar(tarr, mstar, index_select, index_high, fstar_tdelay):
     """Time averaged SFH that has ocurred over some previous time period
 
     fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay
+
     Parameters
     ----------
     tarr : ndarray of shape (n_times, )
@@ -270,7 +270,7 @@ compute_fstar_vmap = jjit(vmap(compute_fstar, in_axes=(None, 0, *[None] * 3)))
 
 
 @jjit
-def _sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params, q_params):
+def _sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params, q_params, fb=FB):
     """Star formation history of an individual galaxy.
 
     SFH(t) = Quenching(t) x epsilon(Mhalo) int Depletion(t|t') x Mgas(t') dt'.
@@ -304,14 +304,14 @@ def _sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params, q_params):
         Star formation rate history in units of Msun/yr assuming h=1.
 
     """
-    ms_sfr = _ms_sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params)
+    ms_sfr = _ms_sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, sfr_params, fb=fb)
     qfrac = _quenching_kern_u_params(lgt, *q_params)
     sfr = qfrac * ms_sfr
     return sfr
 
 
 @jjit
-def _ms_sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, u_ms_params):
+def _ms_sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, u_ms_params, fb=FB):
     """Main Sequence formation history of an individual galaxy."""
 
     ms_params = _get_bounded_sfr_params(*u_ms_params)
@@ -320,7 +320,7 @@ def _ms_sfr_history_from_mah(lgt, dtarr, dmhdt, log_mah, u_ms_params):
     efficiency = _sfr_eff_plaw(log_mah, *sfr_ms_params)
 
     tau_dep_max = MS_BOUNDING_SIGMOID_PDICT["tau_dep"][3]
-    lagged_mgas = _get_lagged_gas(lgt, dtarr, dmhdt, tau_dep, tau_dep_max)
+    lagged_mgas = _get_lagged_gas(lgt, dtarr, dmhdt, tau_dep, tau_dep_max, fb)
 
     ms_sfr = lagged_mgas * efficiency
     return ms_sfr
