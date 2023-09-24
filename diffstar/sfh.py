@@ -104,7 +104,6 @@ def sfh_singlegal(
 
 
 @partial(jjit, static_argnames=["ms_param_type", "q_param_type"])
-@jjit
 def sfh_galpop(
     tarr,
     mah_params,
@@ -179,7 +178,7 @@ def sfh_galpop(
 
     """
     if ms_param_type == "bounded":
-        u_ms_params = _get_unbounded_sfr_params_vmap(*u_ms_params)
+        u_ms_params = _get_unbounded_sfr_params_vmap(u_ms_params)
     if q_param_type == "bounded":
-        u_q_params = _get_unbounded_q_params_vmap(*u_q_params)
+        u_q_params = _get_unbounded_q_params_vmap(u_q_params)
     return _sfh_galpop_kern(tarr, mah_params, u_ms_params, u_q_params, lgt0, fb)
