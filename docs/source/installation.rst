@@ -4,7 +4,8 @@ Installation
 Dependencies
 ------------
 
-``diffstar`` requires `numpy <https://numpy.org/>`__, 
+``diffstar`` requires python 3.9 or greater, and has the following dependencies:
+`numpy <https://numpy.org/>`__, 
 `jax <https://jax.readthedocs.io/en/latest/>`__, 
 `h5py <https://docs.h5py.org/en/stable/>`__, and 
 `diffmah <https://github.com/ArgonneCPAC/diffmah/>`__.

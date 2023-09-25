@@ -1,7 +1,7 @@
 # diffstar
 
 ## Installation
-The latest release of diffstar on conda-forge is 0.1.0:
+The latest release of diffstar is available for installation with either pip or conda-forge:
 ```
 $ conda install diffstar
 ```
