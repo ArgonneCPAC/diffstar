@@ -172,3 +172,27 @@ def test_fb_value_propagates_to_sfh_galpop():
     x = 2.0
     sfh2 = sfh_galpop(tarr, mah_params, ms_params, q_params, LGT0, FB * x)
     assert np.allclose(sfh2, x * sfh)
+
+
+def test_sfh_galpop_is_always_strictly_positive():
+    n_gals, n_t = 1_000, 100
+    lgt0, mah_params, __, __ = _get_all_default_params()
+    tarr = np.linspace(0.1, 10**lgt0, n_t)
+
+    mah_params_singlegal = np.array((12.0, 0.0, 3.0, 2.0))
+    mah_params_galpop = np.tile(mah_params_singlegal, n_gals).reshape((n_gals, 4))
+    u_ms_params_galpop = np.random.uniform(-100, 100, size=(n_gals, 5))
+    u_q_params_galpop = np.random.uniform(-100, 100, size=(n_gals, 4))
+
+    sfh = sfh_galpop(
+        tarr,
+        mah_params_galpop,
+        u_ms_params_galpop,
+        u_q_params_galpop,
+        LGT0,
+        FB,
+        ms_param_type="unbounded",
+        q_param_type="unbounded",
+    )
+    assert np.all(np.isfinite(sfh))
+    assert np.all(sfh >= SFR_MIN)
