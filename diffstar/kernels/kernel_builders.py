@@ -5,7 +5,7 @@ from jax import lax
 from jax import numpy as jnp
 from jax import vmap
 
-from ..defaults import DEFAULT_N_STEPS, T_BIRTH_MIN
+from ..defaults import DEFAULT_N_STEPS, SFR_MIN, T_BIRTH_MIN
 from .main_sequence_kernels import _get_bounded_sfr_params, _lax_ms_sfh_scalar_kern
 from .quenching_kernels import _quenching_kern_u_params
 
@@ -64,6 +64,7 @@ def get_sfh_from_mah_kern(
         lgt_form = jnp.log10(t_form)
         qfunc = _quenching_kern_u_params(lgt_form, *u_q_params)
         sfr = qfunc * ms_sfr
+        sfr = lax.cond(sfr < SFR_MIN, lambda x: SFR_MIN, lambda x: x, sfr)
         return sfr
 
     kern_with_tobs_loop = _get_kern_with_tobs_loop(_kern, tobs_loop)
@@ -167,7 +168,9 @@ def get_ms_sfh_from_mah_kern(
         t_min = jnp.max(jnp.array((tacc_integration_min, t_form - tau_dep)))
         t_table = t_min + uniform_table * (t_form - t_min)
         args = t_form, mah_params, ms_params, lgt0, fb, t_table
-        return _lax_ms_sfh_scalar_kern(*args)
+        sfr = _lax_ms_sfh_scalar_kern(*args)
+        sfr = lax.cond(sfr < SFR_MIN, lambda x: SFR_MIN, lambda x: x, sfr)
+        return sfr
 
     kern_with_tobs_loop = _get_ms_kern_with_tobs_loop(_kern, tobs_loop)
     lax_ms_sfh_from_mah_kern = _get_ms_kern_with_galpop_loop(
