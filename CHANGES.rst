@@ -1,3 +1,8 @@
+0.2.1 (2023-09-27)
+------------------
+- Implement floor at SFR_MIN in all computations of SFH
+
+
 0.2.0 (2023-09-25)
 ------------------
 - Remove quenching.py module
