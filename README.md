@@ -14,10 +14,10 @@ $ pip install .
 ```
 
 ### Environment configuration
-For a typical development environment in conda:
+For a typical development environment with conda-forge:
 
 ```
-$ conda create -n diffit python=3.9 numpy numba flake8 pytest jax ipython jupyter matplotlib scipy h5py diffmah diffstar
+$ conda create -c conda-forge -n diffit python=3.9 numpy numba flake8 pytest jax ipython jupyter matplotlib scipy h5py diffmah diffstar
 ```
 
 ## Project data
