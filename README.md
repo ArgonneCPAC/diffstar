@@ -3,7 +3,7 @@
 ## Installation
 The latest release of diffstar is available for installation with either pip or conda-forge:
 ```
-$ conda install diffstar
+$ conda install -c conda-forge diffstar
 ```
 
 Alternatively, to install diffstar into your environment from the source code:
