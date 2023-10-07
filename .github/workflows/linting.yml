@@ -1,10 +1,6 @@
-name: tests
+name: linting
 
 on:
-  workflow_dispatch: null
-  schedule:
-    # Runs "every Monday & Thursday at 3:05am Central"
-    - cron: '5 8 * * 1,4'
   push:
     branches:
       - main
@@ -17,8 +13,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
 
       - uses: conda-incubator/setup-miniconda@v2
         with:
@@ -28,31 +22,17 @@ jobs:
           show-channel-urls: true
           miniforge-version: latest
           miniforge-variant: Mambaforge
-          use-mamba: true
 
       - name: configure conda and install code
         shell: bash -l {0}
         run: |
-          conda config --set always_yes yes
           mamba install --quiet \
             --file=requirements.txt
           python -m pip install --no-deps -e .
           mamba install -y -q \
-            flake8 \
-            pytest \
-            pytest-xdist \
-            pytest-cov \
-            pip \
-            setuptools \
-            "setuptools_scm>=7,<8" \
-            python-build
-          python -m pip install --no-build-isolation --no-deps -e .
+            flake8
 
-      - name: test
+      - name: lint
         shell: bash -l {0}
         run: |
-          pytest -v diffstar --cov --cov-report=xml
-
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
-
+          flake8 diffstar
