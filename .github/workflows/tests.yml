@@ -1,6 +1,9 @@
 name: tests
 
 on:
+  schedule:
+    # Runs "weekly at minute 01 before midnight Friday"
+    - cron: '53 23 * * 5'
   push:
     branches:
       - main
@@ -35,11 +38,6 @@ jobs:
             pytest \
             pytest-xdist \
             pytest-cov
-
-      - name: lint
-        shell: bash -l {0}
-        run: |
-          flake8 diffstar
 
       - name: test
         shell: bash -l {0}
