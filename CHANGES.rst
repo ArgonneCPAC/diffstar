@@ -1,3 +1,8 @@
+0.2.2 (2023-10-08)
+------------------
+- Fix forgotten import so that diffstar.__version__ now works
+
+
 0.2.1 (2023-09-27)
 ------------------
 - Implement floor at SFR_MIN in all computations of SFH
