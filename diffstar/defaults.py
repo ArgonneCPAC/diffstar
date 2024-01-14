@@ -4,9 +4,17 @@
 from collections import OrderedDict, namedtuple
 
 import numpy as np
+from diffmah.defaults import DEFAULT_MAH_PARAMS
 
 TODAY = 13.8
 LGT0 = np.log10(TODAY)
+
+
+def _get_pdict_from_namedtuple(params):
+    return OrderedDict([(key, val) for key, val in zip(params._fields, params)])
+
+
+DEFAULT_MAH_PDICT = _get_pdict_from_namedtuple(DEFAULT_MAH_PARAMS)
 
 
 # Constants related to SFH integrals
@@ -33,6 +41,3 @@ from .kernels.quenching_kernels import (
 
 DiffstarParams = namedtuple("DiffstarParams", ("ms_params", "q_params"))
 DEFAULT_DIFFSTAR_PARAMS = DiffstarParams(DEFAULT_MS_PARAMS, DEFAULT_Q_PARAMS)
-
-DEFAULT_MAH_PDICT = OrderedDict(logmp=12.0, logtc=0.05, early_index=2.5, late_index=1.0)
-DEFAULT_MAH_PARAMS = np.array(list(DEFAULT_MAH_PDICT.values()))
