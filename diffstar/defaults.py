@@ -39,5 +39,9 @@ from .kernels.quenching_kernels import (
     Q_PARAM_BOUNDS_PDICT,
 )
 
-DiffstarParams = namedtuple("DiffstarParams", ("ms_params", "q_params"))
-DEFAULT_DIFFSTAR_PARAMS = DiffstarParams(DEFAULT_MS_PARAMS, DEFAULT_Q_PARAMS)
+pnames = [*DEFAULT_MS_PARAMS._fields, *DEFAULT_Q_PARAMS._fields]
+DiffstarParams = namedtuple("DiffstarParams", pnames)
+DEFAULT_DIFFSTAR_PARAMS = DiffstarParams(*DEFAULT_MS_PARAMS, *DEFAULT_Q_PARAMS)
+
+DiffstarUParams = namedtuple("DiffstarUParams", ["u_" + key for key in pnames])
+DEFAULT_DIFFSTAR_U_PARAMS = DiffstarUParams(*DEFAULT_U_MS_PARAMS, *DEFAULT_U_Q_PARAMS)

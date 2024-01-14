@@ -15,6 +15,15 @@ from ..kernels.quenching_kernels import (
 )
 
 
+def test_default_diffstar_param_names():
+    gen = zip(
+        defaults.DEFAULT_DIFFSTAR_PARAMS._fields,
+        defaults.DEFAULT_DIFFSTAR_U_PARAMS._fields,
+    )
+    for key, u_key in gen:
+        assert "u_" + key == u_key
+
+
 def test_default_ms_params_are_frozen():
     p = defaults.DEFAULT_MS_PARAMS
     frozen_defaults = np.array((12.0, -1.0, 1.0, -1.0, 2.0))
