@@ -1,6 +1,6 @@
 """
 """
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 
 import numpy as np
 from diffmah.individual_halo_assembly import (
@@ -23,7 +23,8 @@ DEFAULT_MS_PDICT = OrderedDict(
     indx_hi=-1.0,
     tau_dep=2.0,
 )
-DEFAULT_MS_PARAMS = np.array(list(DEFAULT_MS_PDICT.values()))
+MSParams = namedtuple("MSParams", list(DEFAULT_MS_PDICT.keys()))
+DEFAULT_MS_PARAMS = MSParams(*list(DEFAULT_MS_PDICT.values()))
 
 MS_PARAM_BOUNDS_PDICT = OrderedDict(
     lgmcrit=(9.0, 13.5),
