@@ -15,6 +15,48 @@ from ..kernels.quenching_kernels import (
 )
 
 
+def test_default_params_imports_from_top_level():
+    try:
+        from .. import DEFAULT_DIFFSTAR_PARAMS  # noqa
+    except ImportError:
+        raise ImportError("DEFAULT_DIFFSTAR_PARAMS should import from top level")
+
+
+def test_default_u_params_imports_from_top_level():
+    try:
+        from .. import DEFAULT_DIFFSTAR_U_PARAMS  # noqa
+    except ImportError:
+        raise ImportError("DEFAULT_DIFFSTAR_U_PARAMS should import from top level")
+
+
+def test_get_bounded_diffstar_params_imports_from_top_level():
+    try:
+        from .. import get_bounded_diffstar_params  # noqa
+    except ImportError:
+        raise ImportError("get_bounded_diffstar_params should import from top level")
+
+
+def test_get_unbounded_diffstar_params_imports_from_top_level():
+    try:
+        from .. import get_unbounded_diffstar_params  # noqa
+    except ImportError:
+        raise ImportError("get_unbounded_diffstar_params should import from top level")
+
+
+def test_DiffstarUParams_imports_from_top_level():
+    try:
+        from .. import DiffstarUParams  # noqa
+    except ImportError:
+        raise ImportError("DiffstarUParams should import from top level")
+
+
+def test_DiffstarParams_imports_from_top_level():
+    try:
+        from .. import DiffstarParams  # noqa
+    except ImportError:
+        raise ImportError("DiffstarParams should import from top level")
+
+
 def test_default_diffstar_params():
     gen = zip(
         defaults.DEFAULT_DIFFSTAR_PARAMS._fields,
