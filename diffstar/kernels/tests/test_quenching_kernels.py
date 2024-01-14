@@ -23,10 +23,14 @@ def test_bounding_function_returns_finite_results_on_default_u_q_params():
 
 
 def test_default_quenching_params_respect_bounds():
-    assert set(Q_PARAM_BOUNDS_PDICT.keys()) == set(DEFAULT_U_Q_PDICT.keys())
+    keys = list(Q_PARAM_BOUNDS_PDICT.keys())
+    correct_u_keys = ["u_" + key for key in keys]
+    actual_u_keys = list(DEFAULT_U_Q_PDICT.keys())
+    assert correct_u_keys == actual_u_keys
+
     for key, bounds in Q_PARAM_BOUNDS_PDICT.items():
         lo, hi = bounds
-        default_val = DEFAULT_U_Q_PDICT[key]
+        default_val = DEFAULT_U_Q_PDICT["u_" + key]
         assert lo < default_val < hi
 
 

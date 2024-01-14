@@ -15,13 +15,35 @@ from ..kernels.quenching_kernels import (
 )
 
 
-def test_default_diffstar_param_names():
+def test_default_diffstar_params():
     gen = zip(
         defaults.DEFAULT_DIFFSTAR_PARAMS._fields,
         defaults.DEFAULT_DIFFSTAR_U_PARAMS._fields,
     )
     for key, u_key in gen:
         assert "u_" + key == u_key
+
+    assert defaults.DEFAULT_DIFFSTAR_PARAMS._fields == ("ms_params", "q_params")
+    assert defaults.DEFAULT_DIFFSTAR_U_PARAMS._fields == ("u_ms_params", "u_q_params")
+
+    assert np.allclose(
+        defaults.DEFAULT_DIFFSTAR_U_PARAMS.u_ms_params,
+        np.array(list(DEFAULT_U_MS_PDICT.values())),
+    )
+    assert np.allclose(
+        defaults.DEFAULT_DIFFSTAR_U_PARAMS.u_q_params,
+        np.array(list(DEFAULT_U_Q_PDICT.values())),
+    )
+
+
+def test_get_bounded_diffstar_params():
+    p = defaults.get_bounded_diffstar_params(defaults.DEFAULT_DIFFSTAR_U_PARAMS)
+    assert np.allclose(p.ms_params, defaults.DEFAULT_DIFFSTAR_PARAMS.ms_params)
+    assert np.allclose(p.q_params, defaults.DEFAULT_DIFFSTAR_PARAMS.q_params)
+
+    u_p = defaults.get_unbounded_diffstar_params(defaults.DEFAULT_DIFFSTAR_PARAMS)
+    assert np.allclose(u_p.u_ms_params, defaults.DEFAULT_DIFFSTAR_U_PARAMS.u_ms_params)
+    assert np.allclose(u_p.u_q_params, defaults.DEFAULT_DIFFSTAR_U_PARAMS.u_q_params)
 
 
 def test_default_ms_params_are_frozen():

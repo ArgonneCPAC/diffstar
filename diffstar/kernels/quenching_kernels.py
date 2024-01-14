@@ -199,7 +199,8 @@ _get_unbounded_q_params_vmap = jjit(
 )
 
 
-DEFAULT_U_Q_PARAMS = _get_unbounded_q_params(*DEFAULT_Q_PARAMS)
+QUParams = namedtuple("QUParams", ["u_" + key for key in DEFAULT_Q_PDICT.keys()])
+DEFAULT_U_Q_PARAMS = QUParams(*_get_unbounded_q_params(*DEFAULT_Q_PARAMS))
 DEFAULT_U_Q_PDICT = OrderedDict(
-    [(key, val) for key, val in zip(DEFAULT_Q_PDICT.keys(), DEFAULT_U_Q_PARAMS)]
+    [(key, val) for key, val in zip(DEFAULT_U_Q_PARAMS._fields, DEFAULT_U_Q_PARAMS)]
 )
