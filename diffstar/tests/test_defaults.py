@@ -125,11 +125,6 @@ def test_default_q_params_are_frozen():
 def test_default_ms_params_bounded_consistent_with_unbounded():
     p = defaults.DEFAULT_MS_PARAMS
     u_p = defaults.DEFAULT_U_MS_PARAMS
-
-
-def test_default_ms_params_bounded_consistent_with_unbounded():
-    p = defaults.DEFAULT_MS_PARAMS
-    u_p = defaults.DEFAULT_U_MS_PARAMS
     p2 = _get_bounded_sfr_params(*u_p)
     assert np.allclose(p, p2, rtol=0.01)
 
