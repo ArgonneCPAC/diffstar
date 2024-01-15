@@ -1,3 +1,8 @@
+0.2.3 (2024-01-15)
+------------------
+- Switch to namedtuple for diffstar parameters (https://github.com/ArgonneCPAC/diffstar/pull/45)
+
+
 0.2.2 (2023-10-08)
 ------------------
 - Fix forgotten import so that diffstar.__version__ now works
