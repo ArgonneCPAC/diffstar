@@ -1,4 +1,4 @@
-name: test_released_dependencies
+name: test_main_branch_dependencies
 
 on:
   workflow_dispatch: null
@@ -31,7 +31,7 @@ jobs:
           use-mamba: true
 
       - name: configure conda and install code
-      # Test against current release of diffmah
+      # Test against current main branch of diffmah
         shell: bash -l {0}
         run: |
           conda config --set always_yes yes
@@ -47,6 +47,8 @@ jobs:
             setuptools \
             "setuptools_scm>=7,<8" \
             python-build
+          pip uninstall diffmah --yes
+          pip install --no-deps git+https://github.com/ArgonneCPAC/diffmah.git
           python -m pip install --no-build-isolation --no-deps -e .
 
       - name: test
