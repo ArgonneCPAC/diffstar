@@ -26,6 +26,7 @@ from .kernels.main_sequence_kernels import (
     INDX_K,
     MS_PARAM_BOUNDS_PDICT,
     MSParams,
+    MSUParams,
     _get_bounded_sfr_params,
     _get_unbounded_sfr_params,
 )
@@ -59,6 +60,6 @@ def get_bounded_diffstar_params(diffstar_u_params):
 
 @jjit
 def get_unbounded_diffstar_params(diffstar_params):
-    ms_params = MSParams(*_get_unbounded_sfr_params(*diffstar_params.ms_params))
-    q_params = QUParams(*_get_unbounded_q_params(*diffstar_params.q_params))
-    return DiffstarUParams(ms_params, q_params)
+    u_ms_params = MSUParams(*_get_unbounded_sfr_params(*diffstar_params.ms_params))
+    u_q_params = QUParams(*_get_unbounded_q_params(*diffstar_params.q_params))
+    return DiffstarUParams(u_ms_params, u_q_params)
