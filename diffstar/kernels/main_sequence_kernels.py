@@ -3,8 +3,8 @@
 from collections import OrderedDict, namedtuple
 
 import numpy as np
+from diffmah.defaults import MAH_K
 from diffmah.individual_halo_assembly import (
-    DEFAULT_MAH_PARAMS,
     _calc_halo_history_scalar,
     _rolling_plaw_vs_logt,
 )
@@ -54,9 +54,8 @@ MS_BOUNDING_SIGMOID_PDICT = calculate_sigmoid_bounds(MS_PARAM_BOUNDS_PDICT)
 
 @jjit
 def _lax_ms_sfh_scalar_kern(t_form, mah_params, ms_params, lgt0, fb, t_table):
-    mah_k = DEFAULT_MAH_PARAMS["mah_k"]
     logmp, logtc, early, late = mah_params
-    all_mah_params = lgt0, logmp, logtc, mah_k, early, late
+    all_mah_params = lgt0, logmp, logtc, MAH_K, early, late
     lgt_form = jnp.log10(t_form)
     log_mah_at_tform = _rolling_plaw_vs_logt(lgt_form, *all_mah_params)
 
