@@ -54,10 +54,7 @@ jobs:
       - name: test
         shell: bash -l {0}
         run: |
-          pytest -v diffstar --cov --cov-report=xml
-
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
+          pytest -v diffstar
 
       - name: test versions
         shell: bash -el {0}
