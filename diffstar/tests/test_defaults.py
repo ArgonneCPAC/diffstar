@@ -17,6 +17,15 @@ from ..kernels.quenching_kernels import (
 )
 
 
+def test_get_unbounded_diffstar_params_return_unbounded_namedtuple():
+    u_diffstar_params = defaults.get_unbounded_diffstar_params(
+        defaults.DEFAULT_DIFFSTAR_PARAMS
+    )
+    assert u_diffstar_params._fields == ("u_ms_params", "u_q_params")
+    assert u_diffstar_params.u_ms_params._fields == tuple(DEFAULT_U_MS_PDICT.keys())
+    assert u_diffstar_params.u_q_params._fields == tuple(DEFAULT_U_Q_PDICT.keys())
+
+
 def test_default_params_imports_from_top_level():
     try:
         from .. import DEFAULT_DIFFSTAR_PARAMS  # noqa
@@ -100,6 +109,11 @@ def test_default_q_params_are_frozen():
     p = defaults.DEFAULT_Q_PARAMS
     frozen_defaults = np.array((1.0, -0.50725, -1.01773, -0.212307))
     assert np.allclose(p, frozen_defaults)
+
+
+def test_default_ms_params_bounded_consistent_with_unbounded():
+    p = defaults.DEFAULT_MS_PARAMS
+    u_p = defaults.DEFAULT_U_MS_PARAMS
 
 
 def test_default_ms_params_bounded_consistent_with_unbounded():
