@@ -1,4 +1,4 @@
-name: tests
+name: test_main_branch_dependencies
 
 on:
   workflow_dispatch: null
@@ -31,6 +31,7 @@ jobs:
           use-mamba: true
 
       - name: configure conda and install code
+      # Test against current main branch of diffmah
         shell: bash -l {0}
         run: |
           conda config --set always_yes yes
@@ -46,15 +47,14 @@ jobs:
             setuptools \
             "setuptools_scm>=7,<8" \
             python-build
+          pip uninstall diffmah --yes
+          pip install --no-deps git+https://github.com/ArgonneCPAC/diffmah.git
           python -m pip install --no-build-isolation --no-deps -e .
 
       - name: test
         shell: bash -l {0}
         run: |
-          pytest -v diffstar --cov --cov-report=xml
-
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
+          pytest -v diffstar
 
       - name: test versions
         shell: bash -el {0}

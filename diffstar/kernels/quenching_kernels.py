@@ -1,6 +1,6 @@
 """
 """
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 
 import numpy as np
 from jax import jit as jjit
@@ -12,7 +12,9 @@ from ..utils import _inverse_sigmoid, _sigmoid
 DEFAULT_Q_PDICT = OrderedDict(
     lg_qt=1.0, qlglgdt=-0.50725, lg_drop=-1.01773, lg_rejuv=-0.212307
 )
-DEFAULT_Q_PARAMS = np.array(list(DEFAULT_Q_PDICT.values()))
+QParams = namedtuple("QParams", list(DEFAULT_Q_PDICT.keys()))
+
+DEFAULT_Q_PARAMS = QParams(*list(DEFAULT_Q_PDICT.values()))
 
 Q_PARAM_BOUNDS_PDICT = OrderedDict(
     lg_qt=(0.1, 2.0), qlglgdt=(-3.0, -0.01), lg_drop=(-3, 0.0), lg_rejuv=(-3, 0.0)
@@ -197,7 +199,13 @@ _get_unbounded_q_params_vmap = jjit(
 )
 
 
-DEFAULT_U_Q_PARAMS = _get_unbounded_q_params(*DEFAULT_Q_PARAMS)
+QUParams = namedtuple("QUParams", ["u_" + key for key in DEFAULT_Q_PDICT.keys()])
+DEFAULT_U_Q_PARAMS = QUParams(*_get_unbounded_q_params(*DEFAULT_Q_PARAMS))
 DEFAULT_U_Q_PDICT = OrderedDict(
-    [(key, val) for key, val in zip(DEFAULT_Q_PDICT.keys(), DEFAULT_U_Q_PARAMS)]
+    [(key, val) for key, val in zip(DEFAULT_U_Q_PARAMS._fields, DEFAULT_U_Q_PARAMS)]
+)
+
+DEFAULT_Q_U_PARAMS_UNQUENCHED = QUParams(*[5] * 4)
+DEFAULT_Q_PARAMS_UNQUENCHED = QParams(
+    *_get_bounded_q_params(*DEFAULT_Q_U_PARAMS_UNQUENCHED)
 )

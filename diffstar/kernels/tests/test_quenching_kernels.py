@@ -4,6 +4,8 @@ import numpy as np
 
 from ...defaults import DEFAULT_Q_PARAMS, DEFAULT_U_Q_PARAMS, Q_PARAM_BOUNDS_PDICT
 from ..quenching_kernels import (
+    DEFAULT_Q_PARAMS_UNQUENCHED,
+    DEFAULT_Q_U_PARAMS_UNQUENCHED,
     DEFAULT_U_Q_PDICT,
     _get_bounded_q_params,
     _get_unbounded_q_params,
@@ -23,10 +25,14 @@ def test_bounding_function_returns_finite_results_on_default_u_q_params():
 
 
 def test_default_quenching_params_respect_bounds():
-    assert set(Q_PARAM_BOUNDS_PDICT.keys()) == set(DEFAULT_U_Q_PDICT.keys())
+    keys = list(Q_PARAM_BOUNDS_PDICT.keys())
+    correct_u_keys = ["u_" + key for key in keys]
+    actual_u_keys = list(DEFAULT_U_Q_PDICT.keys())
+    assert correct_u_keys == actual_u_keys
+
     for key, bounds in Q_PARAM_BOUNDS_PDICT.items():
         lo, hi = bounds
-        default_val = DEFAULT_U_Q_PDICT[key]
+        default_val = DEFAULT_U_Q_PDICT["u_" + key]
         assert lo < default_val < hi
 
 
@@ -84,3 +90,16 @@ def test_quenching_function_has_expected_behavior_on_default_params():
         _quenching_kern(lg_qt, lg_qt, q_dt, lg_q_drop, lg_q_rejuv)
     )
     assert np.allclose(actual_lg_q_drop, lg_q_drop, rtol=1e-3)
+
+
+def test_default_q_params_unquenched():
+    tarr = np.linspace(0.1, 13.8, 200)
+    lgtarr = np.log10(tarr)
+
+    res = _quenching_kern(lgtarr, *DEFAULT_Q_PARAMS_UNQUENCHED)
+    assert np.all(res > 0.99)
+
+    res2 = _quenching_kern_u_params(lgtarr, *DEFAULT_Q_U_PARAMS_UNQUENCHED)
+    assert np.all(res2 > 0.99)
+
+    assert np.allclose(res, res2)
