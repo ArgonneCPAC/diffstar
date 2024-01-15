@@ -38,7 +38,9 @@ from .kernels.main_sequence_kernels import (
 )
 from .kernels.quenching_kernels import (
     DEFAULT_Q_PARAMS,
+    DEFAULT_Q_PARAMS_UNQUENCHED,
     DEFAULT_Q_PDICT,
+    DEFAULT_Q_U_PARAMS_UNQUENCHED,
     DEFAULT_U_Q_PARAMS,
     Q_PARAM_BOUNDS_PDICT,
     QParams,

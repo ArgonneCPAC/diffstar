@@ -12,6 +12,8 @@ from ..kernels.quenching_kernels import (
     DEFAULT_U_Q_PDICT,
     _get_bounded_q_params,
     _get_unbounded_q_params,
+    _quenching_kern,
+    _quenching_kern_u_params,
 )
 
 
@@ -166,3 +168,16 @@ def test_default_q_params_respects_pbounds():
     for p, bounds in zip(pars, bdict.values()):
         lo, hi = bounds
         assert lo < p < hi
+
+
+def test_default_q_params_unquenched():
+    tarr = np.linspace(0.1, 13.8, 200)
+    lgtarr = np.log10(tarr)
+
+    res = _quenching_kern(lgtarr, *defaults.DEFAULT_Q_PARAMS_UNQUENCHED)
+    assert np.all(res > 0.99)
+
+    res2 = _quenching_kern_u_params(lgtarr, *defaults.DEFAULT_Q_U_PARAMS_UNQUENCHED)
+    assert np.all(res2 > 0.99)
+
+    assert np.allclose(res, res2)

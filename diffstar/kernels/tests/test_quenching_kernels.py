@@ -4,6 +4,8 @@ import numpy as np
 
 from ...defaults import DEFAULT_Q_PARAMS, DEFAULT_U_Q_PARAMS, Q_PARAM_BOUNDS_PDICT
 from ..quenching_kernels import (
+    DEFAULT_Q_PARAMS_UNQUENCHED,
+    DEFAULT_Q_U_PARAMS_UNQUENCHED,
     DEFAULT_U_Q_PDICT,
     _get_bounded_q_params,
     _get_unbounded_q_params,
@@ -88,3 +90,16 @@ def test_quenching_function_has_expected_behavior_on_default_params():
         _quenching_kern(lg_qt, lg_qt, q_dt, lg_q_drop, lg_q_rejuv)
     )
     assert np.allclose(actual_lg_q_drop, lg_q_drop, rtol=1e-3)
+
+
+def test_default_q_params_unquenched():
+    tarr = np.linspace(0.1, 13.8, 200)
+    lgtarr = np.log10(tarr)
+
+    res = _quenching_kern(lgtarr, *DEFAULT_Q_PARAMS_UNQUENCHED)
+    assert np.all(res > 0.99)
+
+    res2 = _quenching_kern_u_params(lgtarr, *DEFAULT_Q_U_PARAMS_UNQUENCHED)
+    assert np.all(res2 > 0.99)
+
+    assert np.allclose(res, res2)

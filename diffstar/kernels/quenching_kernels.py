@@ -204,3 +204,8 @@ DEFAULT_U_Q_PARAMS = QUParams(*_get_unbounded_q_params(*DEFAULT_Q_PARAMS))
 DEFAULT_U_Q_PDICT = OrderedDict(
     [(key, val) for key, val in zip(DEFAULT_U_Q_PARAMS._fields, DEFAULT_U_Q_PARAMS)]
 )
+
+DEFAULT_Q_U_PARAMS_UNQUENCHED = QUParams(*[5] * 4)
+DEFAULT_Q_PARAMS_UNQUENCHED = QParams(
+    *_get_bounded_q_params(*DEFAULT_Q_U_PARAMS_UNQUENCHED)
+)
