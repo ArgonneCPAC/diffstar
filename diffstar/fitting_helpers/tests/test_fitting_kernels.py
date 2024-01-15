@@ -1,11 +1,8 @@
 """
 """
 import numpy as np
-from diffmah.individual_halo_assembly import (
-    DEFAULT_MAH_PARAMS,
-    _calc_halo_history,
-    _get_early_late,
-)
+from diffmah.defaults import DEFAULT_MAH_PARAMS, MAH_K
+from diffmah.individual_halo_assembly import _calc_halo_history
 
 from ...defaults import DEFAULT_U_MS_PARAMS, DEFAULT_U_Q_PARAMS, FB, LGT0
 from ...kernels import get_sfh_from_mah_kern
@@ -22,12 +19,14 @@ DEFAULT_LOGM0 = 12.0
 
 
 def _get_default_diffmah_args():
-    mah_logtc, mah_k, mah_ue, mah_ul = list(DEFAULT_MAH_PARAMS.values())
-    early_index, late_index = _get_early_late(mah_ue, mah_ul)
-    k = DEFAULT_MAH_PARAMS["mah_k"]
-    logmp = DEFAULT_LOGM0
-    diffmah_args = [LGT0, logmp, mah_logtc, k, early_index, late_index]
-    return diffmah_args
+    return (
+        LGT0,
+        DEFAULT_MAH_PARAMS.logmp,
+        DEFAULT_MAH_PARAMS.logtc,
+        MAH_K,
+        DEFAULT_MAH_PARAMS.early_index,
+        DEFAULT_MAH_PARAMS.late_index,
+    )
 
 
 def test_calculate_sm_sfr_fstar_history_from_mah():

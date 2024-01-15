@@ -3,11 +3,8 @@
 import os
 
 import numpy as np
-from diffmah.individual_halo_assembly import (
-    DEFAULT_MAH_PARAMS,
-    _calc_halo_history,
-    _get_early_late,
-)
+from diffmah.defaults import DEFAULT_MAH_PARAMS, MAH_K
+from diffmah.individual_halo_assembly import _calc_halo_history
 from jax import numpy as jnp
 
 from ...defaults import DEFAULT_U_MS_PARAMS, DEFAULT_U_Q_PARAMS, LGT0
@@ -24,14 +21,14 @@ TESTING_DATA_DRN = os.path.join(
 
 def _get_default_mah_params():
     """Return (logt0, logmp, logtc, k, early, late)"""
-    mah_logtc, mah_k, mah_ue, mah_ul = list(DEFAULT_MAH_PARAMS.values())
-    early_index, late_index = _get_early_late(mah_ue, mah_ul)
-    k = DEFAULT_MAH_PARAMS["mah_k"]
-    logmp = DEFAULT_LOGM0
-
-    default_mah_params = [LGT0, logmp, mah_logtc, k, early_index, late_index]
-    default_mah_params = jnp.array(default_mah_params)
-    return default_mah_params
+    return (
+        LGT0,
+        DEFAULT_MAH_PARAMS.logmp,
+        DEFAULT_MAH_PARAMS.logtc,
+        MAH_K,
+        DEFAULT_MAH_PARAMS.early_index,
+        DEFAULT_MAH_PARAMS.late_index,
+    )
 
 
 def _get_default_sfr_u_params():
@@ -133,7 +130,7 @@ def test_diffmah_behavior_is_frozen():
     assert logmp == DEFAULT_LOGM0, msg
 
     msg = "Default mah_k parameter within Diffmah has changed"
-    assert DEFAULT_MAH_PARAMS["mah_k"] == 3.5, msg
+    assert MAH_K == 3.5, msg
 
     msg = "mah_k parameter returned by _get_default_mah_params function has changed"
     assert k == 3.5, msg
@@ -185,7 +182,7 @@ def test_sfh_is_frozen_on_example_bpl_sample():
                 LGT0_BPL,
                 mah_params_test_sample[ih, 0],
                 mah_params_test_sample[ih, 1],
-                DEFAULT_MAH_PARAMS["mah_k"],
+                MAH_K,
                 mah_params_test_sample[ih, 2],
                 mah_params_test_sample[ih, 3],
             )
