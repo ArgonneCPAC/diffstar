@@ -4,17 +4,28 @@ import numpy as np
 
 from .. import defaults
 from ..kernels.main_sequence_kernels import (
+    DEFAULT_MS_PDICT,
     DEFAULT_U_MS_PDICT,
     _get_bounded_sfr_params,
     _get_unbounded_sfr_params,
 )
 from ..kernels.quenching_kernels import (
+    DEFAULT_Q_PDICT,
     DEFAULT_U_Q_PDICT,
     _get_bounded_q_params,
     _get_unbounded_q_params,
     _quenching_kern,
     _quenching_kern_u_params,
 )
+
+
+def test_get_bounded_diffstar_params_return_unbounded_namedtuple():
+    diffstar_params = defaults.get_bounded_diffstar_params(
+        defaults.DEFAULT_DIFFSTAR_U_PARAMS
+    )
+    assert diffstar_params._fields == ("ms_params", "q_params")
+    assert diffstar_params.ms_params._fields == tuple(DEFAULT_MS_PDICT.keys())
+    assert diffstar_params.q_params._fields == tuple(DEFAULT_Q_PDICT.keys())
 
 
 def test_get_unbounded_diffstar_params_return_unbounded_namedtuple():
