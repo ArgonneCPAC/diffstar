@@ -81,7 +81,7 @@ def test_new_old_kernel_builders_agree_on_random_u_params():
         assert np.allclose(new_sfh, old_sfh, atol=0.01)
 
 
-def test_new_old_kernel_builders_agree_on_defaults_galpop():
+def test_new_old_kernel_builders_agree_on_defaults_galpop_vmap_tobsloop_none():
     old_sfh_kern = build_sfh_from_mah_kernel(galpop_loop="vmap")
     new_sfh_kern = build_sfh_from_mah_kernel2(galpop_loop="vmap")
 
@@ -101,6 +101,99 @@ def test_new_old_kernel_builders_agree_on_defaults_galpop():
     new_q_params_galpop = QParams(*[zz + p for p in DEFAULT_DIFFSTAR_PARAMS.q_params])
     new_args = (
         t,
+        *new_mah_params_galpop,
+        *new_ms_params_galpop,
+        *new_q_params_galpop,
+        LGT0,
+        FB,
+    )
+    new_sfh = new_sfh_kern(*new_args)
+
+    assert np.allclose(new_sfh, old_sfh, rtol=1e-3)
+
+
+def test_new_old_kernel_builders_agree_on_defaults_galpop_scan_tobsloop_none():
+    old_sfh_kern = build_sfh_from_mah_kernel(galpop_loop="scan")
+    new_sfh_kern = build_sfh_from_mah_kernel2(galpop_loop="scan")
+
+    t = 10.0
+    mah_params_galpop = np.array(DEFAULT_MAH_PARAMS).reshape((1, -1))
+    ms_params_galpop = np.array(DEFAULT_DIFFSTAR_PARAMS.ms_params).reshape((1, -1))
+    q_params_galpop = np.array(DEFAULT_DIFFSTAR_PARAMS.q_params).reshape((1, -1))
+
+    old_args = t, mah_params_galpop, ms_params_galpop, q_params_galpop, LGT0, FB
+    old_sfh = old_sfh_kern(*old_args)
+
+    zz = np.zeros(1)
+    new_mah_params_galpop = DiffmahParams(*[zz + p for p in DEFAULT_MAH_PARAMS])
+    new_ms_params_galpop = MSParams(
+        *[zz + p for p in DEFAULT_DIFFSTAR_PARAMS.ms_params]
+    )
+    new_q_params_galpop = QParams(*[zz + p for p in DEFAULT_DIFFSTAR_PARAMS.q_params])
+    new_args = (
+        t,
+        *new_mah_params_galpop,
+        *new_ms_params_galpop,
+        *new_q_params_galpop,
+        LGT0,
+        FB,
+    )
+    new_sfh = new_sfh_kern(*new_args)
+
+    assert np.allclose(new_sfh, old_sfh, rtol=1e-3)
+
+
+def test_new_old_kernel_builders_agree_on_defaults_galpop_vmap_tobsloop_scan():
+    old_sfh_kern = build_sfh_from_mah_kernel(galpop_loop="scan", tobs_loop="scan")
+    new_sfh_kern = build_sfh_from_mah_kernel2(galpop_loop="scan", tobs_loop="scan")
+
+    tarr = np.linspace(0.1, 13.5, 100)
+    mah_params_galpop = np.array(DEFAULT_MAH_PARAMS).reshape((1, -1))
+    ms_params_galpop = np.array(DEFAULT_DIFFSTAR_PARAMS.ms_params).reshape((1, -1))
+    q_params_galpop = np.array(DEFAULT_DIFFSTAR_PARAMS.q_params).reshape((1, -1))
+
+    old_args = tarr, mah_params_galpop, ms_params_galpop, q_params_galpop, LGT0, FB
+    old_sfh = old_sfh_kern(*old_args)
+
+    zz = np.zeros(1)
+    new_mah_params_galpop = DiffmahParams(*[zz + p for p in DEFAULT_MAH_PARAMS])
+    new_ms_params_galpop = MSParams(
+        *[zz + p for p in DEFAULT_DIFFSTAR_PARAMS.ms_params]
+    )
+    new_q_params_galpop = QParams(*[zz + p for p in DEFAULT_DIFFSTAR_PARAMS.q_params])
+    new_args = (
+        tarr,
+        *new_mah_params_galpop,
+        *new_ms_params_galpop,
+        *new_q_params_galpop,
+        LGT0,
+        FB,
+    )
+    new_sfh = new_sfh_kern(*new_args)
+
+    assert np.allclose(new_sfh, old_sfh, rtol=1e-3)
+
+
+def test_new_old_kernel_builders_agree_on_defaults_galpop_scan_tobsloop_scan():
+    old_sfh_kern = build_sfh_from_mah_kernel(galpop_loop="scan", tobs_loop="scan")
+    new_sfh_kern = build_sfh_from_mah_kernel2(galpop_loop="scan", tobs_loop="scan")
+
+    tarr = np.linspace(0.1, 13.5, 100)
+    mah_params_galpop = np.array(DEFAULT_MAH_PARAMS).reshape((1, -1))
+    ms_params_galpop = np.array(DEFAULT_DIFFSTAR_PARAMS.ms_params).reshape((1, -1))
+    q_params_galpop = np.array(DEFAULT_DIFFSTAR_PARAMS.q_params).reshape((1, -1))
+
+    old_args = tarr, mah_params_galpop, ms_params_galpop, q_params_galpop, LGT0, FB
+    old_sfh = old_sfh_kern(*old_args)
+
+    zz = np.zeros(1)
+    new_mah_params_galpop = DiffmahParams(*[zz + p for p in DEFAULT_MAH_PARAMS])
+    new_ms_params_galpop = MSParams(
+        *[zz + p for p in DEFAULT_DIFFSTAR_PARAMS.ms_params]
+    )
+    new_q_params_galpop = QParams(*[zz + p for p in DEFAULT_DIFFSTAR_PARAMS.q_params])
+    new_args = (
+        tarr,
         *new_mah_params_galpop,
         *new_ms_params_galpop,
         *new_q_params_galpop,

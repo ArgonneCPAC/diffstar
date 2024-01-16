@@ -189,27 +189,53 @@ def _get_kern_with_galpop_loop(kern, galpop_loop):
     elif galpop_loop == "scan":
 
         @jjit
-        def new_kern(t, mah_params_galpop, ms_params_galpop, q_params_galpop, lgt0, fb):
-            n_gals, n_mah_params = mah_params_galpop.shape
-            n_ms_params = ms_params_galpop.shape[1]
-            n_q_params = q_params_galpop.shape[1]
-            n_params = n_mah_params + n_ms_params + n_q_params
+        def new_kern(
+            t,
+            logmp,
+            logtc,
+            early_index,
+            late_index,
+            lgmcrit,
+            lgy_at_mcrit,
+            indx_lo,
+            indx_hi,
+            tau_dep,
+            lg_qt,
+            qlglgdt,
+            lg_drop,
+            lg_rejuv,
+            lgt0,
+            fb,
+        ):
+            n_gals = logmp.shape[0]
+
+            n_params = N_MAH_PARAMS + N_MS_PARAMS + N_Q_PARAMS
             galpop_params = jnp.zeros(shape=(n_gals, n_params))
-            galpop_params = galpop_params.at[:, :n_mah_params].set(mah_params_galpop)
-            i, j = n_mah_params, n_mah_params + n_ms_params
-            galpop_params = galpop_params.at[:, i:j].set(ms_params_galpop)
-            i = n_mah_params + n_ms_params
-            galpop_params = galpop_params.at[:, i:].set(q_params_galpop)
+            galpop_params = galpop_params.at[:, 0].set(logmp)
+            galpop_params = galpop_params.at[:, 1].set(logtc)
+            galpop_params = galpop_params.at[:, 2].set(early_index)
+            galpop_params = galpop_params.at[:, 3].set(late_index)
+
+            galpop_params = galpop_params.at[:, 4].set(lgmcrit)
+            galpop_params = galpop_params.at[:, 5].set(lgy_at_mcrit)
+            galpop_params = galpop_params.at[:, 6].set(indx_lo)
+            galpop_params = galpop_params.at[:, 7].set(indx_hi)
+            galpop_params = galpop_params.at[:, 8].set(tau_dep)
+
+            galpop_params = galpop_params.at[:, 9].set(lg_qt)
+            galpop_params = galpop_params.at[:, 10].set(qlglgdt)
+            galpop_params = galpop_params.at[:, 11].set(lg_drop)
+            galpop_params = galpop_params.at[:, 12].set(lg_rejuv)
 
             @jjit
             def scan_func_galpop(carryover, el):
                 params = el
-                mah_params = params[:n_mah_params]
-                i, j = n_mah_params, n_mah_params + n_ms_params
+                mah_params = params[:N_MAH_PARAMS]
+                i, j = N_MAH_PARAMS, N_MAH_PARAMS + N_MS_PARAMS
                 ms_params = params[i:j]
-                i = n_mah_params + n_ms_params
+                i = N_MAH_PARAMS + N_MS_PARAMS
                 q_params = params[i:]
-                sfh_galpop = kern(t, mah_params, ms_params, q_params, lgt0, fb)
+                sfh_galpop = kern(t, *mah_params, *ms_params, *q_params, lgt0, fb)
                 carryover = sfh_galpop
                 accumulated = sfh_galpop
                 return carryover, accumulated
