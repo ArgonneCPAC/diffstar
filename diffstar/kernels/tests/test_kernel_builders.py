@@ -1,7 +1,7 @@
 """
 """
 import numpy as np
-from diffmah.defaults import DEFAULT_MAH_PARAMS
+from diffmah.defaults import DEFAULT_MAH_PARAMS, DiffmahParams
 from jax import random as jran
 
 from ...defaults import (
@@ -10,12 +10,17 @@ from ...defaults import (
     FB,
     LGT0,
     DiffstarUParams,
+    MSParams,
     MSUParams,
+    QParams,
     QUParams,
     get_bounded_diffstar_params,
     get_unbounded_diffstar_params,
 )
 from ..history_kernel_builders import build_sfh_from_mah_kernel
+from ..history_kernel_builders2 import (
+    build_sfh_from_mah_kernel as build_sfh_from_mah_kernel2,
+)
 from ..kernel_builders import get_sfh_from_mah_kern
 
 
@@ -74,3 +79,34 @@ def test_new_old_kernel_builders_agree_on_random_u_params():
         )
         new_sfh = new_sfh_kern(*new_args)
         assert np.allclose(new_sfh, old_sfh, atol=0.01)
+
+
+def test_new_old_kernel_builders_agree_on_defaults_galpop():
+    old_sfh_kern = build_sfh_from_mah_kernel(galpop_loop="vmap")
+    new_sfh_kern = build_sfh_from_mah_kernel2(galpop_loop="vmap")
+
+    t = 10.0
+    mah_params_galpop = np.array(DEFAULT_MAH_PARAMS).reshape((1, -1))
+    ms_params_galpop = np.array(DEFAULT_DIFFSTAR_PARAMS.ms_params).reshape((1, -1))
+    q_params_galpop = np.array(DEFAULT_DIFFSTAR_PARAMS.q_params).reshape((1, -1))
+
+    old_args = t, mah_params_galpop, ms_params_galpop, q_params_galpop, LGT0, FB
+    old_sfh = old_sfh_kern(*old_args)
+
+    zz = np.zeros(1)
+    new_mah_params_galpop = DiffmahParams(*[zz + p for p in DEFAULT_MAH_PARAMS])
+    new_ms_params_galpop = MSParams(
+        *[zz + p for p in DEFAULT_DIFFSTAR_PARAMS.ms_params]
+    )
+    new_q_params_galpop = QParams(*[zz + p for p in DEFAULT_DIFFSTAR_PARAMS.q_params])
+    new_args = (
+        t,
+        *new_mah_params_galpop,
+        *new_ms_params_galpop,
+        *new_q_params_galpop,
+        LGT0,
+        FB,
+    )
+    new_sfh = new_sfh_kern(*new_args)
+
+    assert np.allclose(new_sfh, old_sfh, rtol=1e-3)
