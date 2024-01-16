@@ -74,7 +74,8 @@ def calc_sfh_singlegal(
         This variable is only returned if return_smh=True
 
     """
-    args = (tarr, *mah_params, *sfh_params.ms_params, *sfh_params.q_params, lgt0, fb)
+    ms_params, q_params = sfh_params
+    args = (tarr, *mah_params, *ms_params, *q_params, lgt0, fb)
     sfh = _sfh_singlegal_kern(*args)
     if return_smh:
         smh = cumulative_mstar_formed(tarr, sfh)
@@ -126,7 +127,8 @@ def calc_sfh_galpop(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB, return_smh=F
         This variable is only returned if return_smh=True
 
     """
-    args = (tarr, *mah_params, *sfh_params.ms_params, *sfh_params.q_params, lgt0, fb)
+    ms_params, q_params = sfh_params
+    args = (tarr, *mah_params, *ms_params, *q_params, lgt0, fb)
     sfh = _sfh_galpop_kern(*args)
     if return_smh:
         smh = _cumulative_mstar_formed_vmap(tarr, sfh)
