@@ -1,6 +1,7 @@
 """
 """
 import numpy as np
+import pytest
 
 from .. import defaults
 from ..kernels.main_sequence_kernels import (
@@ -17,6 +18,15 @@ from ..kernels.quenching_kernels import (
     _quenching_kern,
     _quenching_kern_u_params,
 )
+
+try:
+    import dsps
+
+    HAS_DSPS = True
+except ImportError:
+    HAS_DSPS = False
+
+MSG_HAS_DSPS = "Must have dsps installed to run this test"
 
 
 def test_get_bounded_diffstar_params_return_unbounded_namedtuple():
@@ -201,3 +211,19 @@ def test_default_q_params_unquenched():
     assert np.all(res2 > 0.99)
 
     assert np.allclose(res, res2)
+
+
+@pytest.mark.skipif(not HAS_DSPS, reason=MSG_HAS_DSPS)
+def test_consistency_with_dsps_defaults():
+    assert np.allclose(defaults.SFR_MIN, dsps.constants.SFR_MIN)
+    assert np.allclose(defaults.T_BIRTH_MIN, dsps.constants.T_BIRTH_MIN)
+    assert np.allclose(defaults.T_TABLE_MIN, dsps.constants.T_TABLE_MIN)
+    assert np.allclose(
+        defaults.N_T_LGSM_INTEGRATION, dsps.constants.N_T_LGSM_INTEGRATION
+    )
+
+
+def test_consistency_with_diffmah_defaults():
+    from diffmah import defaults as diffmah_defaults
+
+    assert np.allclose(defaults.LGT0, diffmah_defaults.LGT0)
