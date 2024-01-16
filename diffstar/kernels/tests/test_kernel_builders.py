@@ -10,17 +10,12 @@ from ...defaults import (
     FB,
     LGT0,
     DiffstarUParams,
-    MSParams,
     MSUParams,
-    QParams,
     QUParams,
     get_bounded_diffstar_params,
     get_unbounded_diffstar_params,
 )
 from ..history_kernel_builders import build_sfh_from_mah_kernel
-from ..history_kernel_builders2 import (
-    build_sfh_from_mah_kernel as build_sfh_from_mah_kernel2,
-)
 from ..kernel_builders import get_sfh_from_mah_kern
 
 
@@ -38,7 +33,14 @@ def test_new_old_kernel_builders_agree_on_defaults():
     old_args = t, DEFAULT_MAH_PARAMS, *DEFAULT_DIFFSTAR_U_PARAMS, LGT0, FB
     old_sfh = old_sfh_kern(*old_args)
 
-    new_args = t, DEFAULT_MAH_PARAMS, *DEFAULT_DIFFSTAR_PARAMS, LGT0, FB
+    new_args = (
+        t,
+        *DEFAULT_MAH_PARAMS,
+        *DEFAULT_DIFFSTAR_PARAMS.ms_params,
+        *DEFAULT_DIFFSTAR_PARAMS.q_params,
+        LGT0,
+        FB,
+    )
     new_sfh = new_sfh_kern(*new_args)
 
     assert np.allclose(new_sfh, old_sfh, rtol=1e-3)
@@ -71,9 +73,9 @@ def test_new_old_kernel_builders_agree_on_random_u_params():
 
         new_args = (
             t,
-            DEFAULT_MAH_PARAMS,
-            sfh_params.ms_params,
-            sfh_params.q_params,
+            *DEFAULT_MAH_PARAMS,
+            *sfh_params.ms_params,
+            *sfh_params.q_params,
             LGT0,
             FB,
         )
@@ -81,125 +83,79 @@ def test_new_old_kernel_builders_agree_on_random_u_params():
         assert np.allclose(new_sfh, old_sfh, atol=0.01)
 
 
-def test_new_old_kernel_builders_agree_on_defaults_galpop_vmap_tobsloop_none():
-    old_sfh_kern = build_sfh_from_mah_kernel(galpop_loop="vmap")
-    new_sfh_kern = build_sfh_from_mah_kernel2(galpop_loop="vmap")
+def test_new_old_kernel_builders_agree_on_random_u_params_tobs_loop():
+    ran_key = jran.PRNGKey(0)
+    old_sfh_kern = get_sfh_from_mah_kern(tobs_loop="scan")
+    new_sfh_kern = build_sfh_from_mah_kernel(tobs_loop="scan")
 
-    t = 10.0
-    mah_params_galpop = np.array(DEFAULT_MAH_PARAMS).reshape((1, -1))
-    ms_params_galpop = np.array(DEFAULT_DIFFSTAR_PARAMS.ms_params).reshape((1, -1))
-    q_params_galpop = np.array(DEFAULT_DIFFSTAR_PARAMS.q_params).reshape((1, -1))
+    tarr = np.linspace(0.1, 13.5, 50)
+    ntests = 100
+    ran_keys = jran.split(ran_key, ntests)
+    for params_key in ran_keys:
+        uran_params = jran.normal(params_key, shape=(9,)) * 0.1
+        u_ms_params = np.array(DEFAULT_DIFFSTAR_U_PARAMS.u_ms_params) + uran_params[:5]
+        u_q_params = np.array(DEFAULT_DIFFSTAR_U_PARAMS.u_q_params) + uran_params[5:]
+        old_args = tarr, DEFAULT_MAH_PARAMS, u_ms_params, u_q_params, LGT0, FB
+        old_sfh = old_sfh_kern(*old_args)
 
-    old_args = t, mah_params_galpop, ms_params_galpop, q_params_galpop, LGT0, FB
-    old_sfh = old_sfh_kern(*old_args)
+        sfh_u_params = DiffstarUParams(MSUParams(*u_ms_params), QUParams(*u_q_params))
+        sfh_params = get_bounded_diffstar_params(sfh_u_params)
 
-    zz = np.zeros(1)
-    new_mah_params_galpop = DiffmahParams(*[zz + p for p in DEFAULT_MAH_PARAMS])
-    new_ms_params_galpop = MSParams(
-        *[zz + p for p in DEFAULT_DIFFSTAR_PARAMS.ms_params]
-    )
-    new_q_params_galpop = QParams(*[zz + p for p in DEFAULT_DIFFSTAR_PARAMS.q_params])
-    new_args = (
-        t,
-        *new_mah_params_galpop,
-        *new_ms_params_galpop,
-        *new_q_params_galpop,
-        LGT0,
-        FB,
-    )
-    new_sfh = new_sfh_kern(*new_args)
+        # Test u_params correctly inverts
+        sfh_u_params2 = get_unbounded_diffstar_params(sfh_params)
+        assert np.allclose(u_ms_params, sfh_u_params2.u_ms_params)
+        assert np.allclose(u_q_params, sfh_u_params2.u_q_params)
 
-    assert np.allclose(new_sfh, old_sfh, rtol=1e-3)
-
-
-def test_new_old_kernel_builders_agree_on_defaults_galpop_scan_tobsloop_none():
-    old_sfh_kern = build_sfh_from_mah_kernel(galpop_loop="scan")
-    new_sfh_kern = build_sfh_from_mah_kernel2(galpop_loop="scan")
-
-    t = 10.0
-    mah_params_galpop = np.array(DEFAULT_MAH_PARAMS).reshape((1, -1))
-    ms_params_galpop = np.array(DEFAULT_DIFFSTAR_PARAMS.ms_params).reshape((1, -1))
-    q_params_galpop = np.array(DEFAULT_DIFFSTAR_PARAMS.q_params).reshape((1, -1))
-
-    old_args = t, mah_params_galpop, ms_params_galpop, q_params_galpop, LGT0, FB
-    old_sfh = old_sfh_kern(*old_args)
-
-    zz = np.zeros(1)
-    new_mah_params_galpop = DiffmahParams(*[zz + p for p in DEFAULT_MAH_PARAMS])
-    new_ms_params_galpop = MSParams(
-        *[zz + p for p in DEFAULT_DIFFSTAR_PARAMS.ms_params]
-    )
-    new_q_params_galpop = QParams(*[zz + p for p in DEFAULT_DIFFSTAR_PARAMS.q_params])
-    new_args = (
-        t,
-        *new_mah_params_galpop,
-        *new_ms_params_galpop,
-        *new_q_params_galpop,
-        LGT0,
-        FB,
-    )
-    new_sfh = new_sfh_kern(*new_args)
-
-    assert np.allclose(new_sfh, old_sfh, rtol=1e-3)
+        new_args = (
+            tarr,
+            *DEFAULT_MAH_PARAMS,
+            *sfh_params.ms_params,
+            *sfh_params.q_params,
+            LGT0,
+            FB,
+        )
+        new_sfh = new_sfh_kern(*new_args)
+        assert np.allclose(new_sfh, old_sfh, atol=0.01)
 
 
-def test_new_old_kernel_builders_agree_on_defaults_galpop_vmap_tobsloop_scan():
-    old_sfh_kern = build_sfh_from_mah_kernel(galpop_loop="scan", tobs_loop="scan")
-    new_sfh_kern = build_sfh_from_mah_kernel2(galpop_loop="scan", tobs_loop="scan")
+def test_new_old_kernel_builders_agree_on_random_u_params_galobs_loop():
+    ran_key = jran.PRNGKey(0)
+    old_sfh_kern = get_sfh_from_mah_kern(tobs_loop="scan", galpop_loop="vmap")
+    new_sfh_kern = build_sfh_from_mah_kernel(tobs_loop="scan", galpop_loop="vmap")
 
-    tarr = np.linspace(0.1, 13.5, 100)
-    mah_params_galpop = np.array(DEFAULT_MAH_PARAMS).reshape((1, -1))
-    ms_params_galpop = np.array(DEFAULT_DIFFSTAR_PARAMS.ms_params).reshape((1, -1))
-    q_params_galpop = np.array(DEFAULT_DIFFSTAR_PARAMS.q_params).reshape((1, -1))
+    ZZ = np.zeros(1)
 
-    old_args = tarr, mah_params_galpop, ms_params_galpop, q_params_galpop, LGT0, FB
-    old_sfh = old_sfh_kern(*old_args)
+    tarr = np.linspace(0.1, 13.5, 50)
+    ntests = 100
+    ran_keys = jran.split(ran_key, ntests)
+    for params_key in ran_keys:
+        uran_params = jran.normal(params_key, shape=(9,)) * 0.1
+        u_ms_params = np.array(DEFAULT_DIFFSTAR_U_PARAMS.u_ms_params) + uran_params[:5]
+        u_q_params = np.array(DEFAULT_DIFFSTAR_U_PARAMS.u_q_params) + uran_params[5:]
 
-    zz = np.zeros(1)
-    new_mah_params_galpop = DiffmahParams(*[zz + p for p in DEFAULT_MAH_PARAMS])
-    new_ms_params_galpop = MSParams(
-        *[zz + p for p in DEFAULT_DIFFSTAR_PARAMS.ms_params]
-    )
-    new_q_params_galpop = QParams(*[zz + p for p in DEFAULT_DIFFSTAR_PARAMS.q_params])
-    new_args = (
-        tarr,
-        *new_mah_params_galpop,
-        *new_ms_params_galpop,
-        *new_q_params_galpop,
-        LGT0,
-        FB,
-    )
-    new_sfh = new_sfh_kern(*new_args)
+        old_args = (
+            tarr,
+            np.array(DEFAULT_MAH_PARAMS).reshape((1, -1)),
+            np.array(u_ms_params).reshape((1, -1)),
+            np.array(u_q_params).reshape((1, -1)),
+            LGT0,
+            FB,
+        )
+        old_sfh = old_sfh_kern(*old_args)
 
-    assert np.allclose(new_sfh, old_sfh, rtol=1e-3)
+        mah_params_galpop_new = DiffmahParams(*[ZZ + p for p in DEFAULT_MAH_PARAMS])
+        u_ms_params_galpop_new = MSUParams(*[ZZ + p for p in u_ms_params])
+        u_q_params_galpop_new = QUParams(*[ZZ + p for p in u_q_params])
 
-
-def test_new_old_kernel_builders_agree_on_defaults_galpop_scan_tobsloop_scan():
-    old_sfh_kern = build_sfh_from_mah_kernel(galpop_loop="scan", tobs_loop="scan")
-    new_sfh_kern = build_sfh_from_mah_kernel2(galpop_loop="scan", tobs_loop="scan")
-
-    tarr = np.linspace(0.1, 13.5, 100)
-    mah_params_galpop = np.array(DEFAULT_MAH_PARAMS).reshape((1, -1))
-    ms_params_galpop = np.array(DEFAULT_DIFFSTAR_PARAMS.ms_params).reshape((1, -1))
-    q_params_galpop = np.array(DEFAULT_DIFFSTAR_PARAMS.q_params).reshape((1, -1))
-
-    old_args = tarr, mah_params_galpop, ms_params_galpop, q_params_galpop, LGT0, FB
-    old_sfh = old_sfh_kern(*old_args)
-
-    zz = np.zeros(1)
-    new_mah_params_galpop = DiffmahParams(*[zz + p for p in DEFAULT_MAH_PARAMS])
-    new_ms_params_galpop = MSParams(
-        *[zz + p for p in DEFAULT_DIFFSTAR_PARAMS.ms_params]
-    )
-    new_q_params_galpop = QParams(*[zz + p for p in DEFAULT_DIFFSTAR_PARAMS.q_params])
-    new_args = (
-        tarr,
-        *new_mah_params_galpop,
-        *new_ms_params_galpop,
-        *new_q_params_galpop,
-        LGT0,
-        FB,
-    )
-    new_sfh = new_sfh_kern(*new_args)
-
-    assert np.allclose(new_sfh, old_sfh, rtol=1e-3)
+        sfh_u_params = DiffstarUParams(u_ms_params_galpop_new, u_q_params_galpop_new)
+        sfh_params = get_bounded_diffstar_params(sfh_u_params)
+        new_args = (
+            tarr,
+            *mah_params_galpop_new,
+            *sfh_params.ms_params,
+            *sfh_params.q_params,
+            LGT0,
+            FB,
+        )
+        new_sfh = new_sfh_kern(*new_args)
+        assert np.allclose(new_sfh, old_sfh, atol=0.01)

@@ -5,11 +5,21 @@ from jax import lax
 from jax import numpy as jnp
 from jax import vmap
 
-from ..defaults import DEFAULT_N_STEPS, SFR_MIN, T_BIRTH_MIN
+from ..defaults import (
+    DEFAULT_DIFFSTAR_PARAMS,
+    DEFAULT_MAH_PARAMS,
+    DEFAULT_N_STEPS,
+    SFR_MIN,
+    T_BIRTH_MIN,
+)
 from .main_sequence_kernels import _lax_ms_sfh_scalar_kern
 from .quenching_kernels import _quenching_kern
 
-__all__ = ("build_sfh_from_mah_kernel", "build_ms_sfh_from_mah_kernel")
+__all__ = ("build_sfh_from_mah_kernel",)
+
+N_MAH_PARAMS = len(DEFAULT_MAH_PARAMS)
+N_MS_PARAMS = len(DEFAULT_DIFFSTAR_PARAMS.ms_params)
+N_Q_PARAMS = len(DEFAULT_DIFFSTAR_PARAMS.q_params)
 
 
 def build_sfh_from_mah_kernel(
@@ -54,15 +64,33 @@ def build_sfh_from_mah_kernel(
     uniform_table = jnp.linspace(0, 1, n_steps)
 
     @jjit
-    def _kern(t_form, mah_params, ms_params, q_params, lgt0, fb):
-        tau_dep = ms_params[4]
+    def _kern(
+        t_form,
+        logmp,
+        logtc,
+        early_index,
+        late_index,
+        lgmcrit,
+        lgy_at_mcrit,
+        indx_lo,
+        indx_hi,
+        tau_dep,
+        lg_qt,
+        qlglgdt,
+        lg_drop,
+        lg_rejuv,
+        lgt0,
+        fb,
+    ):
+        mah_params = logmp, logtc, early_index, late_index
+        ms_params = lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, tau_dep
+
         t_min = jnp.max(jnp.array((tacc_integration_min, t_form - tau_dep)))
         t_table = t_min + uniform_table * (t_form - t_min)
         args = t_form, mah_params, ms_params, lgt0, fb, t_table
         ms_sfr = _lax_ms_sfh_scalar_kern(*args)
         lgt_form = jnp.log10(t_form)
 
-        lg_qt, qlglgdt, lg_drop, lg_rejuv = q_params
         lg_q_dt = 10**qlglgdt
         qkern_inputs = lg_qt, lg_q_dt, lg_drop, lg_rejuv
         qfunc = _quenching_kern(lgt_form, *qkern_inputs)
@@ -78,16 +106,57 @@ def build_sfh_from_mah_kernel(
 
 def _get_kern_with_tobs_loop(kern, tobs_loop):
     if tobs_loop == "vmap":
-        _t = [0, None, None, None, None, None]
+        _t = [
+            0,
+            *[None] * N_MAH_PARAMS,
+            *[None] * N_MS_PARAMS,
+            *[None] * N_Q_PARAMS,
+            None,
+            None,
+        ]
         new_kern = jjit(vmap(kern, in_axes=_t))
     elif tobs_loop == "scan":
 
         @jjit
-        def new_kern(tarr, mah_params, ms_params, q_params, lgt0, fb):
+        def new_kern(
+            tarr,
+            logmp,
+            logtc,
+            early_index,
+            late_index,
+            lgmcrit,
+            lgy_at_mcrit,
+            indx_lo,
+            indx_hi,
+            tau_dep,
+            lg_qt,
+            qlglgdt,
+            lg_drop,
+            lg_rejuv,
+            lgt0,
+            fb,
+        ):
             @jjit
             def scan_func_time_array(carryover, el):
                 t_form = el
-                sfr_at_t_form = kern(t_form, mah_params, ms_params, q_params, lgt0, fb)
+                sfr_at_t_form = kern(
+                    t_form,
+                    logmp,
+                    logtc,
+                    early_index,
+                    late_index,
+                    lgmcrit,
+                    lgy_at_mcrit,
+                    indx_lo,
+                    indx_hi,
+                    tau_dep,
+                    lg_qt,
+                    qlglgdt,
+                    lg_drop,
+                    lg_rejuv,
+                    lgt0,
+                    fb,
+                )
                 carryover = sfr_at_t_form
                 accumulated = sfr_at_t_form
                 return carryover, accumulated
@@ -108,127 +177,65 @@ def _get_kern_with_tobs_loop(kern, tobs_loop):
 
 def _get_kern_with_galpop_loop(kern, galpop_loop):
     if galpop_loop == "vmap":
-        _g = [None, 0, 0, 0, None, None]
+        _g = [
+            None,
+            *[0] * N_MAH_PARAMS,
+            *[0] * N_MS_PARAMS,
+            *[0] * N_Q_PARAMS,
+            None,
+            None,
+        ]
         new_kern = jjit(vmap(kern, in_axes=_g))
     elif galpop_loop == "scan":
 
         @jjit
-        def new_kern(t, mah_params_galpop, ms_params_galpop, q_params_galpop, lgt0, fb):
-            n_gals, n_mah_params = mah_params_galpop.shape
-            n_ms_params = ms_params_galpop.shape[1]
-            n_q_params = q_params_galpop.shape[1]
-            n_params = n_mah_params + n_ms_params + n_q_params
+        def new_kern(
+            t,
+            logmp,
+            logtc,
+            early_index,
+            late_index,
+            lgmcrit,
+            lgy_at_mcrit,
+            indx_lo,
+            indx_hi,
+            tau_dep,
+            lg_qt,
+            qlglgdt,
+            lg_drop,
+            lg_rejuv,
+            lgt0,
+            fb,
+        ):
+            n_gals = logmp.shape[0]
+
+            n_params = N_MAH_PARAMS + N_MS_PARAMS + N_Q_PARAMS
             galpop_params = jnp.zeros(shape=(n_gals, n_params))
-            galpop_params = galpop_params.at[:, :n_mah_params].set(mah_params_galpop)
-            i, j = n_mah_params, n_mah_params + n_ms_params
-            galpop_params = galpop_params.at[:, i:j].set(ms_params_galpop)
-            i = n_mah_params + n_ms_params
-            galpop_params = galpop_params.at[:, i:].set(q_params_galpop)
+            galpop_params = galpop_params.at[:, 0].set(logmp)
+            galpop_params = galpop_params.at[:, 1].set(logtc)
+            galpop_params = galpop_params.at[:, 2].set(early_index)
+            galpop_params = galpop_params.at[:, 3].set(late_index)
+
+            galpop_params = galpop_params.at[:, 4].set(lgmcrit)
+            galpop_params = galpop_params.at[:, 5].set(lgy_at_mcrit)
+            galpop_params = galpop_params.at[:, 6].set(indx_lo)
+            galpop_params = galpop_params.at[:, 7].set(indx_hi)
+            galpop_params = galpop_params.at[:, 8].set(tau_dep)
+
+            galpop_params = galpop_params.at[:, 9].set(lg_qt)
+            galpop_params = galpop_params.at[:, 10].set(qlglgdt)
+            galpop_params = galpop_params.at[:, 11].set(lg_drop)
+            galpop_params = galpop_params.at[:, 12].set(lg_rejuv)
 
             @jjit
             def scan_func_galpop(carryover, el):
                 params = el
-                mah_params = params[:n_mah_params]
-                i, j = n_mah_params, n_mah_params + n_ms_params
+                mah_params = params[:N_MAH_PARAMS]
+                i, j = N_MAH_PARAMS, N_MAH_PARAMS + N_MS_PARAMS
                 ms_params = params[i:j]
-                i = n_mah_params + n_ms_params
+                i = N_MAH_PARAMS + N_MS_PARAMS
                 q_params = params[i:]
-                sfh_galpop = kern(t, mah_params, ms_params, q_params, lgt0, fb)
-                carryover = sfh_galpop
-                accumulated = sfh_galpop
-                return carryover, accumulated
-
-            scan_init = jnp.zeros_like(t)
-            scan_arr = galpop_params
-            res = lax.scan(scan_func_galpop, scan_init, scan_arr)
-            sfh_galpop = res[1]
-            return sfh_galpop
-
-    elif galpop_loop is None:
-        new_kern = kern
-    else:
-        msg = "Input `galpop_loop`={0} must be either `vmap` or `scan`"
-        raise ValueError(msg.format(galpop_loop))
-    return new_kern
-
-
-def build_ms_sfh_from_mah_kernel(
-    n_steps=DEFAULT_N_STEPS,
-    tacc_integration_min=T_BIRTH_MIN,
-    tobs_loop=None,
-    galpop_loop=None,
-):
-    uniform_table = jnp.linspace(0, 1, n_steps)
-
-    @jjit
-    def _kern(t_form, mah_params, ms_params, lgt0, fb):
-        tau_dep = ms_params[4]
-        t_min = jnp.max(jnp.array((tacc_integration_min, t_form - tau_dep)))
-        t_table = t_min + uniform_table * (t_form - t_min)
-        args = t_form, mah_params, ms_params, lgt0, fb, t_table
-        sfr = _lax_ms_sfh_scalar_kern(*args)
-        sfr = lax.cond(sfr < SFR_MIN, lambda x: SFR_MIN, lambda x: x, sfr)
-        return sfr
-
-    kern_with_tobs_loop = _get_ms_kern_with_tobs_loop(_kern, tobs_loop)
-    lax_ms_sfh_from_mah_kern = _get_ms_kern_with_galpop_loop(
-        kern_with_tobs_loop, galpop_loop
-    )
-
-    return lax_ms_sfh_from_mah_kern
-
-
-def _get_ms_kern_with_tobs_loop(kern, tobs_loop):
-    if tobs_loop == "vmap":
-        _t = [0, None, None, None, None]
-        new_kern = jjit(vmap(kern, in_axes=_t))
-    elif tobs_loop == "scan":
-
-        @jjit
-        def new_kern(tarr, mah_params, ms_params, lgt0, fb):
-            @jjit
-            def scan_func_time_array(carryover, el):
-                t_form = el
-                sfr_at_t_form = kern(t_form, mah_params, ms_params, lgt0, fb)
-                carryover = sfr_at_t_form
-                accumulated = sfr_at_t_form
-                return carryover, accumulated
-
-            scan_init = 0.0
-            scan_arr = tarr
-            res = lax.scan(scan_func_time_array, scan_init, scan_arr)
-            sfh = res[1]
-            return sfh
-
-    elif tobs_loop is None:
-        new_kern = kern
-    else:
-        msg = "Input `tobs_loop`={0} must be either `vmap` or `scan`"
-        raise ValueError(msg.format(tobs_loop))
-    return new_kern
-
-
-def _get_ms_kern_with_galpop_loop(kern, galpop_loop):
-    if galpop_loop == "vmap":
-        _g = [None, 0, 0, None, None]
-        new_kern = jjit(vmap(kern, in_axes=_g))
-    elif galpop_loop == "scan":
-
-        @jjit
-        def new_kern(t, mah_params_galpop, ms_params_galpop, lgt0, fb):
-            n_gals, n_mah_params = mah_params_galpop.shape
-            n_ms_params = ms_params_galpop.shape[1]
-            n_params = n_mah_params + n_ms_params
-            galpop_params = jnp.zeros(shape=(n_gals, n_params))
-            galpop_params = galpop_params.at[:, :n_mah_params].set(mah_params_galpop)
-            galpop_params = galpop_params.at[:, n_mah_params:].set(ms_params_galpop)
-
-            @jjit
-            def scan_func_galpop(carryover, el):
-                params = el
-                mah_params = params[:n_mah_params]
-                ms_params = params[n_mah_params:]
-                sfh_galpop = kern(t, mah_params, ms_params, lgt0, fb)
+                sfh_galpop = kern(t, *mah_params, *ms_params, *q_params, lgt0, fb)
                 carryover = sfh_galpop
                 accumulated = sfh_galpop
                 return carryover, accumulated
