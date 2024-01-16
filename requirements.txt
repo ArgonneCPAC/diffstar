@@ -1,4 +1,4 @@
-diffmah
+diffmah>=0.5.0
 numpy
 jax
 h5py
