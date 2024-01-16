@@ -129,3 +129,28 @@ def test_calc_sfh_smh_singlegal_agrees_with_sfh_singlegal_on_u_randoms():
         )
 
         assert np.allclose(sfh, sfh_new, rtol=1e-4)
+
+
+def test_sfh_galpop_evaluates():
+    n_t = 100
+    lgt0, mah_params, ms_params, q_params = _get_all_default_params()
+    mah_params = np.array(mah_params).reshape((1, -1))
+    ms_params = np.array(ms_params).reshape((1, -1))
+    q_params = np.array(q_params).reshape((1, -1))
+    tarr = np.linspace(0.1, 10**lgt0, n_t)
+    sfh = sfh_galpop(tarr, mah_params, ms_params, q_params, LGT0, FB)
+
+
+# def test_calc_sfh_smh_galpop_agrees_with_sfh_galpop_on_defaults():
+#     lgt0, mah_params, ms_params, q_params = _get_all_default_params()
+
+#     n_t = 100
+#     tarr = np.linspace(0.1, 10**lgt0, n_t)
+#     sfh = sfh_singlegal(tarr, mah_params, ms_params, q_params, lgt0, FB)
+
+#     sfh_params = DiffstarParams(MSParams(*ms_params), QParams(*q_params))
+#     sfh_new, smh_new = calc_sfh_smh_singlegal(
+#         sfh_params, mah_params, tarr, lgt0=lgt0, fb=FB
+#     )
+
+#     assert np.allclose(sfh, sfh_new, rtol=1e-4)
