@@ -1,5 +1,6 @@
 """"""
 import numpy as np
+from diffmah.defaults import DiffmahParams
 from jax import random as jran
 
 from .. import sfh_galpop, sfh_singlegal
@@ -142,9 +143,9 @@ def test_calc_sfh_smh_galpop_agrees_with_sfh_galpop():
 
     lgt0, mah_params, ms_params, q_params = _get_all_default_params()
     zz = np.zeros(1)
-    mah_params = [zz + p for p in mah_params]
-    ms_params = [zz + p for p in ms_params]
-    q_params = [zz + p for p in q_params]
+    mah_params = DiffmahParams(*[zz + p for p in mah_params])
+    ms_params = MSParams(*[zz + p for p in ms_params])
+    q_params = QParams(*[zz + p for p in q_params])
     sfh_params = DiffstarParams(ms_params, q_params)
     sfh_new, smh_new = calc_sfh_smh_galpop(sfh_params, mah_params, tarr)
     assert np.allclose(sfh, sfh_new)
