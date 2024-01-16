@@ -31,7 +31,7 @@ jobs:
           use-mamba: true
 
       - name: configure conda and install code
-      # Test against current main branch of diffmah
+      # Test against current main branch of diffmah and dsps
         shell: bash -l {0}
         run: |
           conda config --set always_yes yes
@@ -49,6 +49,7 @@ jobs:
             python-build
           pip uninstall diffmah --yes
           pip install --no-deps git+https://github.com/ArgonneCPAC/diffmah.git
+          pip install --no-deps git+https://github.com/ArgonneCPAC/dsps.git
           python -m pip install --no-build-isolation --no-deps -e .
 
       - name: test
