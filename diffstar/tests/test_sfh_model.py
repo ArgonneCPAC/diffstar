@@ -12,8 +12,12 @@ from ..defaults import (
     LGT0,
     SFR_MIN,
     DiffstarParams,
+    DiffstarUParams,
     MSParams,
+    MSUParams,
     QParams,
+    QUParams,
+    get_bounded_diffstar_params,
 )
 from ..kernels.kernel_builders import get_sfh_from_mah_kern
 from ..kernels.main_sequence_kernels import (
@@ -88,6 +92,38 @@ def test_calc_sfh_smh_singlegal_agrees_with_sfh_singlegal_on_randoms():
         sfh = sfh_singlegal(tarr, mah_params, ms_params, q_params, lgt0, FB)
 
         sfh_params = DiffstarParams(MSParams(*ms_params), QParams(*q_params))
+        sfh_new, smh_new = calc_sfh_smh_singlegal(
+            sfh_params, mah_params, tarr, lgt0=lgt0, fb=FB
+        )
+
+        assert np.allclose(sfh, sfh_new, rtol=1e-4)
+
+
+def test_calc_sfh_smh_singlegal_agrees_with_sfh_singlegal_on_u_randoms():
+    lgt0, mah_params, u_ms_params_init, u_q_params_init = _get_all_default_u_params()
+
+    n_t = 100
+    tarr = np.linspace(0.1, 10**lgt0, n_t)
+
+    ran_key = jran.PRNGKey(0)
+    ntests = 20
+    ran_keys = jran.split(ran_key, ntests)
+    for test_key in ran_keys:
+        ms_key, q_key = jran.split(test_key, 2)
+        u_ms_params = jran.normal(ms_key, shape=(5,)) + np.array(u_ms_params_init)
+        u_q_params = jran.normal(q_key, shape=(4,)) + np.array(u_q_params_init)
+        sfh = sfh_singlegal(
+            tarr,
+            mah_params,
+            u_ms_params,
+            u_q_params,
+            lgt0,
+            FB,
+            ms_param_type="unbounded",
+            q_param_type="unbounded",
+        )
+        sfh_u_params = DiffstarUParams(MSUParams(*u_ms_params), QUParams(*u_q_params))
+        sfh_params = get_bounded_diffstar_params(sfh_u_params)
         sfh_new, smh_new = calc_sfh_smh_singlegal(
             sfh_params, mah_params, tarr, lgt0=lgt0, fb=FB
         )
