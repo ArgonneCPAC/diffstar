@@ -14,5 +14,5 @@ dependencies:
   - numpy
   - jax
   - jaxlib
-  - diffmah
+  - diffmah>=0.5.0
   - h5py
