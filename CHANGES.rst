@@ -1,3 +1,8 @@
+0.2.4 (2024-01-16)
+------------------
+- Require diffmah>=0.5.0
+
+
 0.2.3 (2024-01-15)
 ------------------
 - Switch to namedtuple for diffstar parameters (https://github.com/ArgonneCPAC/diffstar/pull/45)
