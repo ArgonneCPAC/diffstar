@@ -10,5 +10,4 @@ from .defaults import (
     get_bounded_diffstar_params,
     get_unbounded_diffstar_params,
 )
-from .kernels import get_ms_sfh_from_mah_kern, get_sfh_from_mah_kern
-from .sfh import sfh_galpop, sfh_singlegal
+from .sfh_model import calc_sfh_galpop, calc_sfh_singlegal
