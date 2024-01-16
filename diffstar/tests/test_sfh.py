@@ -2,7 +2,6 @@
 """
 import numpy as np
 
-from .. import sfh_galpop, sfh_singlegal
 from ..defaults import (
     DEFAULT_MS_PARAMS,
     DEFAULT_Q_PARAMS,
@@ -15,6 +14,7 @@ from ..defaults import (
 from ..kernels.kernel_builders import get_sfh_from_mah_kern
 from ..kernels.main_sequence_kernels import _get_unbounded_sfr_params_vmap
 from ..kernels.quenching_kernels import _get_unbounded_q_params_vmap
+from ..sfh import sfh_galpop, sfh_singlegal
 from .test_gas import _get_default_mah_params
 
 

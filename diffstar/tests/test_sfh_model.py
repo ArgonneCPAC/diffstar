@@ -3,7 +3,6 @@ import numpy as np
 from diffmah.defaults import DiffmahParams
 from jax import random as jran
 
-from .. import sfh_galpop, sfh_singlegal
 from ..defaults import (
     DEFAULT_MS_PARAMS,
     DEFAULT_Q_PARAMS,
@@ -22,6 +21,7 @@ from ..defaults import (
 )
 from ..kernels.main_sequence_kernels import _get_bounded_sfr_params
 from ..kernels.quenching_kernels import _get_bounded_q_params
+from ..sfh import sfh_galpop, sfh_singlegal
 from ..sfh_model import calc_sfh_galpop, calc_sfh_singlegal
 from .test_gas import _get_default_mah_params
 
@@ -40,6 +40,14 @@ def _get_all_default_u_params():
     lgt0, logmp, mah_logtc, k, early_index, late_index = all_mah_params
     mah_params = logmp, mah_logtc, early_index, late_index
     return lgt0, mah_params, u_ms_params, u_q_params
+
+
+def test_calc_sfh_singlegal_imports_from_top_level():
+    from .. import calc_sfh_singlegal  # noqa
+
+
+def test_calc_sfh_galpop_imports_from_top_level():
+    from .. import calc_sfh_galpop  # noqa
 
 
 def test_sfh_singlegal_evaluates():
