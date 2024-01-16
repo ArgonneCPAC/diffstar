@@ -61,7 +61,11 @@ def build_sfh_from_mah_kernel(
         args = t_form, mah_params, ms_params, lgt0, fb, t_table
         ms_sfr = _lax_ms_sfh_scalar_kern(*args)
         lgt_form = jnp.log10(t_form)
-        qfunc = _quenching_kern(lgt_form, *q_params)
+
+        lg_qt, qlglgdt, lg_drop, lg_rejuv = q_params
+        lg_q_dt = 10**qlglgdt
+        qkern_inputs = lg_qt, lg_q_dt, lg_drop, lg_rejuv
+        qfunc = _quenching_kern(lgt_form, *qkern_inputs)
         sfr = qfunc * ms_sfr
         sfr = lax.cond(sfr < SFR_MIN, lambda x: SFR_MIN, lambda x: x, sfr)
         return sfr

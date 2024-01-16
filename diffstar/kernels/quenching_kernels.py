@@ -78,6 +78,9 @@ def _quenching_kern_u_params(lgt, u_lg_qt, u_qlglgdt, u_lg_drop, u_lg_rejuv):
 def _quenching_kern(lgt, lg_qt, lg_q_dt, q_drop, q_rejuv):
     """Base-10 logarithmic drop and symmetric rise in SFR over a time interval.
 
+    Note the relationship between the input lg_q_dt and q_params[1]=qlglgdt:
+        lg_q_dt = 10**qlglgdt
+
     Parameters
     ----------
     lgt : ndarray
