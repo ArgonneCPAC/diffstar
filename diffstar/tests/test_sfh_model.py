@@ -28,7 +28,7 @@ from ..kernels.quenching_kernels import (
     _get_bounded_q_params,
     _get_unbounded_q_params_vmap,
 )
-from ..sfh_model import calc_sfh_smh_singlegal
+from ..sfh_model import calc_sfh_smh_galpop, calc_sfh_smh_singlegal
 from .test_gas import _get_default_mah_params
 
 
@@ -131,26 +131,20 @@ def test_calc_sfh_smh_singlegal_agrees_with_sfh_singlegal_on_u_randoms():
         assert np.allclose(sfh, sfh_new, rtol=1e-4)
 
 
-def test_sfh_galpop_evaluates():
+def test_calc_sfh_smh_galpop_agrees_with_sfh_galpop():
     n_t = 100
     lgt0, mah_params, ms_params, q_params = _get_all_default_params()
     mah_params = np.array(mah_params).reshape((1, -1))
     ms_params = np.array(ms_params).reshape((1, -1))
     q_params = np.array(q_params).reshape((1, -1))
     tarr = np.linspace(0.1, 10**lgt0, n_t)
-    sfh = sfh_galpop(tarr, mah_params, ms_params, q_params, LGT0, FB)
+    sfh = sfh_galpop(tarr, mah_params, ms_params, q_params)
 
-
-# def test_calc_sfh_smh_galpop_agrees_with_sfh_galpop_on_defaults():
-#     lgt0, mah_params, ms_params, q_params = _get_all_default_params()
-
-#     n_t = 100
-#     tarr = np.linspace(0.1, 10**lgt0, n_t)
-#     sfh = sfh_singlegal(tarr, mah_params, ms_params, q_params, lgt0, FB)
-
-#     sfh_params = DiffstarParams(MSParams(*ms_params), QParams(*q_params))
-#     sfh_new, smh_new = calc_sfh_smh_singlegal(
-#         sfh_params, mah_params, tarr, lgt0=lgt0, fb=FB
-#     )
-
-#     assert np.allclose(sfh, sfh_new, rtol=1e-4)
+    lgt0, mah_params, ms_params, q_params = _get_all_default_params()
+    zz = np.zeros(1)
+    mah_params = [zz + p for p in mah_params]
+    ms_params = [zz + p for p in ms_params]
+    q_params = [zz + p for p in q_params]
+    sfh_params = DiffstarParams(ms_params, q_params)
+    sfh_new, smh_new = calc_sfh_smh_galpop(sfh_params, mah_params, tarr)
+    assert np.allclose(sfh, sfh_new)
