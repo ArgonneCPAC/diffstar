@@ -141,6 +141,7 @@ def test_calc_sfh_smh_galpop_agrees_with_sfh_galpop():
     sfh_params = DiffstarParams(ms_params, q_params)
     sfh_new = calc_sfh_galpop(sfh_params, mah_params, tarr)
     assert np.allclose(sfh, sfh_new)
+    assert sfh_new.shape == (1, n_t)
 
     sfh_new2, smh_new2 = calc_sfh_galpop(sfh_params, mah_params, tarr, return_smh=True)
     assert np.allclose(sfh_new, sfh_new2)
