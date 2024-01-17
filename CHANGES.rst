@@ -1,4 +1,4 @@
-0.3.0 (unreleased)
+0.3.0 (2024-01-17)
 ------------------
 - Implement new API for primary user-facing functions calc_sfh_galpop and calc_sfh_singlegal
 
