@@ -54,6 +54,28 @@ DEFAULT_DIFFSTAR_U_PARAMS = DiffstarUParams(DEFAULT_U_MS_PARAMS, DEFAULT_U_Q_PAR
 
 @jjit
 def get_bounded_diffstar_params(diffstar_u_params):
+    """Calculate diffstar parameters from unbounded counterparts.
+
+    The returned diffstar_params is the input expected by diffstar.calc_sfh_singlegal
+    and diffstar.calc_sfh_galpop.
+
+    Parameters
+    ----------
+    diffstar_u_params : namedtuple, length 2
+        DiffstarUParams = u_ms_params, u_q_params
+            u_ms_params and u_q_params are tuples of floats or ndarrays
+            u_ms_params = u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_tau_dep
+            u_q_params = u_lg_qt, u_qlglgdt, u_lg_drop, u_lg_rejuv
+
+    Returns
+    -------
+    diffstar_params : namedtuple, length 2
+        DiffstarParams = ms_params, q_params
+            ms_params and q_params are tuples of floats or ndarrays
+            ms_params = lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, tau_dep
+            q_params = lg_qt, qlglgdt, lg_drop, lg_rejuv
+
+    """
     ms_params = MSParams(*_get_bounded_sfr_params(*diffstar_u_params.u_ms_params))
     q_params = QParams(*_get_bounded_q_params(*diffstar_u_params.u_q_params))
     return DiffstarParams(ms_params, q_params)
@@ -61,6 +83,27 @@ def get_bounded_diffstar_params(diffstar_u_params):
 
 @jjit
 def get_unbounded_diffstar_params(diffstar_params):
+    """Calculate unbounded diffstar parameters from standard params.
+
+    This is the inverse function to get_bounded_diffstar_params
+
+    Parameters
+    ----------
+    diffstar_params : namedtuple, length 2
+        DiffstarParams = ms_params, q_params
+            ms_params and q_params are tuples of floats or ndarrays
+            ms_params = lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, tau_dep
+            q_params = lg_qt, qlglgdt, lg_drop, lg_rejuv
+
+    Returns
+    -------
+    diffstar_u_params : namedtuple, length 2
+        DiffstarUParams = u_ms_params, u_q_params
+            u_ms_params and u_q_params are tuples of floats or ndarrays
+            u_ms_params = u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_tau_dep
+            u_q_params = u_lg_qt, u_qlglgdt, u_lg_drop, u_lg_rejuv
+
+    """
     u_ms_params = MSUParams(*_get_unbounded_sfr_params(*diffstar_params.ms_params))
     u_q_params = QUParams(*_get_unbounded_q_params(*diffstar_params.q_params))
     return DiffstarUParams(u_ms_params, u_q_params)

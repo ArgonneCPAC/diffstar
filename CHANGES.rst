@@ -1,3 +1,8 @@
+0.3.0 (unreleased)
+------------------
+- Implement new API for primary user-facing functions calc_sfh_galpop and calc_sfh_singlegal
+
+
 0.2.4 (2024-01-16)
 ------------------
 - Require diffmah>=0.5.0
