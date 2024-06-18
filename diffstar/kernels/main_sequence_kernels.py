@@ -7,6 +7,7 @@ from diffmah.defaults import MAH_K
 from diffmah.individual_halo_assembly import (
     _calc_halo_history_scalar,
     _rolling_plaw_vs_logt,
+    _calc_halo_history
 )
 from jax import jit as jjit
 from jax import lax
@@ -14,7 +15,7 @@ from jax import numpy as jnp
 from jax import vmap
 
 from ..utils import _inverse_sigmoid, _jax_get_dt_array, _sigmoid
-from .gas_consumption import _gas_conversion_kern
+from .gas_consumption import _gas_conversion_kern, _vmap_gas_conversion_kern
 
 DEFAULT_MS_PDICT = OrderedDict(
     lgmcrit=12.0,
@@ -53,7 +54,7 @@ MS_BOUNDING_SIGMOID_PDICT = calculate_sigmoid_bounds(MS_PARAM_BOUNDS_PDICT)
 
 
 @jjit
-def _lax_ms_sfh_scalar_kern(t_form, mah_params, ms_params, lgt0, fb, t_table):
+def _lax_ms_sfh_scalar_kern_scan(t_form, mah_params, ms_params, lgt0, fb, t_table):
     logmp, logtc, early, late = mah_params
     all_mah_params = lgt0, logmp, logtc, MAH_K, early, late
     lgt_form = jnp.log10(t_form)
@@ -91,6 +92,38 @@ def _lax_ms_sfh_scalar_kern(t_form, mah_params, ms_params, lgt0, fb, t_table):
     dmgas_dt = res[0]
     sfr = dmgas_dt * sfr_eff
     return sfr
+
+
+@jjit
+def _lax_ms_sfh_scalar_kern_sum(t_form, mah_params, ms_params, lgt0, fb, t_table):
+    logmp, logtc, early, late = mah_params
+    all_mah_params = lgt0, logmp, logtc, MAH_K, early, late
+    lgt_form = jnp.log10(t_form)
+    log_mah_at_tform = _rolling_plaw_vs_logt(lgt_form, *all_mah_params)
+
+    sfr_eff_params = ms_params[:4]
+    sfr_eff = _sfr_eff_plaw(log_mah_at_tform, *sfr_eff_params)
+
+    tau_dep = ms_params[4]
+    tau_dep_max = MS_BOUNDING_SIGMOID_PDICT["tau_dep"][3]
+
+    # compute inst. gas accretion
+    lgtacc = jnp.log10(t_table)
+    res = _calc_halo_history(lgtacc, *all_mah_params)
+    dmhdt_at_tacc, log_mah_at_tacc = res
+    dmgdt_inst = fb * dmhdt_at_tacc
+
+    # compute the consumption kernel
+    dt = t_table[1]-t_table[0]
+    kern = _vmap_gas_conversion_kern(t_form, t_table, dt, tau_dep, tau_dep_max)
+
+    # convolve
+    dmgas_dt = jnp.sum(dmgdt_inst * kern * dt)
+    sfr = dmgas_dt * sfr_eff
+    return sfr
+
+
+_lax_ms_sfh_scalar_kern = _lax_ms_sfh_scalar_kern_sum
 
 
 @jjit
