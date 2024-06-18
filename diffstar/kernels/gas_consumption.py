@@ -31,3 +31,25 @@ _vmap_gas_conversion_kern = jjit(vmap(
     _gas_conversion_kern,
     in_axes=(None, 0, None, None, None)
 ))
+
+
+_a, _b = (0, None, 0, None, None), (None, 0, None, None, None)
+_depletion_kernel = jjit(vmap(vmap(_gas_conversion_kern, in_axes=_b), in_axes=_a))
+
+
+@jjit
+def _get_lagged_gas(lgt, dt, dmhdt, tau_dep, tau_dep_max, fb=FB):
+    t_table = 10**lgt
+    mgas_inst = fb * dmhdt
+
+    depletion_matrix = _depletion_kernel(t_table, t_table, dt, tau_dep, tau_dep_max)
+    depletion_matrix_inst = jnp.identity(len(lgt)) / dt
+    tau_w = jnp.where(
+        tau_dep > 5.0 * jnp.mean(dt), jnp.ones(len(dt)), jnp.zeros(len(dt))
+    )
+    depletion_matrix = jnp.where(tau_w == 1, depletion_matrix, depletion_matrix_inst)
+
+    integrand = mgas_inst * depletion_matrix * dt
+    lagged_mgas = jnp.sum(integrand, axis=1)
+
+    return lagged_mgas
