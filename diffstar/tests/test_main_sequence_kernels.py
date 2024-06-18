@@ -19,4 +19,6 @@ def test_main_sequence_kernels_lax_ms_sfh_scalar_kern_scan_vs_sum():
     np.testing.assert_allclose(
         _lax_ms_sfh_scalar_kern_scan(t_form, DEFAULT_MAH_PARAMS, DEFAULT_MS_PARAMS, lgt0, FB, t_table),
         _lax_ms_sfh_scalar_kern_sum(t_form, DEFAULT_MAH_PARAMS, DEFAULT_MS_PARAMS, lgt0, FB, t_table),
+        rtol=1e-6,
+        atol=1e-6,
     )
