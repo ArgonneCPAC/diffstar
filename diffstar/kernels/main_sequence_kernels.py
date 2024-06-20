@@ -1,13 +1,14 @@
 """
 """
+
 from collections import OrderedDict, namedtuple
 
 import numpy as np
 from diffmah.defaults import MAH_K
 from diffmah.individual_halo_assembly import (
+    _calc_halo_history,
     _calc_halo_history_scalar,
     _rolling_plaw_vs_logt,
-    _calc_halo_history
 )
 from jax import jit as jjit
 from jax import lax
@@ -114,7 +115,7 @@ def _lax_ms_sfh_scalar_kern_sum(t_form, mah_params, ms_params, lgt0, fb, t_table
     dmgdt_inst = fb * dmhdt_at_tacc
 
     # compute the consumption kernel
-    dt = t_table[1]-t_table[0]
+    dt = t_table[1] - t_table[0]
     kern = _vmap_gas_conversion_kern(t_form, t_table, dt, tau_dep, tau_dep_max)
 
     # convolve

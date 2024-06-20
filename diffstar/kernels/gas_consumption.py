@@ -1,8 +1,10 @@
 """Calculate mass of gas available for star formation from the freshly accreted gas.
 """
+
 from jax import jit as jjit
-from jax import lax, vmap
+from jax import lax
 from jax import numpy as jnp
+from jax import vmap
 
 from ..utils import tw_bin_jax_kern
 
@@ -27,10 +29,9 @@ def _gas_conversion_kern(t_form, t_acc, dt, tau_dep, tau_dep_max):
     return tri_kern
 
 
-_vmap_gas_conversion_kern = jjit(vmap(
-    _gas_conversion_kern,
-    in_axes=(None, 0, None, None, None)
-))
+_vmap_gas_conversion_kern = jjit(
+    vmap(_gas_conversion_kern, in_axes=(None, 0, None, None, None))
+)
 
 
 _a, _b = (0, None, 0, None, None), (None, 0, None, None, None)
