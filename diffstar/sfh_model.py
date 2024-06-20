@@ -1,5 +1,6 @@
 """
 """
+
 from collections import namedtuple
 from functools import partial
 
@@ -14,6 +15,7 @@ _sfh_singlegal_kern = build_sfh_from_mah_kernel(
     n_steps=DEFAULT_N_STEPS,
     tacc_integration_min=T_BIRTH_MIN,
     tobs_loop="scan",
+    tform_loop="sum",
 )
 
 _sfh_galpop_kern = build_sfh_from_mah_kernel(
@@ -21,6 +23,7 @@ _sfh_galpop_kern = build_sfh_from_mah_kernel(
     tacc_integration_min=T_BIRTH_MIN,
     tobs_loop="scan",
     galpop_loop="vmap",
+    tform_loop="sum",
 )
 
 _cumulative_mstar_formed_vmap = jjit(vmap(cumulative_mstar_formed, in_axes=(None, 0)))

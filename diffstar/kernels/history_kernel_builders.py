@@ -1,5 +1,6 @@
 """
 """
+
 from jax import jit as jjit
 from jax import lax
 from jax import numpy as jnp
@@ -12,7 +13,10 @@ from ..defaults import (
     SFR_MIN,
     T_BIRTH_MIN,
 )
-from .main_sequence_kernels import _lax_ms_sfh_scalar_kern
+from .main_sequence_kernels import (
+    _lax_ms_sfh_scalar_kern_scan,
+    _lax_ms_sfh_scalar_kern_sum,
+)
 from .quenching_kernels import _quenching_kern
 
 __all__ = ("build_sfh_from_mah_kernel",)
@@ -27,6 +31,7 @@ def build_sfh_from_mah_kernel(
     tacc_integration_min=T_BIRTH_MIN,
     tobs_loop=None,
     galpop_loop=None,
+    tform_loop="sum",
 ):
     """Build a JAX-jitted kernel to calculate SFHs of a galaxy population.
 
@@ -51,6 +56,10 @@ def build_sfh_from_mah_kernel(
         For a JAX kernel that assumes galaxy population,
         options are either 'vmap' or 'scan', specifying the calculation method
 
+    tform_loop : string
+        Use 'sum' for faster vmap-based calculation and 'scan' for slower alternative.
+        Default is 'sum'
+
     Returns
     -------
     sfh_from_mah_kern : function
@@ -61,6 +70,11 @@ def build_sfh_from_mah_kernel(
             return sfh
 
     """
+    if tform_loop == "sum":
+        _lax_ms_sfh_scalar_kern = _lax_ms_sfh_scalar_kern_sum
+    elif tform_loop == "scan":
+        _lax_ms_sfh_scalar_kern = _lax_ms_sfh_scalar_kern_scan
+
     uniform_table = jnp.linspace(0, 1, n_steps)
 
     @jjit
