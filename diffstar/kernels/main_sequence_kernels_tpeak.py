@@ -73,9 +73,6 @@ def _lax_ms_sfh_scalar_kern_scan(t_form, mah_params, t_peak, ms_params, lgt0, fb
         tacc, dt = el
         dmgas_dt = carryover
 
-        lgtacc = jnp.log10(tacc)
-        # res = _calc_halo_history_scalar(lgtacc, *all_mah_params)
-        # dmhdt_at_tacc, log_mah_at_tacc = res
         dmhdt_at_tacc = _dmhdt_kern_scalar(mah_params, tacc, t_peak, lgt0)
         
         dmgdt_inst = fb * dmhdt_at_tacc
