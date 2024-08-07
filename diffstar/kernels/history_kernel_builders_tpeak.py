@@ -61,7 +61,7 @@ def build_sfh_from_mah_kernel(
         JAX-jitted function that calculates SFH in accord with the input arguments
         Function signature is as follows:
 
-        def sfh_from_mah_kern(t, mah_params, ms_params, q_params, lgt0, fb):
+        def sfh_from_mah_kern(t, mah_params, ms_params, q_params, t_peak, lgt0, fb):
             return sfh
 
     """
