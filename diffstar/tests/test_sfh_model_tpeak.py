@@ -44,11 +44,11 @@ def _get_all_default_u_params():
 
 
 def test_calc_sfh_singlegal_imports_from_top_level():
-    from .. import calc_sfh_singlegal  # noqa
+    from .. import calc_sfh_singlegal as _func  # noqa
 
 
 def test_calc_sfh_galpop_imports_from_top_level():
-    from .. import calc_sfh_galpop  # noqa
+    from .. import calc_sfh_galpop as _func  # noqa
 
 
 def test_sfh_singlegal_evaluates():
@@ -70,7 +70,8 @@ def test_calc_sfh_smh_singlegal_agrees_with_sfh_singlegal_on_defaults():
     sfh = sfh_singlegal(tarr, mah_params, ms_params, q_params, lgt0, FB)
 
     sfh_params = DiffstarParams(MSParams(*ms_params), QParams(*q_params))
-    sfh_new = calc_sfh_singlegal(sfh_params, mah_params, tarr, lgt0=lgt0, fb=FB)
+    t_peak = tarr[-1]
+    sfh_new = calc_sfh_singlegal(sfh_params, mah_params, t_peak, tarr, lgt0=lgt0, fb=FB)
 
     assert np.allclose(sfh, sfh_new, rtol=1e-4)
 
@@ -93,7 +94,10 @@ def test_calc_sfh_smh_singlegal_agrees_with_sfh_singlegal_on_randoms():
         sfh = sfh_singlegal(tarr, mah_params, ms_params, q_params, lgt0, FB)
 
         sfh_params = DiffstarParams(MSParams(*ms_params), QParams(*q_params))
-        sfh_new = calc_sfh_singlegal(sfh_params, mah_params, tarr, lgt0=lgt0, fb=FB)
+        t_peak = tarr[-1]
+        sfh_new = calc_sfh_singlegal(
+            sfh_params, mah_params, t_peak, tarr, lgt0=lgt0, fb=FB
+        )
 
         assert np.allclose(sfh, sfh_new, rtol=1e-4)
 
@@ -123,11 +127,14 @@ def test_calc_sfh_smh_singlegal_agrees_with_sfh_singlegal_on_u_randoms():
         )
         sfh_u_params = DiffstarUParams(MSUParams(*u_ms_params), QUParams(*u_q_params))
         sfh_params = get_bounded_diffstar_params(sfh_u_params)
-        sfh_new = calc_sfh_singlegal(sfh_params, mah_params, tarr, lgt0=lgt0, fb=FB)
+        t_peak = tarr[-1]
+        sfh_new = calc_sfh_singlegal(
+            sfh_params, mah_params, t_peak, tarr, lgt0=lgt0, fb=FB
+        )
         assert np.allclose(sfh, sfh_new, rtol=1e-4)
 
         sfh_new2, smh_new2 = calc_sfh_singlegal(
-            sfh_params, mah_params, tarr, lgt0=lgt0, fb=FB, return_smh=True
+            sfh_params, mah_params, t_peak, tarr, lgt0=lgt0, fb=FB, return_smh=True
         )
         assert np.allclose(sfh_new, sfh_new2)
         assert np.all(np.isfinite(smh_new2))
@@ -148,10 +155,13 @@ def test_calc_sfh_smh_galpop_agrees_with_sfh_galpop():
     ms_params = MSParams(*[zz + p for p in ms_params])
     q_params = QParams(*[zz + p for p in q_params])
     sfh_params = DiffstarParams(ms_params, q_params)
-    sfh_new = calc_sfh_galpop(sfh_params, mah_params, tarr)
+    t_peak = np.zeros(1) + tarr[-1]
+    sfh_new = calc_sfh_galpop(sfh_params, mah_params, t_peak, tarr)
     assert np.allclose(sfh, sfh_new)
     assert sfh_new.shape == (1, n_t)
 
-    sfh_new2, smh_new2 = calc_sfh_galpop(sfh_params, mah_params, tarr, return_smh=True)
+    sfh_new2, smh_new2 = calc_sfh_galpop(
+        sfh_params, mah_params, t_peak, tarr, return_smh=True
+    )
     assert np.allclose(sfh_new, sfh_new2)
     assert np.all(np.isfinite(smh_new2))
