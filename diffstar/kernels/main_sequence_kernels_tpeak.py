@@ -4,12 +4,7 @@
 from collections import OrderedDict, namedtuple
 
 import numpy as np
-from diffmah.defaults import MAH_K
-from diffmah.individual_halo_assembly import (
-    _calc_halo_history,
-    _calc_halo_history_scalar,
-    _rolling_plaw_vs_logt,
-)
+from diffmah.diffmah_kernels import _diffmah_kern, _diffmah_kern_scalar, _log_mah_kern
 from jax import jit as jjit
 from jax import lax
 from jax import numpy as jnp
@@ -55,11 +50,10 @@ MS_BOUNDING_SIGMOID_PDICT = calculate_sigmoid_bounds(MS_PARAM_BOUNDS_PDICT)
 
 
 @jjit
-def _lax_ms_sfh_scalar_kern_scan(t_form, mah_params, ms_params, lgt0, fb, t_table):
-    logmp, logtc, early, late = mah_params
-    all_mah_params = lgt0, logmp, logtc, MAH_K, early, late
-    lgt_form = jnp.log10(t_form)
-    log_mah_at_tform = _rolling_plaw_vs_logt(lgt_form, *all_mah_params)
+def _lax_ms_sfh_scalar_kern_scan(
+    t_form, mah_params, ms_params, t_peak, lgt0, fb, t_table
+):
+    log_mah_at_tform = _log_mah_kern(mah_params, t_form, t_peak, lgt0)
 
     sfr_eff_params = ms_params[:4]
     sfr_eff = _sfr_eff_plaw(log_mah_at_tform, *sfr_eff_params)
@@ -74,8 +68,7 @@ def _lax_ms_sfh_scalar_kern_scan(t_form, mah_params, ms_params, lgt0, fb, t_tabl
         tacc, dt = el
         dmgas_dt = carryover
 
-        lgtacc = jnp.log10(tacc)
-        res = _calc_halo_history_scalar(lgtacc, *all_mah_params)
+        res = _diffmah_kern_scalar(mah_params, tacc, t_peak, lgt0)
         dmhdt_at_tacc, log_mah_at_tacc = res
         dmgdt_inst = fb * dmhdt_at_tacc
 
@@ -96,11 +89,10 @@ def _lax_ms_sfh_scalar_kern_scan(t_form, mah_params, ms_params, lgt0, fb, t_tabl
 
 
 @jjit
-def _lax_ms_sfh_scalar_kern_sum(t_form, mah_params, ms_params, lgt0, fb, t_table):
-    logmp, logtc, early, late = mah_params
-    all_mah_params = lgt0, logmp, logtc, MAH_K, early, late
-    lgt_form = jnp.log10(t_form)
-    log_mah_at_tform = _rolling_plaw_vs_logt(lgt_form, *all_mah_params)
+def _lax_ms_sfh_scalar_kern_sum(
+    t_form, mah_params, ms_params, t_peak, lgt0, fb, t_table
+):
+    log_mah_at_tform = _log_mah_kern(mah_params, t_form, t_peak, lgt0)
 
     sfr_eff_params = ms_params[:4]
     sfr_eff = _sfr_eff_plaw(log_mah_at_tform, *sfr_eff_params)
@@ -109,8 +101,7 @@ def _lax_ms_sfh_scalar_kern_sum(t_form, mah_params, ms_params, lgt0, fb, t_table
     tau_dep_max = MS_BOUNDING_SIGMOID_PDICT["tau_dep"][3]
 
     # compute inst. gas accretion
-    lgtacc = jnp.log10(t_table)
-    res = _calc_halo_history(lgtacc, *all_mah_params)
+    res = _diffmah_kern(mah_params, t_table, t_peak, lgt0)
     dmhdt_at_tacc, log_mah_at_tacc = res
     dmgdt_inst = fb * dmhdt_at_tacc
 

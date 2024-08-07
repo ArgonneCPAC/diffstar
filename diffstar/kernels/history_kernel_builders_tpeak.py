@@ -88,6 +88,7 @@ def build_sfh_from_mah_kernel(
         qlglgdt,
         lg_drop,
         lg_rejuv,
+        t_peak,
         lgt0,
         fb,
     ):
@@ -96,7 +97,7 @@ def build_sfh_from_mah_kernel(
 
         t_min = jnp.max(jnp.array((tacc_integration_min, t_form - tau_dep)))
         t_table = t_min + uniform_table * (t_form - t_min)
-        args = t_form, mah_params, ms_params, lgt0, fb, t_table
+        args = t_form, mah_params, ms_params, t_peak, lgt0, fb, t_table
         ms_sfr = _lax_ms_sfh_scalar_kern(*args)
         lgt_form = jnp.log10(t_form)
 
@@ -122,6 +123,7 @@ def _get_kern_with_tobs_loop(kern, tobs_loop):
             *[None] * N_Q_PARAMS,
             None,
             None,
+            None,
         ]
         new_kern = jjit(vmap(kern, in_axes=_t))
     elif tobs_loop == "scan":
@@ -142,6 +144,7 @@ def _get_kern_with_tobs_loop(kern, tobs_loop):
             qlglgdt,
             lg_drop,
             lg_rejuv,
+            t_peak,
             lgt0,
             fb,
         ):
@@ -163,6 +166,7 @@ def _get_kern_with_tobs_loop(kern, tobs_loop):
                     qlglgdt,
                     lg_drop,
                     lg_rejuv,
+                    t_peak,
                     lgt0,
                     fb,
                 )
@@ -191,6 +195,7 @@ def _get_kern_with_galpop_loop(kern, galpop_loop):
             *[0] * N_MAH_PARAMS,
             *[0] * N_MS_PARAMS,
             *[0] * N_Q_PARAMS,
+            0,
             None,
             None,
         ]
@@ -213,6 +218,7 @@ def _get_kern_with_galpop_loop(kern, galpop_loop):
             qlglgdt,
             lg_drop,
             lg_rejuv,
+            t_peak,
             lgt0,
             fb,
         ):
@@ -244,7 +250,9 @@ def _get_kern_with_galpop_loop(kern, galpop_loop):
                 ms_params = params[i:j]
                 i = N_MAH_PARAMS + N_MS_PARAMS
                 q_params = params[i:]
-                sfh_galpop = kern(t, *mah_params, *ms_params, *q_params, lgt0, fb)
+                sfh_galpop = kern(
+                    t, *mah_params, *ms_params, *q_params, t_peak, lgt0, fb
+                )
                 carryover = sfh_galpop
                 accumulated = sfh_galpop
                 return carryover, accumulated

@@ -17,7 +17,7 @@ from ...defaults import (
     get_unbounded_diffstar_params,
 )
 from ..history_kernel_builders_tpeak import build_sfh_from_mah_kernel
-from ..kernel_builders_tpeak import get_sfh_from_mah_kern
+from ..kernel_builders import get_sfh_from_mah_kern
 
 
 def test_get_sfh_from_mah_kern_imports_from_top_level_kernels():
@@ -33,12 +33,14 @@ def test_new_old_kernel_builders_agree_on_defaults():
     t = 10.0
     old_args = t, DEFAULT_MAH_PARAMS, *DEFAULT_DIFFSTAR_U_PARAMS, LGT0, FB
     old_sfh = old_sfh_kern(*old_args)
+    t_peak = t + 1.0
 
     new_args = (
         t,
         *DEFAULT_MAH_PARAMS,
         *DEFAULT_DIFFSTAR_PARAMS.ms_params,
         *DEFAULT_DIFFSTAR_PARAMS.q_params,
+        t_peak,
         LGT0,
         FB,
     )
@@ -72,11 +74,14 @@ def test_new_old_kernel_builders_agree_on_random_u_params():
         assert np.allclose(u_ms_params, sfh_u_params2.u_ms_params)
         assert np.allclose(u_q_params, sfh_u_params2.u_q_params)
 
+        t_peak = t + 1.0
+
         new_args = (
             t,
             *DEFAULT_MAH_PARAMS,
             *sfh_params.ms_params,
             *sfh_params.q_params,
+            t_peak,
             LGT0,
             FB,
         )
@@ -107,11 +112,13 @@ def test_new_old_kernel_builders_agree_on_random_u_params_tobs_loop():
         assert np.allclose(u_ms_params, sfh_u_params2.u_ms_params)
         assert np.allclose(u_q_params, sfh_u_params2.u_q_params)
 
+        t_peak = tarr[-1] + 0.5
         new_args = (
             tarr,
             *DEFAULT_MAH_PARAMS,
             *sfh_params.ms_params,
             *sfh_params.q_params,
+            t_peak,
             LGT0,
             FB,
         )
@@ -150,11 +157,13 @@ def test_new_old_kernel_builders_agree_on_random_u_params_galobs_loop():
 
         sfh_u_params = DiffstarUParams(u_ms_params_galpop_new, u_q_params_galpop_new)
         sfh_params = get_bounded_diffstar_params(sfh_u_params)
+        t_peak = tarr[-1] + np.ones(1)
         new_args = (
             tarr,
             *mah_params_galpop_new,
             *sfh_params.ms_params,
             *sfh_params.q_params,
+            t_peak,
             LGT0,
             FB,
         )

@@ -58,12 +58,12 @@ def get_sfh_from_mah_kern(
     uniform_table = jnp.linspace(0, 1, n_steps)
 
     @jjit
-    def _kern(t_form, mah_params, u_ms_params, u_q_params, lgt0, fb):
+    def _kern(t_form, mah_params, u_ms_params, u_q_params, t_peak, lgt0, fb):
         ms_params = _get_bounded_sfr_params(*u_ms_params)
         tau_dep = ms_params[4]
         t_min = jnp.max(jnp.array((tacc_integration_min, t_form - tau_dep)))
         t_table = t_min + uniform_table * (t_form - t_min)
-        args = t_form, mah_params, ms_params, lgt0, fb, t_table
+        args = t_form, mah_params, ms_params, t_peak, lgt0, fb, t_table
         ms_sfr = _lax_ms_sfh_scalar_kern(*args)
         lgt_form = jnp.log10(t_form)
         qfunc = _quenching_kern_u_params(lgt_form, *u_q_params)
