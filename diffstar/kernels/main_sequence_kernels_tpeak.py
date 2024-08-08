@@ -4,16 +4,7 @@
 from collections import OrderedDict, namedtuple
 
 import numpy as np
-<<<<<<< HEAD
-from diffmah.defaults import MAH_K
-from diffmah.diffmah_kernels import (
-    mah_singlehalo,
-    _dmhdt_kern_scalar,
-    _rolling_plaw_vs_logt,
-)
-=======
 from diffmah.diffmah_kernels import _diffmah_kern, _diffmah_kern_scalar, _log_mah_kern
->>>>>>> main
 from jax import jit as jjit
 from jax import lax
 from jax import numpy as jnp
