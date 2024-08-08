@@ -9,10 +9,16 @@ import numpy as np
 from ..defaults import SFR_MIN
 from ..utils import _get_dt_array
 
+from umachine_pyio.load_mock import load_mock_from_binaries
+
+
 TASSO = "/Users/aphearin/work/DATA/diffmah_data"
 BEBOP = "/lcrc/project/halotools/diffmah_data"
 LAPTOP = "/Users/alarcon/Documents/diffmah_data"
-
+BEBOP_SMDPL = os.path.join(
+    "/lcrc/project/galsampler/SMDPL/",
+    "dr1_no_merging_upidh/sfh_binary_catalogs/a_1.000000/",
+)
 H_BPL = 0.678
 H_TNG = 0.6774
 H_MDPL = H_BPL
@@ -397,3 +403,56 @@ def load_mdpl_small_data(gal_type, data_drn=BEBOP):
         log_smahs = np.where(sm_cumsum == 0, 0, np.log10(sm_cumsum))
 
     return halo_ids, log_smahs, sfrh, mdpl_t, dt
+
+
+def load_SMDPL_data(subvols, data_drn=BEBOP_SMDPL):
+    """Load the stellar mass histories from UniverseMachine simulation
+    applied to the Bolshoi-Planck (BPL) simulation.
+
+    The loaded stellar mass data has units of Msun assuming the h = H_BPL
+    from the cosmology of the underlying simulation.
+
+    The output stellar mass data has units of Msun/h, or units of
+    Mstar[h=H_BPL] using the h value of the simulation.
+
+    H_BPL is defined at the top of the module.
+
+    Parameters
+    ----------
+    gal_type : string
+        Name of the galaxy type of the file being loaded. Options are
+            'cens': central galaxies
+            'sats': satellite galaxies
+            'orphans': orphan galaxies
+    data_drn : string
+        Filepath where the Diffstar best-fit parameters are stored.
+
+    Returns
+    -------
+    halo_ids:  ndarray of shape (n_gal, )
+        IDs of the halos in the file.
+    log_smahs: ndarray of shape (n_gal, n_times)
+        Cumulative stellar mass history in units of Msun assuming h=1.
+    sfrh: ndarray of shape (n_gal, n_times)
+        Star formation rate history in units of Msun/yr assuming h=1.
+    bpl_t : ndarray of shape (n_times, )
+        Cosmic time of each simulated snapshot in Gyr
+    dt : ndarray of shape (n_times, )
+        Cosmic time steps between each simulated snapshot in Gyr
+    """
+
+    galprops = ["halo_id", "sfr_history_main_prog"]
+    halos = load_mock_from_binaries(subvols, root_dirname=data_drn, galprops=galprops)
+
+    SMDPL_t = np.loadtxt(os.path.join(data_drn, "smdpl_cosmic_time.txt"))
+
+    halo_ids = halos["halo_id"]
+    dt = _get_dt_array(SMDPL_t)
+    sfrh = halos["sfr_history_main_prog"]
+    sm_cumsum = np.cumsum(sfrh * dt, axis=1) * 1e9
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        log_smahs = np.where(sm_cumsum == 0, 0, np.log10(sm_cumsum))
+
+    return halo_ids, log_smahs, sfrh, SMDPL_t, dt
