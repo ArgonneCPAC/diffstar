@@ -10,7 +10,7 @@ from jax import grad
 from jax import jit as jjit
 from jax import numpy as jnp
 
-from diffmah.diffmah_kernels import calculate_sm_sfr_fstar_history_from_mah, _diffmah_kern
+from diffmah.diffmah_kernels import _diffmah_kern
 from diffmah.defaults import LGT0
 
 from ..defaults import (
@@ -18,19 +18,23 @@ from ..defaults import (
     DEFAULT_Q_PDICT,
     DEFAULT_U_MS_PARAMS,
     DEFAULT_U_Q_PARAMS,
+    DEFAULT_MS_PARAMS,
+    DEFAULT_Q_PARAMS,
 )
 from ..kernels.main_sequence_kernels_tpeak import (
     _get_bounded_sfr_params_vmap,
+    _get_bounded_sfr_params,
     _get_unbounded_sfr_params,
 )
 from ..kernels.quenching_kernels import (
     _get_bounded_lg_drop,
     _get_bounded_q_params_vmap,
+    _get_bounded_q_params,
     _get_bounded_qt,
     _get_unbounded_q_params,
     _get_unbounded_qrejuv,
 )
-from .fitting_kernels import compute_fstar
+from .fitting_kernels import calculate_sm_sfr_fstar_history_from_mah, compute_fstar
 
 from ..utils import _sigmoid
 
@@ -39,6 +43,37 @@ DLOGM_CUT = 3.5  # Only fit SMH within this dex of the present day stellar mass.
 MIN_MASS_CUT = 7.0  # Only fit SMH above this threshold. Log10(Msun) units.
 FSTAR_TIME_DELAY = 1.0  # Time period of averaged SFH (aka fstar). Gyr units.
 SSFRH_FLOOR = 1e-12  # Clip SFH to this minimum sSFR value. 1/yr units.
+
+
+def get_header():
+    """ """
+    colnames = ["halo_id"]
+    colnames.extend(list(DEFAULT_MS_PDICT.keys()))
+    colnames.extend(list(DEFAULT_Q_PDICT.keys()))
+    colnames.extend(["loss", "success"])
+    header_str = "# " + " ".join(colnames) + "\n"
+    return header_str, colnames
+
+
+def get_header_unbound():
+    """ """
+    colnames = ["halo_id"]
+    colnames.extend(["u_" + s for s in list(DEFAULT_MS_PDICT.keys())])
+    colnames.extend(["u_" + s for s in list(DEFAULT_Q_PDICT.keys())])
+    colnames.extend(["loss", "success"])
+    out = "# " + " ".join(colnames) + "\n"
+    return out
+
+
+def write_collated_data(outname, data, colnames):
+    nrows, ncols = np.shape(data)
+    assert len(colnames) == ncols, "data mismatched with header"
+    with h5py.File(outname, "w") as hdf:
+        for i, name in enumerate(colnames):
+            if name == "halo_id":
+                hdf[name] = data[:, i].astype("i8")
+            else:
+                hdf[name] = data[:, i]
 
 
 @jjit
@@ -67,16 +102,16 @@ def loss_default(params, loss_data):
         fixed_hi,
     ) = loss_data
 
-    sfr_params = [*params[0:3], fixed_hi, params[3]]
-    q_params = params[4:8]
+    u_sfr_params = [*params[0:3], fixed_hi, params[3]]
+    u_q_params = params[4:8]
 
     _res = calculate_sm_sfr_fstar_history_from_mah(
         lgt,
         dt,
         dmhdt,
         log_mah,
-        sfr_params,
-        q_params,
+        u_sfr_params,
+        u_q_params,
         index_select,
         fstar_indx_high,
         fstar_tdelay,
@@ -93,7 +128,7 @@ def loss_default(params, loss_data):
     loss += jnp.mean(((fstar - fstar_target) / weight_fstar) ** 2)
     loss += jnp.mean((sfr_res / weight) ** 2)
 
-    qt = _get_bounded_qt(q_params[0])
+    qt = _get_bounded_qt(u_q_params[0])
     loss += _sigmoid(qt - t_fstar_max, 0.0, 50.0, 100.0, 0.0)
     return loss
 
@@ -240,7 +275,7 @@ def get_loss_data_default(
 
     t_fstar_max = logt[index_select][np.argmax(log_fstar_sim)]
 
-    default_sfr_params = np.array(DEFAULT_U_MS_PARAMS)
+    default_sfr_params = np.array(DEFAULT_MS_PARAMS)
     default_sfr_params[0] = np.clip(0.3 * (logmp - 11.0) + 11.4, 11.0, 13.0)
     default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 0.7, -1.5, -0.2)
     default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) - 0.3, 0.2, 3.0)
@@ -254,7 +289,7 @@ def get_loss_data_default(
 
     sfr_ms_params_err = np.array([0.5, 0.5, 1.0, 3.0])
 
-    default_q_params = np.array(DEFAULT_U_Q_PARAMS)
+    default_q_params = np.array(DEFAULT_Q_PARAMS)
     default_q_params[0] = np.clip(-0.5 * (logmp - 11.0) + 1.5, 0.7, 1.5)
     default_q_params[2] = -2.0
     q_params = np.array(_get_unbounded_q_params(*default_q_params))
@@ -288,11 +323,14 @@ def get_loss_data_default(
 def get_outline_default(halo_id, loss_data, p_best, loss_best, success):
     """Return the string storing fitting results that will be written to disk"""
     fixed_hi = loss_data[-1]
-    sfr_params = np.zeros(5)
-    sfr_params[0:3] = p_best[0:3]
-    sfr_params[3] = fixed_hi
-    sfr_params[4] = p_best[3]
-    q_params = p_best[4:8]
+    u_sfr_params = np.zeros(5)
+    u_sfr_params[0:3] = p_best[0:3]
+    u_sfr_params[3] = fixed_hi
+    u_sfr_params[4] = p_best[3]
+    u_q_params = p_best[4:8]
+
+    sfr_params = _get_bounded_sfr_params(*u_sfr_params)
+    q_params = _get_bounded_q_params(*u_q_params)
     _d = np.concatenate((sfr_params, q_params)).astype("f4")
     data_out = (*_d, float(loss_best))
     out = str(halo_id) + " " + " ".join(["{:.5e}".format(x) for x in data_out])
