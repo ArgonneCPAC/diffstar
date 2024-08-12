@@ -2,19 +2,19 @@
 import os
 import sys
 import h5py
-import glob
 import argparse
 import warnings
 import numpy as np
 
 from time import time
+from glob import glob
 
 from umachine_pyio.load_mock import load_mock_from_binaries
 from astropy.cosmology import Planck15
 from diffstar.utils import _get_dt_array
 import diffstar.fitting_helpers.fit_smah_helpers_tpeak as fitsmah
 from diffstar.fitting_helpers.utils import minimizer_wrapper
-from diffstar.data_loaders import load_SMDPL_data, load_fit_mah_tpeak
+from diffstar.data_loaders.load_smah_data import load_SMDPL_data, load_fit_mah_tpeak
 
 from mpi4py import MPI
 import subprocess
@@ -97,12 +97,12 @@ if __name__ == "__main__":
 
         subvolumes_i = [isubvol]
 
-        subvol_data_str = os.path.join(indir, f"subvol_{isubvol}/")
+        subvol_data_str = indir
         _data = load_SMDPL_data(subvolumes_i, subvol_data_str)
-        halo_ids, log_mahs, log_smahs, sfrhs, tarr, dt, log_mah_fit_min = _data
-
-        subvol_diffmah_str = f"subvol_{isubvol}_diffmah_fits.h5"
-        mah_fit_params, logmp, t_peak = load_fit_mah_tpeak(subvol_diffmah_str, data_drn=indir_diffmah)
+        halo_ids, log_smahs, sfrhs, tarr, dt = _data
+        
+        subvol_diffmah_str = f"{subvol_str}_diffmah_fits.h5"
+        mah_fit_params, logmp, t_peak_arr = load_fit_mah_tpeak(subvol_diffmah_str, data_drn=indir_diffmah)
 
         if rank == 0:
             print("Number of galaxies in mock = {}".format(len(halo_ids)))
@@ -116,11 +116,12 @@ if __name__ == "__main__":
         indx_all = np.arange(0, nhalos_tot).astype("i8")
         indx = np.array_split(indx_all, nranks)[rank]
 
-        halo_ids_for_rank = halo_ids[indx],
-        log_smahs_for_rank = log_smahs[indx],
-        sfrhs_for_rank = sfrhs[indx],
-        mah_params_for_rank = mah_fit_params[indx],
-        logmp_for_rank = logmp[indx],
+        halo_ids_for_rank = halo_ids[indx]
+        log_smahs_for_rank = log_smahs[indx]
+        sfrhs_for_rank = sfrhs[indx]
+        mah_params_for_rank = mah_fit_params[indx]
+        logmp_for_rank = logmp[indx]
+        t_peak_for_rank = t_peak_arr[indx]
 
         nhalos_for_rank = len(halo_ids_for_rank)
 
@@ -136,9 +137,11 @@ if __name__ == "__main__":
                 sfrh = sfrhs_for_rank[i, :]
                 mah_params = mah_params_for_rank[i]
                 logmp_halo = logmp_for_rank[i]
+                t_peak = t_peak_for_rank[i]
+                
 
                 p_init, loss_data = fitsmah.get_loss_data_default(
-                    tarr, dt, sfrh, lgsmah, logmp_halo, mah_params, **kwargs
+                    tarr, dt, sfrh, lgsmah, logmp_halo, mah_params, t_peak, **kwargs
                 )
                 _res = minimizer_wrapper(
                     fitsmah.loss_default, fitsmah.loss_grad_default_np, p_init, loss_data
