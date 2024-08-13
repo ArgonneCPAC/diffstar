@@ -52,6 +52,7 @@ def get_header():
     colnames.extend(list(DEFAULT_Q_PDICT.keys()))
     colnames.extend(["loss", "success"])
     header_str = "# " + " ".join(colnames) + "\n"
+    dtypes = []
     return header_str, colnames
 
 
@@ -66,14 +67,16 @@ def get_header_unbound():
 
 
 def write_collated_data(outname, data, colnames):
+
     nrows, ncols = np.shape(data)
+
     assert len(colnames) == ncols, "data mismatched with header"
     with h5py.File(outname, "w") as hdf:
         for i, name in enumerate(colnames):
-            if name == "halo_id":
-                hdf[name] = data[:, i].astype("i8")
+            if (name == "halo_id") | (name == "success"):
+                hdf[name] = data[:, i].astype(int)
             else:
-                hdf[name] = data[:, i]
+                hdf[name] = data[:, i].astype(float)
 
 
 @jjit
