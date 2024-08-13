@@ -112,7 +112,7 @@ if __name__ == "__main__":
             nhalos_tot = nranks * 5
         else:
             nhalos_tot = len(halo_ids)
-        
+            
         indx_all = np.arange(0, nhalos_tot).astype("i8")
         indx = np.array_split(indx_all, nranks)[rank]
 
@@ -128,6 +128,7 @@ if __name__ == "__main__":
         rank_basepat = "_".join((subvol_str, outbase, TMP_OUTPAT))
         rank_outname = os.path.join(args.outdir, rank_basepat).format(rank)
 
+        # breakpoint()
         with open(rank_outname, "w") as fout:
             fout.write(HEADER)
 
@@ -171,7 +172,7 @@ if __name__ == "__main__":
             subvol_i_fit_results = np.concatenate(collector)
 
             subvol_str = f"subvol_{isubvol:0{nchar_subvol}d}"
-            outbn = "_".join((subvol_str, outbase))
+            outbn = "_".join((subvol_str, outbase)) + ".h5"
             outfn = os.path.join(args.outdir, outbn)
 
             # fitsmah.write_collated_data(outfn, subvol_i_fit_results, chunk_arr=None)
