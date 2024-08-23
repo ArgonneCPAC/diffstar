@@ -54,7 +54,7 @@ def test_main_sequence_kernels_tpeak():
     sfr_sum_tpeak = np.array(
         [
             kern_sum_tpeak(
-                x, DEFAULT_MAH_PARAMS, t_peak, DEFAULT_MS_PARAMS, LGT0, FB, t_table
+                x, DEFAULT_MAH_PARAMS, DEFAULT_MS_PARAMS, t_peak, LGT0, FB, t_table
             )
             for x in t_form
         ]
@@ -62,7 +62,7 @@ def test_main_sequence_kernels_tpeak():
     sfr_scan_tpeak = np.array(
         [
             kern_scan_tpeak(
-                x, DEFAULT_MAH_PARAMS, t_peak, DEFAULT_MS_PARAMS, LGT0, FB, t_table
+                x, DEFAULT_MAH_PARAMS, DEFAULT_MS_PARAMS, t_peak, LGT0, FB, t_table
             )
             for x in t_form
         ]
