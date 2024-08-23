@@ -1,42 +1,33 @@
 """
 """
-import os
+
 import warnings
 
 import h5py
 import numpy as np
-
+from diffmah.defaults import LGT0
+from diffmah.diffmah_kernels import _diffmah_kern
 from jax import grad
 from jax import jit as jjit
 from jax import numpy as jnp
 
-from diffmah.diffmah_kernels import _diffmah_kern
-from diffmah.defaults import LGT0
-
 from ..defaults import (
-    DEFAULT_MS_PDICT,
-    DEFAULT_Q_PDICT,
-    DEFAULT_U_MS_PARAMS,
-    DEFAULT_U_Q_PARAMS,
     DEFAULT_MS_PARAMS,
+    DEFAULT_MS_PDICT,
     DEFAULT_Q_PARAMS,
+    DEFAULT_Q_PDICT,
 )
 from ..kernels.main_sequence_kernels_tpeak import (
-    _get_bounded_sfr_params_vmap,
     _get_bounded_sfr_params,
     _get_unbounded_sfr_params,
 )
 from ..kernels.quenching_kernels import (
-    _get_bounded_lg_drop,
-    _get_bounded_q_params_vmap,
     _get_bounded_q_params,
     _get_bounded_qt,
     _get_unbounded_q_params,
-    _get_unbounded_qrejuv,
 )
-from .fitting_kernels import calculate_sm_sfr_fstar_history_from_mah, compute_fstar
-
 from ..utils import _sigmoid
+from .fitting_kernels import calculate_sm_sfr_fstar_history_from_mah, compute_fstar
 
 T_FIT_MIN = 1.0  # Only fit snapshots above this threshold. Gyr units.
 DLOGM_CUT = 3.5  # Only fit SMH within this dex of the present day stellar mass.
@@ -52,7 +43,6 @@ def get_header():
     colnames.extend(list(DEFAULT_Q_PDICT.keys()))
     colnames.extend(["loss", "success"])
     header_str = "# " + " ".join(colnames) + "\n"
-    dtypes = []
     return header_str, colnames
 
 
@@ -141,6 +131,7 @@ loss_grad_default = jjit(grad(loss_default, argnums=(0)))
 
 def loss_grad_default_np(params, data):
     return np.array(loss_grad_default(params, data)).astype(float)
+
 
 def get_loss_data_default(
     t_sim,
@@ -263,7 +254,6 @@ def get_loss_data_default(
         )
 
     logt = jnp.log10(t_sim)
-    logtmp = np.log10(t_sim[-1])
     dmhdt, log_mah = _diffmah_kern(mah_params, t_sim, t_peak, lgt0)
 
     weight, weight_fstar = get_weights(
@@ -406,4 +396,3 @@ def get_weights(
     weight_fstar[weight_fstar == -10.0] = 1e10
 
     return weight, weight_fstar
-
