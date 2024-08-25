@@ -99,10 +99,10 @@ if __name__ == "__main__":
 
         subvol_data_str = indir
         _data = load_SMDPL_data(subvolumes_i, subvol_data_str)
-        halo_ids, log_smahs, sfrhs, tarr, dt = _data
+        halo_ids, log_smahs, sfrhs, tarr, dt, log_mahs, logmp = _data
         
         subvol_diffmah_str = f"{subvol_str}_diffmah_fits.h5"
-        mah_fit_params, logmp, t_peak_arr = load_fit_mah_tpeak(subvol_diffmah_str, data_drn=indir_diffmah)
+        mah_fit_params, logmp_fit, t_peak_arr = load_fit_mah_tpeak(subvol_diffmah_str, data_drn=indir_diffmah)
 
         if rank == 0:
             print("Number of galaxies in mock = {}".format(len(halo_ids)))

@@ -103,6 +103,48 @@ def load_fit_mah_tpeak(filename, data_drn=BEBOP):
     return mah_fit_params, logmp, t_peak
 
 
+def load_fit_sfh(filename, data_drn=BEBOP):
+    """Load the best fit diffmah parameter data
+
+    Parameters
+    ----------
+    filename : string
+        Name of the h5 file where the diffmah best fit parameters are stored
+
+    data_drn : string
+        Filepath where the Diffstar best-fit parameters are stored
+
+    Returns
+    -------
+    sfh_fit_params:  ndarray of shape (n_gal, 4)
+        Best fit parameters for each halo:
+            (logtc, k, early_index, late_index)
+
+    """
+
+    fn = os.path.join(data_drn, filename)
+    with h5py.File(fn, "r") as hdf:
+        ms_fit_params = np.array(
+            [
+                hdf["lgmcrit"][:],
+                hdf["lgy_at_mcrit"][:],
+                hdf["indx_lo"][:],
+                hdf["indx_hi"][:],
+                hdf["tau_dep"][:],
+            ]
+        ).T
+        q_fit_params = np.array(
+            [
+                hdf["lg_qt"][:],
+                hdf["qlglgdt"][:],
+                hdf["lg_drop"][:],
+                hdf["lg_rejuv"][:],
+            ]
+        ).T
+
+    return ms_fit_params, q_fit_params
+
+
 def load_bolshoi_data(gal_type, data_drn=BEBOP):
     """Load the stellar mass histories from UniverseMachine simulation
     applied to the Bolshoi-Planck (BPL) simulation.
@@ -476,18 +518,27 @@ def load_SMDPL_data(subvols, data_drn=BEBOP_SMDPL):
         Cosmic time steps between each simulated snapshot in Gyr
     """
 
-    galprops = ["halo_id", "sfr_history_main_prog"]
-    halos = load_mock_from_binaries(subvols, root_dirname=data_drn, galprops=galprops)
+    galprops = ["halo_id", "sfr_history_main_prog", "mpeak_history_main_prog"]
+    mock = load_mock_from_binaries(subvols, root_dirname=data_drn, galprops=galprops)
 
     SMDPL_t = np.loadtxt(os.path.join(data_drn, "smdpl_cosmic_time.txt"))
 
-    halo_ids = halos["halo_id"]
+    halo_ids = mock["halo_id"]
     dt = _get_dt_array(SMDPL_t)
-    sfrh = halos["sfr_history_main_prog"]
+    sfrh = mock["sfr_history_main_prog"]
     sm_cumsum = np.cumsum(sfrh * dt, axis=1) * 1e9
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         log_smahs = np.where(sm_cumsum == 0, 0, np.log10(sm_cumsum))
 
-    return halo_ids, log_smahs, sfrh, SMDPL_t, dt
+    lgmh_min = 7.0
+    mh_min = 10**lgmh_min
+    msk = mock["mpeak_history_main_prog"] < mh_min
+    clipped_mahs = np.where(msk, 1.0, mock["mpeak_history_main_prog"])
+    log_mahs = np.log10(clipped_mahs)
+    log_mahs = np.maximum.accumulate(log_mahs, axis=1)
+
+    logmp = log_mahs[:, -1]
+
+    return halo_ids, log_smahs, sfrh, SMDPL_t, dt, log_mahs, logmp
