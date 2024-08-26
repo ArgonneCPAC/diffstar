@@ -24,8 +24,6 @@ def calculate_sm_sfr_fstar_history_from_mah(
     log_mah,
     u_ms_params,
     u_q_params,
-    index_select,
-    index_high,
     fstar_tdelay,
     fb=FB,
 ):
@@ -58,12 +56,6 @@ def calculate_sm_sfr_fstar_history_from_mah(
     u_q_params : ndarray of shape (4, )
         Quenching model unbounded parameters. Includes (u_qt, u_qs, u_drop, u_rejuv)
 
-    index_select: ndarray of shape (n_times_fstar, )
-        Snapshot indices used in fstar computation
-
-    index_high: ndarray of shape (n_times_fstar, )
-        Indices of np.searchsorted(t, t - fstar_tdelay)[index_select]
-
     fstar_tdelay: float
         Time interval in Gyr for fstar definition.
         fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay[Gyr]
@@ -82,7 +74,7 @@ def calculate_sm_sfr_fstar_history_from_mah(
     """
     sfr = _sfr_history_from_mah(lgt, dt, dmhdt, log_mah, u_ms_params, u_q_params, fb=fb)
     mstar = _integrate_sfr(sfr, dt)
-    fstar = compute_fstar(10**lgt, mstar, index_select, index_high, fstar_tdelay)
+    fstar = compute_fstar(10**lgt, mstar, fstar_tdelay)
     return mstar, sfr, fstar
 
 
@@ -140,8 +132,6 @@ def calculate_histories(
     mah_params,
     u_ms_params,
     u_q_params,
-    index_select,
-    index_high,
     fstar_tdelay,
     fb=FB,
 ):
@@ -173,12 +163,6 @@ def calculate_histories(
         Quenching model unbounded parameters. Includes
         (u_qt, u_qs, u_drop, u_rejuv)
 
-    index_select: ndarray of shape (n_times_fstar, )
-        Snapshot indices used in fstar computation.
-
-    index_high: ndarray of shape (n_times_fstar, )
-        Indices of np.searchsorted(t, t - fstar_tdelay)[index_select]
-
     fstar_tdelay: float
         Time interval in Gyr for fstar definition.
         fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay[Gyr]
@@ -209,8 +193,6 @@ def calculate_histories(
         log_mah,
         u_ms_params,
         u_q_params,
-        index_select,
-        index_high,
         fstar_tdelay,
         fb=fb,
     )
@@ -218,7 +200,7 @@ def calculate_histories(
 
 
 calculate_histories_vmap = jjit(
-    vmap(calculate_histories, in_axes=(None, None, 0, 0, 0, None, None, None, None))
+    vmap(calculate_histories, in_axes=(None, None, 0, 0, 0, None, None))
 )
 
 
@@ -229,7 +211,7 @@ def _integrate_sfr(sfr, dt):
 
 
 @jjit
-def compute_fstar(tarr, mstar, index_select, index_high, fstar_tdelay):
+def compute_fstar(tarr, mstar, fstar_tdelay):
     """Time averaged SFH that has ocurred over some previous time period
 
     fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay
@@ -242,12 +224,6 @@ def compute_fstar(tarr, mstar, index_select, index_high, fstar_tdelay):
     mstar : ndarray of shape (n_times, )
         Stellar mass history in Msun units
 
-    index_select: ndarray of shape (n_times_fstar, )
-        Snapshot indices used in fstar computation
-
-    index_high: ndarray of shape (n_times_fstar, )
-        Indices of np.searchsorted(t, t - fstar_tdelay)[index_select]
-
     fstar_tdelay: float
         Time interval in Gyr units for fstar definition.
         fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay
@@ -257,16 +233,14 @@ def compute_fstar(tarr, mstar, index_select, index_high, fstar_tdelay):
     fstar : ndarray of shape (n_times)
         SFH averaged over timescale fstar_tdelay in units of Msun/yr assuming h=1
 
+    Notes
+    -------
+    for t-fstar_tdelay < 0 t<tarr, and jnp.interp returns by default mstar[0], 
+    so fstar will always be positive.
     """
-    mstar_high = mstar[index_select]
-    mstar_low = jax_np_interp(
-        tarr[index_select] - fstar_tdelay, tarr, mstar, index_high
-    )
-    fstar = (mstar_high - mstar_low) / fstar_tdelay / 1e9
+    mstar_low = jnp.interp(tarr - fstar_tdelay, tarr, mstar) 
+    fstar = (mstar - mstar_low) / fstar_tdelay / 1e9
     return fstar
-
-
-compute_fstar_vmap = jjit(vmap(compute_fstar, in_axes=(None, 0, *[None] * 3)))
 
 
 @jjit
