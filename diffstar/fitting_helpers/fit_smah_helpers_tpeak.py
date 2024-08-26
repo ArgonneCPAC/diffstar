@@ -117,8 +117,8 @@ def loss_default(params, loss_data):
     )
 
     mstar, sfr, fstar = _res
+    fstar = jnp.where(fstar > 0.0, jnp.log10(fstar), mstar * ssfrh_floor)
     mstar = jnp.log10(mstar)
-    fstar = jnp.log10(fstar)
 
     sfr_res = 1e8 * (sfr - sfr_target) / sm_target
     sfr_res = jnp.clip(sfr_res, -1.0, 1.0)
@@ -432,7 +432,7 @@ def loss_default_clipssfrh(params, loss_data):
     )
 
     mstar, sfr, fstar = _res
-
+    fstar = jnp.where(fstar > 0.0, jnp.log10(fstar), mstar * ssfrh_floor)
     fstar = jnp.clip(fstar, ssfrh_floor, jnp.inf)
 
     mstar = jnp.log10(mstar)

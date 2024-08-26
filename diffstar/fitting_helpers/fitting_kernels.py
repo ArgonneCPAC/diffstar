@@ -240,6 +240,7 @@ def compute_fstar(tarr, mstar, fstar_tdelay):
     """
     mstar_low = jnp.interp(tarr - fstar_tdelay, tarr, mstar) 
     fstar = (mstar - mstar_low) / fstar_tdelay / 1e9
+    fstar = jnp.where(fstar > 0.0, fstar, 0.0)
     return fstar
 
 
