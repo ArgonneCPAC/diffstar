@@ -145,7 +145,7 @@ if __name__ == "__main__":
                     tarr, dt, sfrh, lgsmah, logmp_halo, mah_params, t_peak, **kwargs
                 )
                 _res = minimizer_wrapper(
-                    fitsmah.loss_default, fitsmah.loss_grad_default_np, p_init, loss_data
+                    fitsmah.loss_default_clipssfrh, fitsmah.loss_grad_default_clipssfrh_np, p_init, loss_data
                 )
                 p_best, loss_best, success = _res
                 outline = fitsmah.get_outline_default(halo_id, loss_data, p_best, loss_best, success)

@@ -129,6 +129,16 @@ def loss_default(params, loss_data):
 
     qt = _get_bounded_qt(u_q_params[0])
     loss += _sigmoid(qt - t_fstar_max, 0.0, 50.0, 100.0, 0.0)
+    sfr_params = _get_bounded_sfr_params(*u_sfr_params)
+    (    
+        lgmcrit,
+        lgy_at_mcrit,
+        indx_lo,
+        indx_hi,
+        tau_dep,
+    ) = sfr_params
+    loss += _sigmoid(indx_lo, 0.0, 10.0, 1.0, 0.0)
+
     return loss
 
 
@@ -432,11 +442,10 @@ def loss_default_clipssfrh(params, loss_data):
     )
 
     mstar, sfr, fstar = _res
+    fstar = jnp.clip(fstar, mstar * ssfrh_floor, jnp.inf)
     fstar = jnp.where(fstar > 0.0, jnp.log10(fstar), mstar * ssfrh_floor)
-    fstar = jnp.clip(fstar, ssfrh_floor, jnp.inf)
 
     mstar = jnp.log10(mstar)
-    fstar = jnp.log10(fstar)
 
     sfr_res = 1e8 * (sfr - sfr_target) / sm_target
     sfr_res = jnp.clip(sfr_res, -1.0, 1.0)
@@ -447,6 +456,16 @@ def loss_default_clipssfrh(params, loss_data):
 
     qt = _get_bounded_qt(u_q_params[0])
     loss += _sigmoid(qt - t_fstar_max, 0.0, 50.0, 100.0, 0.0)
+
+    sfr_params = _get_bounded_sfr_params(*u_sfr_params)
+    (    
+        lgmcrit,
+        lgy_at_mcrit,
+        indx_lo,
+        indx_hi,
+        tau_dep,
+    ) = sfr_params
+    loss += _sigmoid(indx_lo, 0.0, 10.0, 1.0, 0.0)
     return loss
 
 
