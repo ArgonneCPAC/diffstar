@@ -95,8 +95,6 @@ def loss_default(params, loss_data):
         log_sm_target,
         sfr_target,
         fstar_target,
-        index_select,
-        fstar_indx_high,
         fstar_tdelay,
         ssfrh_floor,
         weight,
@@ -115,8 +113,6 @@ def loss_default(params, loss_data):
         log_mah,
         u_sfr_params,
         u_q_params,
-        index_select,
-        fstar_indx_high,
         fstar_tdelay,
     )
 
@@ -223,10 +219,6 @@ def get_loss_data_default(
             Star formation history in Msun/yr.
         log_fstar_sim : ndarray of shape (nt, )
             Base-10 log of cumulative SFH averaged over a timescale in Msun/yr.
-        index_select: ndarray of shape (n_times_fstar, )
-            Snapshot indices used in fstar computation.
-        fstar_indx_high: ndarray of shape (n_times_fstar, )
-            Indices of np.searchsorted(t, t - fstar_tdelay)[index_select]
         fstar_tdelay: float
             Time interval in Gyr for fstar definition.
             fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay[Gyr]
@@ -244,20 +236,15 @@ def get_loss_data_default(
             Fixed value of the unbounded diffstar parameter indx_hi
 
     """
-    fstar_indx_high = np.searchsorted(t_sim, t_sim - fstar_tdelay)
-    _mask = t_sim > fstar_tdelay + fstar_tdelay / 2.0
-    index_select = np.arange(len(t_sim))[_mask]
-    fstar_indx_high = fstar_indx_high[_mask]
-
     smh = 10**log_smah_sim
 
-    fstar_sim = compute_fstar(t_sim, smh, index_select, fstar_indx_high, fstar_tdelay)
+    fstar_sim = compute_fstar(t_sim, smh, fstar_tdelay)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        ssfrh = fstar_sim / smh[index_select]
+        ssfrh = fstar_sim / smh
         ssfrh = np.clip(ssfrh, ssfrh_floor, np.inf)
-        fstar_sim = ssfrh * smh[index_select]
+        fstar_sim = ssfrh * smh
         log_fstar_sim = np.where(
             fstar_sim == 0.0, np.log10(fstar_sim.max()) - 3.0, np.log10(fstar_sim)
         )
@@ -270,13 +257,13 @@ def get_loss_data_default(
         t_sim,
         log_smah_sim,
         log_fstar_sim,
-        fstar_indx_high,
+        fstar_tdelay,
         dlogm_cut,
         t_fit_min,
         mass_fit_min,
     )
 
-    t_fstar_max = logt[index_select][np.argmax(log_fstar_sim)]
+    t_fstar_max = logt[np.argmax(log_fstar_sim)]
 
     default_sfr_params = np.array(DEFAULT_MS_PARAMS)
     default_sfr_params[0] = np.clip(0.3 * (logmp - 11.0) + 11.4, 11.0, 13.0)
@@ -307,8 +294,6 @@ def get_loss_data_default(
         log_smah_sim,
         sfrh,
         log_fstar_sim,
-        index_select,
-        fstar_indx_high,
         fstar_tdelay,
         ssfrh_floor,
         weight,
@@ -345,7 +330,7 @@ def get_weights(
     t_sim,
     log_smah_sim,
     log_fstar_sim,
-    fstar_indx_high,
+    fstar_tdelay,
     dlogm_cut,
     t_fit_min,
     mass_fit_min,
@@ -360,8 +345,9 @@ def get_weights(
         Base-10 log of cumulative stellar mass in Msun units.
     log_fstar_sim : ndarray of shape (nt, )
         Base-10 log of SFH averaged over a time period in Msun/yr units.
-    fstar_indx_high: ndarray of shape (n_times_fstar, )
-        Indices from np.searchsorted(t, t - fstar_tdelay)[index_select]
+    fstar_tdelay: float
+        Time interval in Gyr for fstar definition.
+        fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay[Gyr]
     dlogm_cut : float, optional
         Additional quantity used to place a cut on which simulated snapshots
         are used to define the target halo SFH.
@@ -383,7 +369,7 @@ def get_weights(
     weight : ndarray of shape (nt, )
         Weight for each snapshot, to effectively remove from the fit
         the SMH snapshots that fall below the threshold mass.
-    weight_fstar : ndarray of shape (n_times_fstar, )
+    weight_fstar : ndarray of shape (nt, )
         Weight for each snapshot, to effectively remove from the fit
         the SFH snapshots that fall below the threshold mass.
 
@@ -401,9 +387,9 @@ def get_weights(
 
     weight_fstar = np.ones_like(t_sim)
     weight_fstar[~mask] = 1e10
-    weight_fstar = weight_fstar[fstar_indx_high]
     weight_fstar[log_fstar_sim.max() - log_fstar_sim < 0.1] = 0.5
     weight_fstar[weight_fstar == -10.0] = 1e10
+    weight_fstar[t_sim < fstar_tdelay + 0.01] = 1e10
 
     return weight, weight_fstar
 
@@ -424,8 +410,6 @@ def loss_default_clipssfrh(params, loss_data):
         log_sm_target,
         sfr_target,
         fstar_target,
-        index_select,
-        fstar_indx_high,
         fstar_tdelay,
         ssfrh_floor,
         weight,
@@ -444,13 +428,11 @@ def loss_default_clipssfrh(params, loss_data):
         log_mah,
         u_sfr_params,
         u_q_params,
-        index_select,
-        fstar_indx_high,
         fstar_tdelay,
     )
 
     mstar, sfr, fstar = _res
-    
+
     fstar = jnp.clip(fstar, ssfrh_floor, jnp.inf)
 
     mstar = jnp.log10(mstar)
