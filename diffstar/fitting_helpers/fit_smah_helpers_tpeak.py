@@ -407,3 +407,69 @@ def get_weights(
 
     return weight, weight_fstar
 
+
+@jjit
+def loss_default_clipssfrh(params, loss_data):
+    """
+    MSE loss function for fitting individual stellar mass histories.
+    The parameters k, indx_hi are fixed.
+
+    """
+    (
+        lgt,
+        dt,
+        dmhdt,
+        log_mah,
+        sm_target,
+        log_sm_target,
+        sfr_target,
+        fstar_target,
+        index_select,
+        fstar_indx_high,
+        fstar_tdelay,
+        ssfrh_floor,
+        weight,
+        weight_fstar,
+        t_fstar_max,
+        fixed_hi,
+    ) = loss_data
+
+    u_sfr_params = [*params[0:3], fixed_hi, params[3]]
+    u_q_params = params[4:8]
+
+    _res = calculate_sm_sfr_fstar_history_from_mah(
+        lgt,
+        dt,
+        dmhdt,
+        log_mah,
+        u_sfr_params,
+        u_q_params,
+        index_select,
+        fstar_indx_high,
+        fstar_tdelay,
+    )
+
+    mstar, sfr, fstar = _res
+    
+    fstar = jnp.clip(fstar, ssfrh_floor, jnp.inf)
+
+    mstar = jnp.log10(mstar)
+    fstar = jnp.log10(fstar)
+
+    sfr_res = 1e8 * (sfr - sfr_target) / sm_target
+    sfr_res = jnp.clip(sfr_res, -1.0, 1.0)
+
+    loss = jnp.mean(((mstar - log_sm_target) / weight) ** 2)
+    loss += jnp.mean(((fstar - fstar_target) / weight_fstar) ** 2)
+    loss += jnp.mean((sfr_res / weight) ** 2)
+
+    qt = _get_bounded_qt(u_q_params[0])
+    loss += _sigmoid(qt - t_fstar_max, 0.0, 50.0, 100.0, 0.0)
+    return loss
+
+
+loss_grad_default_clipssfrh = jjit(grad(loss_default_clipssfrh, argnums=(0)))
+
+
+def loss_grad_default_clipssfrh_np(params, data):
+    return np.array(loss_grad_default_clipssfrh(params, data)).astype(float)
