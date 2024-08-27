@@ -456,6 +456,7 @@ def loss_default_clipssfrh(params, loss_data):
         tau_dep,
     ) = sfr_params
     loss += _sigmoid(indx_lo, 0.0, 10.0, 1.0, 0.0)
+    loss += _sigmoid(lgy_at_mcrit, 0.0, 20.0, 0.0, 1.0)
     return loss
 
 
