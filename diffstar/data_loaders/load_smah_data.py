@@ -1,16 +1,15 @@
 """
 """
+
 import os
 import warnings
 
 import h5py
 import numpy as np
+from umachine_pyio.load_mock import load_mock_from_binaries
 
 from ..defaults import SFR_MIN
 from ..utils import _get_dt_array
-
-from umachine_pyio.load_mock import load_mock_from_binaries
-
 
 TASSO = "/Users/aphearin/work/DATA/diffmah_data"
 BEBOP = "/lcrc/project/halotools/diffmah_data"

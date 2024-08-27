@@ -1,5 +1,6 @@
 """
 """
+
 from diffmah.individual_halo_assembly import _calc_halo_history
 from jax import jit as jjit
 from jax import numpy as jnp
@@ -13,7 +14,6 @@ from ..kernels.main_sequence_kernels import (
     _sfr_eff_plaw,
 )
 from ..kernels.quenching_kernels import _quenching_kern_u_params
-from ..utils import jax_np_interp
 
 
 @jjit
@@ -235,10 +235,10 @@ def compute_fstar(tarr, mstar, fstar_tdelay):
 
     Notes
     -------
-    for t-fstar_tdelay < 0 t<tarr, and jnp.interp returns by default mstar[0], 
+    for t-fstar_tdelay < 0 t<tarr, and jnp.interp returns by default mstar[0],
     so fstar will always be positive.
     """
-    mstar_low = jnp.interp(tarr - fstar_tdelay, tarr, mstar) 
+    mstar_low = jnp.interp(tarr - fstar_tdelay, tarr, mstar)
     fstar = (mstar - mstar_low) / fstar_tdelay / 1e9
     fstar = jnp.where(fstar > 0.0, fstar, 0.0)
     return fstar

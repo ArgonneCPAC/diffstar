@@ -1,5 +1,6 @@
 """
 """
+
 import numpy as np
 
 from ...defaults import DEFAULT_MS_PDICT, DEFAULT_Q_PDICT

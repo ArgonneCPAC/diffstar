@@ -1,27 +1,20 @@
-
-import os
-import sys
-import h5py
 import argparse
-import warnings
-import numpy as np
-
-from time import time
-from glob import glob
-
-from umachine_pyio.load_mock import load_mock_from_binaries
-from astropy.cosmology import Planck15
-from diffstar.utils import _get_dt_array
-import diffstar.fitting_helpers.fit_smah_helpers_tpeak as fitsmah
-from diffstar.fitting_helpers.utils import minimizer_wrapper
-from diffstar.data_loaders.load_smah_data import load_SMDPL_data, load_fit_mah_tpeak
-
-from mpi4py import MPI
+import os
 import subprocess
+from glob import glob
+from time import time
 
+import numpy as np
+from mpi4py import MPI
+
+import diffstar.fitting_helpers.fit_smah_helpers_tpeak as fitsmah
+from diffstar.data_loaders.load_smah_data import load_fit_mah_tpeak, load_SMDPL_data
+from diffstar.fitting_helpers.utils import minimizer_wrapper
 
 BEBOP_SMDPL = "/lcrc/project/galsampler/SMDPL/dr1_no_merging_upidh/sfh_binary_catalogs/a_1.000000/"
-BEBOP_SMDPL_MAH = "/lcrc/project/halotools/SMDPL/dr1_no_merging_upidh/diffmah_tpeak_fits/"
+BEBOP_SMDPL_MAH = (
+    "/lcrc/project/halotools/SMDPL/dr1_no_merging_upidh/diffmah_tpeak_fits/"
+)
 
 TMP_OUTPAT = "tmp_sfh_fits_rank_{0}.dat"
 NUM_SUBVOLS_SMDPL = 576
@@ -30,12 +23,14 @@ NUM_SUBVOLS_SMDPL = 576
 if __name__ == "__main__":
     comm = MPI.COMM_WORLD
     rank, nranks = comm.Get_rank(), comm.Get_size()
-    
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument("outdir", help="Output directory")
     parser.add_argument("-outbase", help="Basename of the output hdf5 file")
-    parser.add_argument("-indir_diffmah", help="Directory of mah parameters", default=BEBOP_SMDPL_MAH)
+    parser.add_argument(
+        "-indir_diffmah", help="Directory of mah parameters", default=BEBOP_SMDPL_MAH
+    )
     parser.add_argument("-indir", help="Input directory", default=BEBOP_SMDPL)
     parser.add_argument(
         "-fstar_tdelay",
@@ -50,7 +45,10 @@ if __name__ == "__main__":
         default=fitsmah.MIN_MASS_CUT,
     )
     parser.add_argument(
-        "-ssfrh_floor", help="Clipping floor for sSFH", type=float, default=fitsmah.SSFRH_FLOOR,
+        "-ssfrh_floor",
+        help="Clipping floor for sSFH",
+        type=float,
+        default=fitsmah.SSFRH_FLOOR,
     )
     parser.add_argument("-test", help="Short test run?", type=bool, default=False)
     parser.add_argument("-istart", help="First subvolume in loop", type=int, default=0)
@@ -81,7 +79,7 @@ if __name__ == "__main__":
     ]
     all_avail_subvolumes = [int(s.split("_")[1]) for s in all_avail_subvol_names]
     all_avail_subvolumes = sorted(all_avail_subvolumes)
-    
+
     if args.test:
         subvolumes = [
             all_avail_subvolumes[0],
@@ -100,9 +98,11 @@ if __name__ == "__main__":
         subvol_data_str = indir
         _data = load_SMDPL_data(subvolumes_i, subvol_data_str)
         halo_ids, log_smahs, sfrhs, tarr, dt, log_mahs, logmp = _data
-        
+
         subvol_diffmah_str = f"{subvol_str}_diffmah_fits.h5"
-        mah_fit_params, logmp_fit, t_peak_arr = load_fit_mah_tpeak(subvol_diffmah_str, data_drn=indir_diffmah)
+        mah_fit_params, logmp_fit, t_peak_arr = load_fit_mah_tpeak(
+            subvol_diffmah_str, data_drn=indir_diffmah
+        )
 
         if rank == 0:
             print("Number of galaxies in mock = {}".format(len(halo_ids)))
@@ -112,7 +112,7 @@ if __name__ == "__main__":
             nhalos_tot = nranks * 5
         else:
             nhalos_tot = len(halo_ids)
-            
+
         indx_all = np.arange(0, nhalos_tot).astype("i8")
         indx = np.array_split(indx_all, nranks)[rank]
 
@@ -139,16 +139,20 @@ if __name__ == "__main__":
                 mah_params = mah_params_for_rank[i]
                 logmp_halo = logmp_for_rank[i]
                 t_peak = t_peak_for_rank[i]
-                
 
                 p_init, loss_data = fitsmah.get_loss_data_default(
                     tarr, dt, sfrh, lgsmah, logmp_halo, mah_params, t_peak, **kwargs
                 )
                 _res = minimizer_wrapper(
-                    fitsmah.loss_default_clipssfrh, fitsmah.loss_grad_default_clipssfrh_np, p_init, loss_data
+                    fitsmah.loss_default_clipssfrh,
+                    fitsmah.loss_grad_default_clipssfrh_np,
+                    p_init,
+                    loss_data,
                 )
                 p_best, loss_best, success = _res
-                outline = fitsmah.get_outline_default(halo_id, loss_data, p_best, loss_best, success)
+                outline = fitsmah.get_outline_default(
+                    halo_id, loss_data, p_best, loss_best, success
+                )
 
                 fout.write(outline)
 
