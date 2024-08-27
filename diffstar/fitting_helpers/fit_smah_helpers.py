@@ -278,15 +278,7 @@ def loss_free(params, loss_data):
     q_params = params[5:9]
 
     _res = calculate_sm_sfr_fstar_history_from_mah(
-        lgt,
-        dt,
-        dmhdt,
-        log_mah,
-        sfr_params,
-        q_params,
-        index_select,
-        fstar_indx_high,
-        fstar_tdelay,
+        lgt, dt, dmhdt, log_mah, sfr_params, q_params, fstar_tdelay
     )
 
     mstar, sfr, fstar = _res
@@ -417,7 +409,7 @@ def get_loss_data_free(
 
     smh = 10**log_smah_sim
 
-    fstar_sim = compute_fstar(t_sim, smh, index_select, fstar_indx_high, fstar_tdelay)
+    fstar_sim = compute_fstar(t_sim, smh, fstar_tdelay)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -530,15 +522,7 @@ def loss_fixed_noquench(params, loss_data):
     sfr_params = params
 
     _res = calculate_sm_sfr_fstar_history_from_mah(
-        lgt,
-        dt,
-        dmhdt,
-        log_mah,
-        sfr_params,
-        q_params,
-        index_select,
-        fstar_indx_high,
-        fstar_tdelay,
+        lgt, dt, dmhdt, log_mah, sfr_params, q_params, fstar_tdelay
     )
 
     mstar, sfr, fstar = _res
@@ -671,7 +655,7 @@ def get_loss_data_fixed_noquench(
 
     smh = 10**log_smah_sim
 
-    fstar_sim = compute_fstar(t_sim, smh, index_select, fstar_indx_high, fstar_tdelay)
+    fstar_sim = compute_fstar(t_sim, smh, fstar_tdelay)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -785,15 +769,7 @@ def loss_fixed_hi(params, loss_data):
     q_params = params[4:8]
 
     _res = calculate_sm_sfr_fstar_history_from_mah(
-        lgt,
-        dt,
-        dmhdt,
-        log_mah,
-        sfr_params,
-        q_params,
-        index_select,
-        fstar_indx_high,
-        fstar_tdelay,
+        lgt, dt, dmhdt, log_mah, sfr_params, q_params, fstar_tdelay
     )
 
     mstar, sfr, fstar = _res
@@ -926,13 +902,13 @@ def get_loss_data_fixed_hi(
 
     smh = 10**log_smah_sim
 
-    fstar_sim = compute_fstar(t_sim, smh, index_select, fstar_indx_high, fstar_tdelay)
+    fstar_sim = compute_fstar(t_sim, smh, fstar_tdelay)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        ssfrh = fstar_sim / smh[index_select]
+        ssfrh = fstar_sim / smh
         ssfrh = np.clip(ssfrh, ssfrh_floor, np.inf)
-        fstar_sim = ssfrh * smh[index_select]
+        fstar_sim = ssfrh * smh
         log_fstar_sim = np.where(
             fstar_sim == 0.0, np.log10(fstar_sim.max()) - 3.0, np.log10(fstar_sim)
         )
@@ -1059,15 +1035,7 @@ def loss_fixed_hi_rej(params, loss_data):
     q_params = [*params[4:7], u_lg_rejuv]
 
     _res = calculate_sm_sfr_fstar_history_from_mah(
-        lgt,
-        dt,
-        dmhdt,
-        log_mah,
-        sfr_params,
-        q_params,
-        index_select,
-        fstar_indx_high,
-        fstar_tdelay,
+        lgt, dt, dmhdt, log_mah, sfr_params, q_params, fstar_tdelay
     )
 
     mstar, sfr, fstar = _res
@@ -1201,7 +1169,7 @@ def get_loss_data_fixed_hi_rej(
 
     smh = 10**log_smah_sim
 
-    fstar_sim = compute_fstar(t_sim, smh, index_select, fstar_indx_high, fstar_tdelay)
+    fstar_sim = compute_fstar(t_sim, smh, fstar_tdelay)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -1337,15 +1305,7 @@ def loss_fixed_hi_depl(params, loss_data):
     q_params = params[3:7]
 
     _res = calculate_sm_sfr_fstar_history_from_mah(
-        lgt,
-        dt,
-        dmhdt,
-        log_mah,
-        sfr_params,
-        q_params,
-        index_select,
-        fstar_indx_high,
-        fstar_tdelay,
+        lgt, dt, dmhdt, log_mah, sfr_params, q_params, fstar_tdelay
     )
 
     mstar, sfr, fstar = _res
@@ -1481,7 +1441,7 @@ def get_loss_data_fixed_hi_depl(
 
     smh = 10**log_smah_sim
 
-    fstar_sim = compute_fstar(t_sim, smh, index_select, fstar_indx_high, fstar_tdelay)
+    fstar_sim = compute_fstar(t_sim, smh, fstar_tdelay)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -1605,15 +1565,7 @@ def loss_fixed_depl_noquench(params, loss_data):
     sfr_params = [*params[0:4], fixed_tau]
 
     _res = calculate_sm_sfr_fstar_history_from_mah(
-        lgt,
-        dt,
-        dmhdt,
-        log_mah,
-        sfr_params,
-        q_params,
-        index_select,
-        fstar_indx_high,
-        fstar_tdelay,
+        lgt, dt, dmhdt, log_mah, sfr_params, q_params, fstar_tdelay
     )
 
     mstar, sfr, fstar = _res
@@ -1750,7 +1702,7 @@ def get_loss_data_fixed_depl_noquench(
 
     smh = 10**log_smah_sim
 
-    fstar_sim = compute_fstar(t_sim, smh, index_select, fstar_indx_high, fstar_tdelay)
+    fstar_sim = compute_fstar(t_sim, smh, fstar_tdelay)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
