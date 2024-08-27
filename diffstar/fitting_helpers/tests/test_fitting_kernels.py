@@ -39,7 +39,6 @@ def test_calculate_sm_sfr_fstar_history_from_mah():
     fstar_tdelay = 0.5  # gyr
     fstar_indx_high = np.searchsorted(tarr, tarr - fstar_tdelay)
     _mask = tarr > fstar_tdelay + fstar_tdelay / 2.0
-    index_select = np.arange(len(tarr))[_mask]
     fstar_indx_high = fstar_indx_high[_mask]
 
     dmhdt, log_mah = _calc_halo_history(lgtarr, *_get_default_diffmah_args())
@@ -50,8 +49,6 @@ def test_calculate_sm_sfr_fstar_history_from_mah():
         log_mah,
         DEFAULT_U_MS_PARAMS,
         DEFAULT_U_Q_PARAMS,
-        index_select,
-        fstar_indx_high,
         fstar_tdelay,
         FB,
     )
@@ -63,7 +60,7 @@ def test_calculate_sm_sfr_fstar_history_from_mah():
     assert np.all(mstar > 0)
     assert mstar.shape == (n_t,)
     assert sfr.shape == (n_t,)
-    assert fstar.size < sfr.size
+    assert fstar.shape == (n_t,)
 
 
 def test_calculate_sm_sfr_history_from_mah():
@@ -94,7 +91,6 @@ def test_calculate_histories():
     fstar_tdelay = 0.5  # gyr
     fstar_indx_high = np.searchsorted(tarr, tarr - fstar_tdelay)
     _mask = tarr > fstar_tdelay + fstar_tdelay / 2.0
-    index_select = np.arange(len(tarr))[_mask]
     fstar_indx_high = fstar_indx_high[_mask]
 
     args = (
@@ -103,8 +99,6 @@ def test_calculate_histories():
         all_diffmah_args,
         DEFAULT_U_MS_PARAMS,
         DEFAULT_U_Q_PARAMS,
-        index_select,
-        fstar_indx_high,
         fstar_tdelay,
         FB,
     )
@@ -133,7 +127,6 @@ def test_calculate_histories_vmap():
     fstar_tdelay = 0.5  # gyr
     fstar_indx_high = np.searchsorted(tarr, tarr - fstar_tdelay)
     _mask = tarr > fstar_tdelay + fstar_tdelay / 2.0
-    index_select = np.arange(len(tarr))[_mask]
     fstar_indx_high = fstar_indx_high[_mask]
 
     # in_axes = (None, None, 0, 0, 0, None, None, None)
@@ -143,8 +136,6 @@ def test_calculate_histories_vmap():
         all_diffmah_args,
         u_ms_params,
         u_q_params,
-        index_select,
-        fstar_indx_high,
         fstar_tdelay,
         FB,
     )
