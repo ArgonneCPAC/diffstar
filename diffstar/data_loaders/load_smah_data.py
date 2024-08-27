@@ -6,10 +6,16 @@ import warnings
 
 import h5py
 import numpy as np
-from umachine_pyio.load_mock import load_mock_from_binaries
 
 from ..defaults import SFR_MIN
 from ..utils import _get_dt_array
+
+try:
+    from umachine_pyio.load_mock import load_mock_from_binaries
+
+    HAS_UM_LOADER = True
+except ImportError:
+    HAS_UM_LOADER = False
 
 TASSO = "/Users/aphearin/work/DATA/diffmah_data"
 BEBOP = "/lcrc/project/halotools/diffmah_data"
@@ -23,12 +29,12 @@ H_TNG = 0.6774
 H_MDPL = H_BPL
 
 
-def load_fit_mah(filename, data_drn=BEBOP):
+def load_fit_mah(basename, data_drn=BEBOP):
     """Load the best fit diffmah parameter data
 
     Parameters
     ----------
-    filename : string
+    basename : string
         Name of the h5 file where the diffmah best fit parameters are stored
 
     data_drn : string
@@ -47,7 +53,7 @@ def load_fit_mah(filename, data_drn=BEBOP):
         Base-10 logarithm of the present day peak halo mass
     """
 
-    fn = os.path.join(data_drn, filename)
+    fn = os.path.join(data_drn, basename)
     with h5py.File(fn, "r") as hdf:
         mah_fit_params = np.array(
             [
@@ -62,12 +68,12 @@ def load_fit_mah(filename, data_drn=BEBOP):
     return mah_fit_params, logmp
 
 
-def load_fit_mah_tpeak(filename, data_drn=BEBOP):
+def load_fit_mah_tpeak(basename, data_drn=BEBOP):
     """Load the best fit diffmah parameter data
 
     Parameters
     ----------
-    filename : string
+    basename : string
         Name of the h5 file where the diffmah best fit parameters are stored
 
     data_drn : string
@@ -86,7 +92,7 @@ def load_fit_mah_tpeak(filename, data_drn=BEBOP):
         Base-10 logarithm of the present day peak halo mass
     """
 
-    fn = os.path.join(data_drn, filename)
+    fn = os.path.join(data_drn, basename)
     with h5py.File(fn, "r") as hdf:
         mah_fit_params = np.array(
             [
@@ -102,12 +108,12 @@ def load_fit_mah_tpeak(filename, data_drn=BEBOP):
     return mah_fit_params, logmp, t_peak
 
 
-def load_fit_sfh(filename, data_drn=BEBOP):
+def load_fit_sfh(basename, data_drn=BEBOP):
     """Load the best fit diffmah parameter data
 
     Parameters
     ----------
-    filename : string
+    basename : string
         Name of the h5 file where the diffmah best fit parameters are stored
 
     data_drn : string
@@ -121,7 +127,7 @@ def load_fit_sfh(filename, data_drn=BEBOP):
 
     """
 
-    fn = os.path.join(data_drn, filename)
+    fn = os.path.join(data_drn, basename)
     with h5py.File(fn, "r") as hdf:
         ms_fit_params = np.array(
             [
@@ -516,6 +522,8 @@ def load_SMDPL_data(subvols, data_drn=BEBOP_SMDPL):
     dt : ndarray of shape (n_times, )
         Cosmic time steps between each simulated snapshot in Gyr
     """
+    if not HAS_UM_LOADER:
+        raise ImportError("Must have umachine_pyio installed to load this dataset")
 
     galprops = ["halo_id", "sfr_history_main_prog", "mpeak_history_main_prog"]
     mock = load_mock_from_binaries(subvols, root_dirname=data_drn, galprops=galprops)
