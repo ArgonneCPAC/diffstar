@@ -1,5 +1,6 @@
 """
 """
+
 import os
 import warnings
 
@@ -180,7 +181,7 @@ def get_weights(
     t_sim,
     log_smah_sim,
     log_fstar_sim,
-    fstar_indx_high,
+    fstar_tdelay,
     dlogm_cut,
     t_fit_min,
     mass_fit_min,
@@ -195,8 +196,9 @@ def get_weights(
         Base-10 log of cumulative stellar mass in Msun units.
     log_fstar_sim : ndarray of shape (nt, )
         Base-10 log of SFH averaged over a time period in Msun/yr units.
-    fstar_indx_high: ndarray of shape (n_times_fstar, )
-        Indices from np.searchsorted(t, t - fstar_tdelay)[index_select]
+    fstar_tdelay: float
+        Time interval in Gyr for fstar definition.
+        fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay[Gyr]
     dlogm_cut : float, optional
         Additional quantity used to place a cut on which simulated snapshots
         are used to define the target halo SFH.
@@ -236,9 +238,9 @@ def get_weights(
 
     weight_fstar = np.ones_like(t_sim)
     weight_fstar[~mask] = 1e10
-    weight_fstar = weight_fstar[fstar_indx_high]
     weight_fstar[log_fstar_sim.max() - log_fstar_sim < 0.1] = 0.5
     weight_fstar[weight_fstar == -10.0] = 1e10
+    weight_fstar[t_sim < fstar_tdelay + 0.01] = 1e10
 
     return weight, weight_fstar
 
@@ -264,8 +266,6 @@ def loss_free(params, loss_data):
         log_sm_target,
         sfr_target,
         fstar_target,
-        index_select,
-        fstar_indx_high,
         fstar_tdelay,
         ssfrh_floor,
         weight,
@@ -277,15 +277,7 @@ def loss_free(params, loss_data):
     q_params = params[5:9]
 
     _res = calculate_sm_sfr_fstar_history_from_mah(
-        lgt,
-        dt,
-        dmhdt,
-        log_mah,
-        sfr_params,
-        q_params,
-        index_select,
-        fstar_indx_high,
-        fstar_tdelay,
+        lgt, dt, dmhdt, log_mah, sfr_params, q_params, fstar_tdelay
     )
 
     mstar, sfr, fstar = _res
@@ -390,10 +382,6 @@ def get_loss_data_free(
             Star formation history in Msun/yr.
         log_fstar_sim : ndarray of shape (nt, )
             Base-10 log of cumulative SFH averaged over a timescale in Msun/yr.
-        index_select: ndarray of shape (n_times_fstar, )
-            Snapshot indices used in fstar computation.
-        fstar_indx_high: ndarray of shape (n_times_fstar, )
-            Indices of np.searchsorted(t, t - fstar_tdelay)[index_select]
         fstar_tdelay: float
             Time interval in Gyr for fstar definition.
             fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay[Gyr]
@@ -409,20 +397,16 @@ def get_loss_data_free(
             Base-10 log of the cosmic time where SFH target history peaks.
 
     """
-    fstar_indx_high = np.searchsorted(t_sim, t_sim - fstar_tdelay)
-    _mask = t_sim > fstar_tdelay + fstar_tdelay / 2.0
-    index_select = np.arange(len(t_sim))[_mask]
-    fstar_indx_high = fstar_indx_high[_mask]
 
     smh = 10**log_smah_sim
 
-    fstar_sim = compute_fstar(t_sim, smh, index_select, fstar_indx_high, fstar_tdelay)
+    fstar_sim = compute_fstar(t_sim, smh, fstar_tdelay)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        ssfrh = fstar_sim / smh[index_select]
+        ssfrh = fstar_sim / smh
         ssfrh = np.clip(ssfrh, ssfrh_floor, np.inf)
-        fstar_sim = ssfrh * smh[index_select]
+        fstar_sim = ssfrh * smh
         log_fstar_sim = np.where(
             fstar_sim == 0.0, np.log10(fstar_sim.max()) - 3.0, np.log10(fstar_sim)
         )
@@ -435,13 +419,13 @@ def get_loss_data_free(
         t_sim,
         log_smah_sim,
         log_fstar_sim,
-        fstar_indx_high,
+        fstar_tdelay,
         dlogm_cut,
         t_fit_min,
         mass_fit_min,
     )
 
-    t_fstar_max = logt[index_select][np.argmax(log_fstar_sim)]
+    t_fstar_max = logt[np.argmax(log_fstar_sim)]
 
     default_sfr_params = np.array(DEFAULT_U_MS_PARAMS)
     default_sfr_params[0] = np.clip(0.3 * (logmp - 11.0) + 11.4, 11.0, 13.0)
@@ -469,8 +453,6 @@ def get_loss_data_free(
         log_smah_sim,
         sfrh,
         log_fstar_sim,
-        index_select,
-        fstar_indx_high,
         fstar_tdelay,
         ssfrh_floor,
         weight,
@@ -516,8 +498,6 @@ def loss_fixed_noquench(params, loss_data):
         log_sm_target,
         sfr_target,
         fstar_target,
-        index_select,
-        fstar_indx_high,
         fstar_tdelay,
         ssfrh_floor,
         weight,
@@ -529,15 +509,7 @@ def loss_fixed_noquench(params, loss_data):
     sfr_params = params
 
     _res = calculate_sm_sfr_fstar_history_from_mah(
-        lgt,
-        dt,
-        dmhdt,
-        log_mah,
-        sfr_params,
-        q_params,
-        index_select,
-        fstar_indx_high,
-        fstar_tdelay,
+        lgt, dt, dmhdt, log_mah, sfr_params, q_params, fstar_tdelay
     )
 
     mstar, sfr, fstar = _res
@@ -642,10 +614,6 @@ def get_loss_data_fixed_noquench(
             Star formation history in Msun/yr.
         log_fstar_sim : ndarray of shape (nt, )
             Base-10 log of cumulative SFH averaged over a timescale in Msun/yr.
-        index_select: ndarray of shape (n_times_fstar, )
-            Snapshot indices used in fstar computation.
-        fstar_indx_high: ndarray of shape (n_times_fstar, )
-            Indices of np.searchsorted(t, t - fstar_tdelay)[index_select]
         fstar_tdelay: float
             Time interval in Gyr for fstar definition.
             fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay[Gyr]
@@ -663,20 +631,16 @@ def get_loss_data_fixed_noquench(
             Fixed values of the unbounded quenching parameters
 
     """
-    fstar_indx_high = np.searchsorted(t_sim, t_sim - fstar_tdelay)
-    _mask = t_sim > fstar_tdelay + fstar_tdelay / 2.0
-    index_select = np.arange(len(t_sim))[_mask]
-    fstar_indx_high = fstar_indx_high[_mask]
 
     smh = 10**log_smah_sim
 
-    fstar_sim = compute_fstar(t_sim, smh, index_select, fstar_indx_high, fstar_tdelay)
+    fstar_sim = compute_fstar(t_sim, smh, fstar_tdelay)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        ssfrh = fstar_sim / smh[index_select]
+        ssfrh = fstar_sim / smh
         ssfrh = np.clip(ssfrh, ssfrh_floor, np.inf)
-        fstar_sim = ssfrh * smh[index_select]
+        fstar_sim = ssfrh * smh
         log_fstar_sim = np.where(
             fstar_sim == 0.0, np.log10(fstar_sim.max()) - 3.0, np.log10(fstar_sim)
         )
@@ -689,13 +653,13 @@ def get_loss_data_fixed_noquench(
         t_sim,
         log_smah_sim,
         log_fstar_sim,
-        fstar_indx_high,
+        fstar_tdelay,
         dlogm_cut,
         t_fit_min,
         mass_fit_min,
     )
 
-    t_fstar_max = logt[index_select][np.argmax(log_fstar_sim)]
+    t_fstar_max = logt[np.argmax(log_fstar_sim)]
 
     default_sfr_params = np.array(DEFAULT_U_MS_PARAMS)
     default_sfr_params[0] = np.clip(0.3 * (logmp - 11.0) + 11.4, 11.0, 13.0)
@@ -722,8 +686,6 @@ def get_loss_data_fixed_noquench(
         log_smah_sim,
         sfrh,
         log_fstar_sim,
-        index_select,
-        fstar_indx_high,
         fstar_tdelay,
         ssfrh_floor,
         weight,
@@ -770,8 +732,6 @@ def loss_fixed_hi(params, loss_data):
         log_sm_target,
         sfr_target,
         fstar_target,
-        index_select,
-        fstar_indx_high,
         fstar_tdelay,
         ssfrh_floor,
         weight,
@@ -784,15 +744,7 @@ def loss_fixed_hi(params, loss_data):
     q_params = params[4:8]
 
     _res = calculate_sm_sfr_fstar_history_from_mah(
-        lgt,
-        dt,
-        dmhdt,
-        log_mah,
-        sfr_params,
-        q_params,
-        index_select,
-        fstar_indx_high,
-        fstar_tdelay,
+        lgt, dt, dmhdt, log_mah, sfr_params, q_params, fstar_tdelay
     )
 
     mstar, sfr, fstar = _res
@@ -897,10 +849,6 @@ def get_loss_data_fixed_hi(
             Star formation history in Msun/yr.
         log_fstar_sim : ndarray of shape (nt, )
             Base-10 log of cumulative SFH averaged over a timescale in Msun/yr.
-        index_select: ndarray of shape (n_times_fstar, )
-            Snapshot indices used in fstar computation.
-        fstar_indx_high: ndarray of shape (n_times_fstar, )
-            Indices of np.searchsorted(t, t - fstar_tdelay)[index_select]
         fstar_tdelay: float
             Time interval in Gyr for fstar definition.
             fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay[Gyr]
@@ -918,20 +866,16 @@ def get_loss_data_fixed_hi(
             Fixed value of the unbounded diffstar parameter indx_hi
 
     """
-    fstar_indx_high = np.searchsorted(t_sim, t_sim - fstar_tdelay)
-    _mask = t_sim > fstar_tdelay + fstar_tdelay / 2.0
-    index_select = np.arange(len(t_sim))[_mask]
-    fstar_indx_high = fstar_indx_high[_mask]
 
     smh = 10**log_smah_sim
 
-    fstar_sim = compute_fstar(t_sim, smh, index_select, fstar_indx_high, fstar_tdelay)
+    fstar_sim = compute_fstar(t_sim, smh, fstar_tdelay)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        ssfrh = fstar_sim / smh[index_select]
+        ssfrh = fstar_sim / smh
         ssfrh = np.clip(ssfrh, ssfrh_floor, np.inf)
-        fstar_sim = ssfrh * smh[index_select]
+        fstar_sim = ssfrh * smh
         log_fstar_sim = np.where(
             fstar_sim == 0.0, np.log10(fstar_sim.max()) - 3.0, np.log10(fstar_sim)
         )
@@ -944,13 +888,13 @@ def get_loss_data_fixed_hi(
         t_sim,
         log_smah_sim,
         log_fstar_sim,
-        fstar_indx_high,
+        fstar_tdelay,
         dlogm_cut,
         t_fit_min,
         mass_fit_min,
     )
 
-    t_fstar_max = logt[index_select][np.argmax(log_fstar_sim)]
+    t_fstar_max = logt[np.argmax(log_fstar_sim)]
 
     default_sfr_params = np.array(DEFAULT_U_MS_PARAMS)
     default_sfr_params[0] = np.clip(0.3 * (logmp - 11.0) + 11.4, 11.0, 13.0)
@@ -981,8 +925,6 @@ def get_loss_data_fixed_hi(
         log_smah_sim,
         sfrh,
         log_fstar_sim,
-        index_select,
-        fstar_indx_high,
         fstar_tdelay,
         ssfrh_floor,
         weight,
@@ -1039,8 +981,6 @@ def loss_fixed_hi_rej(params, loss_data):
         log_sm_target,
         sfr_target,
         fstar_target,
-        index_select,
-        fstar_indx_high,
         fstar_tdelay,
         ssfrh_floor,
         weight,
@@ -1058,15 +998,7 @@ def loss_fixed_hi_rej(params, loss_data):
     q_params = [*params[4:7], u_lg_rejuv]
 
     _res = calculate_sm_sfr_fstar_history_from_mah(
-        lgt,
-        dt,
-        dmhdt,
-        log_mah,
-        sfr_params,
-        q_params,
-        index_select,
-        fstar_indx_high,
-        fstar_tdelay,
+        lgt, dt, dmhdt, log_mah, sfr_params, q_params, fstar_tdelay
     )
 
     mstar, sfr, fstar = _res
@@ -1172,10 +1104,6 @@ def get_loss_data_fixed_hi_rej(
             Star formation history in Msun/yr.
         log_fstar_sim : ndarray of shape (nt, )
             Base-10 log of cumulative SFH averaged over a timescale in Msun/yr.
-        index_select: ndarray of shape (n_times_fstar, )
-            Snapshot indices used in fstar computation.
-        fstar_indx_high: ndarray of shape (n_times_fstar, )
-            Indices of np.searchsorted(t, t - fstar_tdelay)[index_select]
         fstar_tdelay: float
             Time interval in Gyr for fstar definition.
             fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay[Gyr]
@@ -1193,20 +1121,16 @@ def get_loss_data_fixed_hi_rej(
             Fixed value of the unbounded diffstar parameter indx_hi
 
     """
-    fstar_indx_high = np.searchsorted(t_sim, t_sim - fstar_tdelay)
-    _mask = t_sim > fstar_tdelay + fstar_tdelay / 2.0
-    index_select = np.arange(len(t_sim))[_mask]
-    fstar_indx_high = fstar_indx_high[_mask]
 
     smh = 10**log_smah_sim
 
-    fstar_sim = compute_fstar(t_sim, smh, index_select, fstar_indx_high, fstar_tdelay)
+    fstar_sim = compute_fstar(t_sim, smh, fstar_tdelay)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        ssfrh = fstar_sim / smh[index_select]
+        ssfrh = fstar_sim / smh
         ssfrh = np.clip(ssfrh, ssfrh_floor, np.inf)
-        fstar_sim = ssfrh * smh[index_select]
+        fstar_sim = ssfrh * smh
         log_fstar_sim = np.where(
             fstar_sim == 0.0, np.log10(fstar_sim.max()) - 3.0, np.log10(fstar_sim)
         )
@@ -1219,13 +1143,13 @@ def get_loss_data_fixed_hi_rej(
         t_sim,
         log_smah_sim,
         log_fstar_sim,
-        fstar_indx_high,
+        fstar_tdelay,
         dlogm_cut,
         t_fit_min,
         mass_fit_min,
     )
 
-    t_fstar_max = logt[index_select][np.argmax(log_fstar_sim)]
+    t_fstar_max = logt[np.argmax(log_fstar_sim)]
 
     default_sfr_params = np.array(DEFAULT_U_MS_PARAMS)
     default_sfr_params[0] = np.clip(0.3 * (logmp - 11.0) + 11.4, 11.0, 13.0)
@@ -1259,8 +1183,6 @@ def get_loss_data_fixed_hi_rej(
         log_smah_sim,
         sfrh,
         log_fstar_sim,
-        index_select,
-        fstar_indx_high,
         fstar_tdelay,
         ssfrh_floor,
         weight,
@@ -1321,8 +1243,6 @@ def loss_fixed_hi_depl(params, loss_data):
         log_sm_target,
         sfr_target,
         fstar_target,
-        index_select,
-        fstar_indx_high,
         fstar_tdelay,
         ssfrh_floor,
         weight,
@@ -1336,15 +1256,7 @@ def loss_fixed_hi_depl(params, loss_data):
     q_params = params[3:7]
 
     _res = calculate_sm_sfr_fstar_history_from_mah(
-        lgt,
-        dt,
-        dmhdt,
-        log_mah,
-        sfr_params,
-        q_params,
-        index_select,
-        fstar_indx_high,
-        fstar_tdelay,
+        lgt, dt, dmhdt, log_mah, sfr_params, q_params, fstar_tdelay
     )
 
     mstar, sfr, fstar = _res
@@ -1450,10 +1362,6 @@ def get_loss_data_fixed_hi_depl(
             Star formation history in Msun/yr.
         log_fstar_sim : ndarray of shape (nt, )
             Base-10 log of cumulative SFH averaged over a timescale in Msun/yr.
-        index_select: ndarray of shape (n_times_fstar, )
-            Snapshot indices used in fstar computation.
-        fstar_indx_high: ndarray of shape (n_times_fstar, )
-            Indices of np.searchsorted(t, t - fstar_tdelay)[index_select]
         fstar_tdelay: float
             Time interval in Gyr for fstar definition.
             fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay[Gyr]
@@ -1473,20 +1381,16 @@ def get_loss_data_fixed_hi_depl(
             Fixed value of the unbounded diffstar parameter tau_dep
 
     """
-    fstar_indx_high = np.searchsorted(t_sim, t_sim - fstar_tdelay)
-    _mask = t_sim > fstar_tdelay + fstar_tdelay / 2.0
-    index_select = np.arange(len(t_sim))[_mask]
-    fstar_indx_high = fstar_indx_high[_mask]
 
     smh = 10**log_smah_sim
 
-    fstar_sim = compute_fstar(t_sim, smh, index_select, fstar_indx_high, fstar_tdelay)
+    fstar_sim = compute_fstar(t_sim, smh, fstar_tdelay)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        ssfrh = fstar_sim / smh[index_select]
+        ssfrh = fstar_sim / smh
         ssfrh = np.clip(ssfrh, ssfrh_floor, np.inf)
-        fstar_sim = ssfrh * smh[index_select]
+        fstar_sim = ssfrh * smh
         log_fstar_sim = np.where(
             fstar_sim == 0.0, np.log10(fstar_sim.max()) - 3.0, np.log10(fstar_sim)
         )
@@ -1499,13 +1403,13 @@ def get_loss_data_fixed_hi_depl(
         t_sim,
         log_smah_sim,
         log_fstar_sim,
-        fstar_indx_high,
+        fstar_tdelay,
         dlogm_cut,
         t_fit_min,
         mass_fit_min,
     )
 
-    t_fstar_max = logt[index_select][np.argmax(log_fstar_sim)]
+    t_fstar_max = logt[np.argmax(log_fstar_sim)]
 
     default_sfr_params = np.array(DEFAULT_U_MS_PARAMS)
     default_sfr_params[0] = np.clip(0.3 * (logmp - 11.0) + 11.4, 11.0, 13.0)
@@ -1535,8 +1439,6 @@ def get_loss_data_fixed_hi_depl(
         log_smah_sim,
         sfrh,
         log_fstar_sim,
-        index_select,
-        fstar_indx_high,
         fstar_tdelay,
         ssfrh_floor,
         weight,
@@ -1590,8 +1492,6 @@ def loss_fixed_depl_noquench(params, loss_data):
         log_sm_target,
         sfr_target,
         fstar_target,
-        index_select,
-        fstar_indx_high,
         fstar_tdelay,
         ssfrh_floor,
         weight,
@@ -1604,15 +1504,7 @@ def loss_fixed_depl_noquench(params, loss_data):
     sfr_params = [*params[0:4], fixed_tau]
 
     _res = calculate_sm_sfr_fstar_history_from_mah(
-        lgt,
-        dt,
-        dmhdt,
-        log_mah,
-        sfr_params,
-        q_params,
-        index_select,
-        fstar_indx_high,
-        fstar_tdelay,
+        lgt, dt, dmhdt, log_mah, sfr_params, q_params, fstar_tdelay
     )
 
     mstar, sfr, fstar = _res
@@ -1719,10 +1611,6 @@ def get_loss_data_fixed_depl_noquench(
             Star formation history in Msun/yr.
         log_fstar_sim : ndarray of shape (nt, )
             Base-10 log of cumulative SFH averaged over a timescale in Msun/yr.
-        index_select: ndarray of shape (n_times_fstar, )
-            Snapshot indices used in fstar computation.
-        fstar_indx_high: ndarray of shape (n_times_fstar, )
-            Indices of np.searchsorted(t, t - fstar_tdelay)[index_select]
         fstar_tdelay: float
             Time interval in Gyr for fstar definition.
             fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay[Gyr]
@@ -1742,20 +1630,16 @@ def get_loss_data_fixed_depl_noquench(
             Fixed value of the unbounded quenching parameters
 
     """
-    fstar_indx_high = np.searchsorted(t_sim, t_sim - fstar_tdelay)
-    _mask = t_sim > fstar_tdelay + fstar_tdelay / 2.0
-    index_select = np.arange(len(t_sim))[_mask]
-    fstar_indx_high = fstar_indx_high[_mask]
 
     smh = 10**log_smah_sim
 
-    fstar_sim = compute_fstar(t_sim, smh, index_select, fstar_indx_high, fstar_tdelay)
+    fstar_sim = compute_fstar(t_sim, smh, fstar_tdelay)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        ssfrh = fstar_sim / smh[index_select]
+        ssfrh = fstar_sim / smh
         ssfrh = np.clip(ssfrh, ssfrh_floor, np.inf)
-        fstar_sim = ssfrh * smh[index_select]
+        fstar_sim = ssfrh * smh
         log_fstar_sim = np.where(
             fstar_sim == 0.0, np.log10(fstar_sim.max()) - 3.0, np.log10(fstar_sim)
         )
@@ -1768,13 +1652,13 @@ def get_loss_data_fixed_depl_noquench(
         t_sim,
         log_smah_sim,
         log_fstar_sim,
-        fstar_indx_high,
+        fstar_tdelay,
         dlogm_cut,
         t_fit_min,
         mass_fit_min,
     )
 
-    t_fstar_max = logt[index_select][np.argmax(log_fstar_sim)]
+    t_fstar_max = logt[np.argmax(log_fstar_sim)]
 
     default_sfr_params = np.array(DEFAULT_U_MS_PARAMS)
     default_sfr_params[0] = np.clip(0.3 * (logmp - 11.0) + 11.4, 11.0, 13.0)
@@ -1802,8 +1686,6 @@ def get_loss_data_fixed_depl_noquench(
         log_smah_sim,
         sfrh,
         log_fstar_sim,
-        index_select,
-        fstar_indx_high,
         fstar_tdelay,
         ssfrh_floor,
         weight,
