@@ -60,7 +60,7 @@ def test_calculate_sm_sfr_fstar_history_from_mah():
     assert np.all(mstar > 0)
     assert mstar.shape == (n_t,)
     assert sfr.shape == (n_t,)
-    assert fstar.size < sfr.size
+    assert fstar.shape == (n_t,)
 
 
 def test_calculate_sm_sfr_history_from_mah():
