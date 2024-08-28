@@ -13,7 +13,7 @@ write_to_template = "__version__ = '{version}'\n"
 [tool.setuptools]
 include-package-data = true
 packages = {find = {exclude=["tests*", "scripts*", "docs*", "notebooks*"]}}
-package-data = {diffstar = ["tests/testing_data/*.npy", "tests/testing_data/*.txt", "tests/testing_data/*.dat", "*/tests/testing_data/*.txt", "*/tests/testing_data/*.dat"]}
+package-data = {diffstar = ["tests/testing_data/*", "*/tests/testing_data/*"]}
 package-dir = {diffstar = "diffstar"}
 
 [project.urls]
