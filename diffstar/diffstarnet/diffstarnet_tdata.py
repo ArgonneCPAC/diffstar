@@ -4,12 +4,8 @@
 from collections import namedtuple
 
 import numpy as np
-from diffmah.diffmahpop_kernels.diffmahpop_params_monocensat import (
-    DEFAULT_DIFFMAHPOP_PARAMS,
-)
-from diffmah.diffmahpop_kernels.mc_diffmahpop_kernels_monocens import (
-    _mc_diffmah_singlecen_vmap_kern,
-)
+from diffmah.diffmahpop_kernels.bimod_censat_params import DEFAULT_DIFFMAHPOP_PARAMS
+from diffmah.diffmahpop_kernels.mc_bimod_cens import _mc_diffmah_singlecen_vmap_kern
 from jax import random as jran
 
 from ..defaults import (
@@ -22,8 +18,8 @@ from ..defaults import (
     T_TABLE_MIN,
     get_bounded_diffstar_params,
 )
-from ..kernels.main_sequence_kernels_tpeak import MS_PARAM_BOUNDS_PDICT
-from ..sfh_model_tpeak import calc_sfh_galpop
+from ..kernels.main_sequence_kernels_tpeak5 import MS_PARAM_BOUNDS_PDICT
+from ..sfh_model_tpeak5 import calc_sfh_galpop
 
 T0 = 10**LGT0
 N_SFH_TABLE = 200
@@ -36,7 +32,7 @@ _TDATA_SFH_ROOTKEYS = ["sfh_params", "sfh", "smh"]
 _TDATA_NOQ_KEYS = [key + "_noq" for key in _TDATA_SFH_ROOTKEYS]
 _TDATA_NOQ_NOLAG_KEYS = [key + "_nolag" for key in _TDATA_NOQ_KEYS]
 SFH_KEYS = _TDATA_SFH_ROOTKEYS + _TDATA_NOQ_KEYS + _TDATA_NOQ_NOLAG_KEYS
-TDATA_KEYS = ["mah_params", "t_peak", "log_mah"] + SFH_KEYS
+TDATA_KEYS = ["mah_params", "log_mah"] + SFH_KEYS
 TData = namedtuple("TData", TDATA_KEYS)
 
 
@@ -87,10 +83,12 @@ def _compute_tdata(
 
     mah_key, sfh_key = jran.split(ran_key, 2)
 
-    mah_params, t_peak, dmhdt, log_mah = mc_diffmah_halo_sample(
-        mah_key, tarr, logm0_sample
-    )
-    n_halos = mah_params.logm0.size
+    _reslist = mc_diffmah_halo_sample(mah_key, tarr, logm0_sample)
+    mah_params_early, dmhdt_early, log_mah_early = _reslist[:3]
+    mah_params_late, dmhdt_late, log_mah_late = _reslist[3:6]
+    frac_early = _reslist[6]
+
+    n_halos = mah_params_early.logm0.size
     ZZ = np.zeros(n_halos)
 
     uran = jran.uniform(sfh_key, minval=-100, maxval=100, shape=(8, n_halos))
@@ -112,7 +110,6 @@ def _compute_tdata(
     sfh, smh = calc_sfh_galpop(
         sfh_params,
         mah_params,
-        t_peak,
         tarr,
         lgt0=LGT0,
         fb=FB,
@@ -123,7 +120,6 @@ def _compute_tdata(
     sfh_noq, smh_noq = calc_sfh_galpop(
         sfh_params_noq,
         mah_params,
-        t_peak,
         tarr,
         lgt0=LGT0,
         fb=FB,
@@ -134,7 +130,6 @@ def _compute_tdata(
     sfh_noq_nolag, smh_noq_nolag = calc_sfh_galpop(
         sfh_params_noq_nolag,
         mah_params,
-        t_peak,
         tarr,
         lgt0=LGT0,
         fb=FB,
@@ -150,7 +145,6 @@ def _compute_tdata(
     )
 
     mah_params_out = mah_params._make([x[msk] for x in mah_params])
-    t_peak_out = t_peak[msk]
     log_mah_out = log_mah[msk]
     sfh_out = sfh[msk]
     smh_out = smh[msk]
@@ -180,7 +174,6 @@ def _compute_tdata(
 
     return TData(
         mah_params_out,
-        t_peak_out,
         log_mah_out,
         sfh_params_out,
         sfh_out,
@@ -204,5 +197,15 @@ def mc_diffmah_halo_sample(ran_key, tarr, logm0_sample):
     _reslist = _mc_diffmah_singlecen_vmap_kern(
         DEFAULT_DIFFMAHPOP_PARAMS, tarr, logm0_sample, t_obs, ran_keys, lgt0
     )
-    mah_params, t_peak, dmhdt, log_mah = _reslist
-    return mah_params, t_peak, dmhdt, log_mah
+    mah_params_early, dmhdt_early, log_mah_early = _reslist[:3]
+    mah_params_late, dmhdt_late, log_mah_late = _reslist[3:6]
+    frac_early = _reslist[6]
+    return (
+        mah_params_early,
+        dmhdt_early,
+        log_mah_early,
+        mah_params_late,
+        dmhdt_late,
+        log_mah_late,
+        frac_early,
+    )
