@@ -28,7 +28,7 @@ from ..kernels.quenching_kernels import (
     _get_bounded_q_params as _old_get_bounded_q_params,
 )
 from ..sfh import sfh_galpop, sfh_singlegal
-from ..sfh_model_tpeak5 import calc_sfh_galpop, calc_sfh_singlegal
+from ..sfh_model_tpeak import calc_sfh_galpop, calc_sfh_singlegal
 
 
 def _get_all_default_params():

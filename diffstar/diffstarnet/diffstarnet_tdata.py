@@ -18,8 +18,8 @@ from ..defaults import (
     T_TABLE_MIN,
     get_bounded_diffstar_params,
 )
-from ..kernels.main_sequence_kernels_tpeak5 import MS_PARAM_BOUNDS_PDICT
-from ..sfh_model_tpeak5 import calc_sfh_galpop
+from ..kernels.main_sequence_kernels_tpeak import MS_PARAM_BOUNDS_PDICT
+from ..sfh_model_tpeak import calc_sfh_galpop
 
 T0 = 10**LGT0
 N_SFH_TABLE = 200

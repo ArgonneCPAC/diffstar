@@ -8,7 +8,7 @@ from jax import numpy as jnp
 from jax import vmap
 
 from ..defaults import DEFAULT_DIFFSTAR_PARAMS, DEFAULT_N_STEPS, SFR_MIN, T_BIRTH_MIN
-from .main_sequence_kernels_tpeak5 import (
+from .main_sequence_kernels_tpeak import (
     _lax_ms_sfh_scalar_kern_scan,
     _lax_ms_sfh_scalar_kern_sum,
 )

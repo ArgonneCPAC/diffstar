@@ -9,10 +9,10 @@ from ..kernels.main_sequence_kernels import _lax_ms_sfh_scalar_kern_scan
 from ..kernels.main_sequence_kernels import _lax_ms_sfh_scalar_kern_scan as kern_scan
 from ..kernels.main_sequence_kernels import _lax_ms_sfh_scalar_kern_sum
 from ..kernels.main_sequence_kernels import _lax_ms_sfh_scalar_kern_sum as kern_sum
-from ..kernels.main_sequence_kernels_tpeak5 import (
+from ..kernels.main_sequence_kernels_tpeak import (
     _lax_ms_sfh_scalar_kern_scan as kern_scan_tpeak,
 )
-from ..kernels.main_sequence_kernels_tpeak5 import (
+from ..kernels.main_sequence_kernels_tpeak import (
     _lax_ms_sfh_scalar_kern_sum as kern_sum_tpeak,
 )
 

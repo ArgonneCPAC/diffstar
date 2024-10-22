@@ -3,7 +3,6 @@
 
 import numpy as np
 from diffmah.defaults import DEFAULT_MAH_PARAMS as OLD_DEFAULT_MAH_PARAMS
-from diffmah.defaults import DiffmahParams as OldDiffmahParams
 from diffmah.diffmah_kernels import DEFAULT_MAH_PARAMS as NEW_DEFAULT_MAH_PARAMS
 from diffmah.diffmah_kernels import DiffmahParams as NewDiffmahParams
 from jax import random as jran
@@ -19,7 +18,7 @@ from ...defaults import (
     get_bounded_diffstar_params,
     get_unbounded_diffstar_params,
 )
-from ..history_kernel_builders_tpeak5 import build_sfh_from_mah_kernel
+from ..history_kernel_builders_tpeak import build_sfh_from_mah_kernel
 from ..kernel_builders import get_sfh_from_mah_kern
 
 

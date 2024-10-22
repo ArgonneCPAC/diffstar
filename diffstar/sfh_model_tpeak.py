@@ -8,7 +8,7 @@ from jax import jit as jjit
 from jax import vmap
 
 from .defaults import DEFAULT_N_STEPS, FB, LGT0, T_BIRTH_MIN
-from .kernels.history_kernel_builders_tpeak5 import build_sfh_from_mah_kernel
+from .kernels.history_kernel_builders_tpeak import build_sfh_from_mah_kernel
 from .utils import cumulative_mstar_formed
 
 _sfh_singlegal_kern = build_sfh_from_mah_kernel(
