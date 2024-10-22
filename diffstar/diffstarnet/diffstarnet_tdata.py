@@ -4,8 +4,10 @@
 from collections import namedtuple
 
 import numpy as np
+from diffmah.diffmah_kernels import DEFAULT_MAH_PARAMS
 from diffmah.diffmahpop_kernels.bimod_censat_params import DEFAULT_DIFFMAHPOP_PARAMS
 from diffmah.diffmahpop_kernels.mc_bimod_cens import _mc_diffmah_singlecen_vmap_kern
+from jax import numpy as jnp
 from jax import random as jran
 
 from ..defaults import (
@@ -81,7 +83,7 @@ def _compute_tdata(
     """"""
     tarr = np.linspace(T_TABLE_MIN, T0, n_sfh_table)
 
-    mah_key, sfh_key = jran.split(ran_key, 2)
+    mah_key, early_late_key, sfh_key = jran.split(ran_key, 3)
 
     _reslist = mc_diffmah_halo_sample(mah_key, tarr, logm0_sample)
     mah_params_early, dmhdt_early, log_mah_early = _reslist[:3]
@@ -89,6 +91,19 @@ def _compute_tdata(
     frac_early = _reslist[6]
 
     n_halos = mah_params_early.logm0.size
+    uran_mah = jran.uniform(early_late_key, minval=0, maxval=1, shape=(n_halos,))
+    msk_mah = frac_early < uran_mah
+    mah_params = DEFAULT_MAH_PARAMS._make(
+        [
+            jnp.where(
+                msk_mah, getattr(mah_params_early, key), getattr(mah_params_late, key)
+            )
+            for key in mah_params_late._fields
+        ]
+    )
+
+    log_mah = jnp.where(msk_mah.reshape((-1, 1)), log_mah_early, log_mah_late)
+
     ZZ = np.zeros(n_halos)
 
     uran = jran.uniform(sfh_key, minval=-100, maxval=100, shape=(8, n_halos))
