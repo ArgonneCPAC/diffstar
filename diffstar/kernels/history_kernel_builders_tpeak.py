@@ -61,7 +61,7 @@ def build_sfh_from_mah_kernel(
         JAX-jitted function that calculates SFH in accord with the input arguments
         Function signature is as follows:
 
-        def sfh_from_mah_kern(t, mah_params, ms_params, q_params, t_peak, lgt0, fb):
+        def sfh_from_mah_kern(t, mah_params, ms_params, q_params, lgt0, fb):
             return sfh
 
     """
@@ -79,6 +79,7 @@ def build_sfh_from_mah_kernel(
         logtc,
         early_index,
         late_index,
+        t_peak,
         lgmcrit,
         lgy_at_mcrit,
         indx_lo,
@@ -88,16 +89,16 @@ def build_sfh_from_mah_kernel(
         qlglgdt,
         lg_drop,
         lg_rejuv,
-        t_peak,
         lgt0,
         fb,
     ):
-        mah_params = logmp, logtc, early_index, late_index
+        mah_params = logmp, logtc, early_index, late_index, t_peak
+        mah_params = DEFAULT_MAH_PARAMS._make(mah_params)
         ms_params = lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, tau_dep
 
         t_min = jnp.max(jnp.array((tacc_integration_min, t_form - tau_dep)))
         t_table = t_min + uniform_table * (t_form - t_min)
-        args = t_form, mah_params, ms_params, t_peak, lgt0, fb, t_table
+        args = t_form, mah_params, ms_params, lgt0, fb, t_table
         ms_sfr = _lax_ms_sfh_scalar_kern(*args)
         lgt_form = jnp.log10(t_form)
 
@@ -123,7 +124,6 @@ def _get_kern_with_tobs_loop(kern, tobs_loop):
             *[None] * N_Q_PARAMS,
             None,
             None,
-            None,
         ]
         new_kern = jjit(vmap(kern, in_axes=_t))
     elif tobs_loop == "scan":
@@ -135,6 +135,7 @@ def _get_kern_with_tobs_loop(kern, tobs_loop):
             logtc,
             early_index,
             late_index,
+            t_peak,
             lgmcrit,
             lgy_at_mcrit,
             indx_lo,
@@ -144,7 +145,6 @@ def _get_kern_with_tobs_loop(kern, tobs_loop):
             qlglgdt,
             lg_drop,
             lg_rejuv,
-            t_peak,
             lgt0,
             fb,
         ):
@@ -157,6 +157,7 @@ def _get_kern_with_tobs_loop(kern, tobs_loop):
                     logtc,
                     early_index,
                     late_index,
+                    t_peak,
                     lgmcrit,
                     lgy_at_mcrit,
                     indx_lo,
@@ -166,7 +167,6 @@ def _get_kern_with_tobs_loop(kern, tobs_loop):
                     qlglgdt,
                     lg_drop,
                     lg_rejuv,
-                    t_peak,
                     lgt0,
                     fb,
                 )
@@ -195,7 +195,6 @@ def _get_kern_with_galpop_loop(kern, galpop_loop):
             *[0] * N_MAH_PARAMS,
             *[0] * N_MS_PARAMS,
             *[0] * N_Q_PARAMS,
-            0,
             None,
             None,
         ]
@@ -209,6 +208,7 @@ def _get_kern_with_galpop_loop(kern, galpop_loop):
             logtc,
             early_index,
             late_index,
+            t_peak,
             lgmcrit,
             lgy_at_mcrit,
             indx_lo,
@@ -218,7 +218,6 @@ def _get_kern_with_galpop_loop(kern, galpop_loop):
             qlglgdt,
             lg_drop,
             lg_rejuv,
-            t_peak,
             lgt0,
             fb,
         ):
@@ -230,17 +229,18 @@ def _get_kern_with_galpop_loop(kern, galpop_loop):
             galpop_params = galpop_params.at[:, 1].set(logtc)
             galpop_params = galpop_params.at[:, 2].set(early_index)
             galpop_params = galpop_params.at[:, 3].set(late_index)
+            galpop_params = galpop_params.at[:, 4].set(t_peak)
 
-            galpop_params = galpop_params.at[:, 4].set(lgmcrit)
-            galpop_params = galpop_params.at[:, 5].set(lgy_at_mcrit)
-            galpop_params = galpop_params.at[:, 6].set(indx_lo)
-            galpop_params = galpop_params.at[:, 7].set(indx_hi)
-            galpop_params = galpop_params.at[:, 8].set(tau_dep)
+            galpop_params = galpop_params.at[:, 5].set(lgmcrit)
+            galpop_params = galpop_params.at[:, 6].set(lgy_at_mcrit)
+            galpop_params = galpop_params.at[:, 7].set(indx_lo)
+            galpop_params = galpop_params.at[:, 8].set(indx_hi)
+            galpop_params = galpop_params.at[:, 9].set(tau_dep)
 
-            galpop_params = galpop_params.at[:, 9].set(lg_qt)
-            galpop_params = galpop_params.at[:, 10].set(qlglgdt)
-            galpop_params = galpop_params.at[:, 11].set(lg_drop)
-            galpop_params = galpop_params.at[:, 12].set(lg_rejuv)
+            galpop_params = galpop_params.at[:, 10].set(lg_qt)
+            galpop_params = galpop_params.at[:, 11].set(qlglgdt)
+            galpop_params = galpop_params.at[:, 12].set(lg_drop)
+            galpop_params = galpop_params.at[:, 13].set(lg_rejuv)
 
             @jjit
             def scan_func_galpop(carryover, el):
@@ -250,9 +250,7 @@ def _get_kern_with_galpop_loop(kern, galpop_loop):
                 ms_params = params[i:j]
                 i = N_MAH_PARAMS + N_MS_PARAMS
                 q_params = params[i:]
-                sfh_galpop = kern(
-                    t, *mah_params, *ms_params, *q_params, t_peak, lgt0, fb
-                )
+                sfh_galpop = kern(t, *mah_params, *ms_params, *q_params, lgt0, fb)
                 carryover = sfh_galpop
                 accumulated = sfh_galpop
                 return carryover, accumulated

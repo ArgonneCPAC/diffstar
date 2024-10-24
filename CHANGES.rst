@@ -1,3 +1,8 @@
+0.3.2 (unreleased)
+------------------
+- Adapt sfh kernels to be compatible with diffmah 0.6.1
+
+
 0.3.1 (2024-6-19)
 ------------------
 - Performance improvements for calc_sfh_galpop and calc_sfh_singlegal
