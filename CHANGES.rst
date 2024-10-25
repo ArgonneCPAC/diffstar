@@ -1,4 +1,4 @@
-0.3.2 (unreleased)
+0.3.2 (2024-10-25)
 ------------------
 - Adapt sfh kernels to be compatible with diffmah 0.6.1
 
