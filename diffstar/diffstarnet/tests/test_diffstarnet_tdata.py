@@ -73,7 +73,7 @@ def test_mc_diffmah_halo_sample():
 
     n_halos = tdata.mah_params.logm0.size
     assert n_halos_init >= n_halos
-    assert tdata.t_peak.size == n_halos
+    assert tdata.mah_params.t_peak.size == n_halos
 
     diff = tdata.mah_params.logm0 - tdata.log_mah[:, -1]
     assert np.abs(diff).mean() < 0.1

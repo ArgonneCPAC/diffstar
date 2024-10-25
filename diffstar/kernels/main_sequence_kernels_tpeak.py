@@ -50,10 +50,8 @@ MS_BOUNDING_SIGMOID_PDICT = calculate_sigmoid_bounds(MS_PARAM_BOUNDS_PDICT)
 
 
 @jjit
-def _lax_ms_sfh_scalar_kern_scan(
-    t_form, mah_params, ms_params, t_peak, lgt0, fb, t_table
-):
-    log_mah_at_tform = _log_mah_kern(mah_params, t_form, t_peak, lgt0)
+def _lax_ms_sfh_scalar_kern_scan(t_form, mah_params, ms_params, lgt0, fb, t_table):
+    log_mah_at_tform = _log_mah_kern(mah_params, t_form, lgt0)
 
     sfr_eff_params = ms_params[:4]
     sfr_eff = _sfr_eff_plaw(log_mah_at_tform, *sfr_eff_params)
@@ -68,7 +66,7 @@ def _lax_ms_sfh_scalar_kern_scan(
         tacc, dt = el
         dmgas_dt = carryover
 
-        res = _diffmah_kern_scalar(mah_params, tacc, t_peak, lgt0)
+        res = _diffmah_kern_scalar(mah_params, tacc, lgt0)
         dmhdt_at_tacc, log_mah_at_tacc = res
         dmgdt_inst = fb * dmhdt_at_tacc
 
@@ -89,10 +87,8 @@ def _lax_ms_sfh_scalar_kern_scan(
 
 
 @jjit
-def _lax_ms_sfh_scalar_kern_sum(
-    t_form, mah_params, ms_params, t_peak, lgt0, fb, t_table
-):
-    log_mah_at_tform = _log_mah_kern(mah_params, t_form, t_peak, lgt0)
+def _lax_ms_sfh_scalar_kern_sum(t_form, mah_params, ms_params, lgt0, fb, t_table):
+    log_mah_at_tform = _log_mah_kern(mah_params, t_form, lgt0)
 
     sfr_eff_params = ms_params[:4]
     sfr_eff = _sfr_eff_plaw(log_mah_at_tform, *sfr_eff_params)
@@ -101,7 +97,7 @@ def _lax_ms_sfh_scalar_kern_sum(
     tau_dep_max = MS_BOUNDING_SIGMOID_PDICT["tau_dep"][3]
 
     # compute inst. gas accretion
-    res = _diffmah_kern(mah_params, t_table, t_peak, lgt0)
+    res = _diffmah_kern(mah_params, t_table, lgt0)
     dmhdt_at_tacc, log_mah_at_tacc = res
     dmgdt_inst = fb * dmhdt_at_tacc
 

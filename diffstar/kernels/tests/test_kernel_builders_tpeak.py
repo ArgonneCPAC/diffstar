@@ -2,7 +2,9 @@
 """
 
 import numpy as np
-from diffmah.defaults import DEFAULT_MAH_PARAMS, DiffmahParams
+from diffmah.defaults import DEFAULT_MAH_PARAMS as OLD_DEFAULT_MAH_PARAMS
+from diffmah.diffmah_kernels import DEFAULT_MAH_PARAMS as NEW_DEFAULT_MAH_PARAMS
+from diffmah.diffmah_kernels import DiffmahParams as NewDiffmahParams
 from jax import random as jran
 
 from ...defaults import (
@@ -31,16 +33,15 @@ def test_new_old_kernel_builders_agree_on_defaults():
     new_sfh_kern = build_sfh_from_mah_kernel()
 
     t = 10.0
-    old_args = t, DEFAULT_MAH_PARAMS, *DEFAULT_DIFFSTAR_U_PARAMS, LGT0, FB
+    old_args = t, OLD_DEFAULT_MAH_PARAMS, *DEFAULT_DIFFSTAR_U_PARAMS, LGT0, FB
     old_sfh = old_sfh_kern(*old_args)
-    t_peak = t + 1.0
 
+    new_mah_params = NEW_DEFAULT_MAH_PARAMS._replace(t_peak=t + 1.0)
     new_args = (
         t,
-        *DEFAULT_MAH_PARAMS,
+        *new_mah_params,
         *DEFAULT_DIFFSTAR_PARAMS.ms_params,
         *DEFAULT_DIFFSTAR_PARAMS.q_params,
-        t_peak,
         LGT0,
         FB,
     )
@@ -63,7 +64,7 @@ def test_new_old_kernel_builders_agree_on_random_u_params():
         uran_params = jran.normal(params_key, shape=(9,)) * 0.1
         u_ms_params = np.array(DEFAULT_DIFFSTAR_U_PARAMS.u_ms_params) + uran_params[:5]
         u_q_params = np.array(DEFAULT_DIFFSTAR_U_PARAMS.u_q_params) + uran_params[5:]
-        old_args = t, DEFAULT_MAH_PARAMS, u_ms_params, u_q_params, LGT0, FB
+        old_args = t, OLD_DEFAULT_MAH_PARAMS, u_ms_params, u_q_params, LGT0, FB
         old_sfh = old_sfh_kern(*old_args)
 
         sfh_u_params = DiffstarUParams(MSUParams(*u_ms_params), QUParams(*u_q_params))
@@ -74,14 +75,12 @@ def test_new_old_kernel_builders_agree_on_random_u_params():
         assert np.allclose(u_ms_params, sfh_u_params2.u_ms_params)
         assert np.allclose(u_q_params, sfh_u_params2.u_q_params)
 
-        t_peak = t + 1.0
-
+        new_mah_params = NEW_DEFAULT_MAH_PARAMS._replace(t_peak=t + 1.0)
         new_args = (
             t,
-            *DEFAULT_MAH_PARAMS,
+            *new_mah_params,
             *sfh_params.ms_params,
             *sfh_params.q_params,
-            t_peak,
             LGT0,
             FB,
         )
@@ -101,7 +100,7 @@ def test_new_old_kernel_builders_agree_on_random_u_params_tobs_loop():
         uran_params = jran.normal(params_key, shape=(9,)) * 0.1
         u_ms_params = np.array(DEFAULT_DIFFSTAR_U_PARAMS.u_ms_params) + uran_params[:5]
         u_q_params = np.array(DEFAULT_DIFFSTAR_U_PARAMS.u_q_params) + uran_params[5:]
-        old_args = tarr, DEFAULT_MAH_PARAMS, u_ms_params, u_q_params, LGT0, FB
+        old_args = tarr, OLD_DEFAULT_MAH_PARAMS, u_ms_params, u_q_params, LGT0, FB
         old_sfh = old_sfh_kern(*old_args)
 
         sfh_u_params = DiffstarUParams(MSUParams(*u_ms_params), QUParams(*u_q_params))
@@ -112,13 +111,12 @@ def test_new_old_kernel_builders_agree_on_random_u_params_tobs_loop():
         assert np.allclose(u_ms_params, sfh_u_params2.u_ms_params)
         assert np.allclose(u_q_params, sfh_u_params2.u_q_params)
 
-        t_peak = tarr[-1] + 0.5
+        new_mah_params = NEW_DEFAULT_MAH_PARAMS._replace(t_peak=tarr[-1] + 0.5)
         new_args = (
             tarr,
-            *DEFAULT_MAH_PARAMS,
+            *new_mah_params,
             *sfh_params.ms_params,
             *sfh_params.q_params,
-            t_peak,
             LGT0,
             FB,
         )
@@ -143,7 +141,7 @@ def test_new_old_kernel_builders_agree_on_random_u_params_galobs_loop():
 
         old_args = (
             tarr,
-            np.array(DEFAULT_MAH_PARAMS).reshape((1, -1)),
+            np.array(OLD_DEFAULT_MAH_PARAMS).reshape((1, -1)),
             np.array(u_ms_params).reshape((1, -1)),
             np.array(u_q_params).reshape((1, -1)),
             LGT0,
@@ -151,19 +149,22 @@ def test_new_old_kernel_builders_agree_on_random_u_params_galobs_loop():
         )
         old_sfh = old_sfh_kern(*old_args)
 
-        mah_params_galpop_new = DiffmahParams(*[ZZ + p for p in DEFAULT_MAH_PARAMS])
+        mah_params_galpop_new = NewDiffmahParams(
+            *[ZZ + p for p in NEW_DEFAULT_MAH_PARAMS]
+        )
         u_ms_params_galpop_new = MSUParams(*[ZZ + p for p in u_ms_params])
         u_q_params_galpop_new = QUParams(*[ZZ + p for p in u_q_params])
 
         sfh_u_params = DiffstarUParams(u_ms_params_galpop_new, u_q_params_galpop_new)
         sfh_params = get_bounded_diffstar_params(sfh_u_params)
-        t_peak = tarr[-1] + np.ones(1)
+        mah_params_galpop_new = mah_params_galpop_new._replace(
+            t_peak=tarr[-1] + np.ones(1)
+        )
         new_args = (
             tarr,
             *mah_params_galpop_new,
             *sfh_params.ms_params,
             *sfh_params.q_params,
-            t_peak,
             LGT0,
             FB,
         )

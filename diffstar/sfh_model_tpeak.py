@@ -33,7 +33,7 @@ GalHistory = namedtuple("GalHistory", ("sfh", "smh"))
 
 @partial(jjit, static_argnames="return_smh")
 def calc_sfh_singlegal(
-    sfh_params, mah_params, t_peak, tarr, lgt0=LGT0, fb=FB, return_smh=False
+    sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB, return_smh=False
 ):
     """Calculate the Diffstar SFH for a single galaxy
 
@@ -80,7 +80,7 @@ def calc_sfh_singlegal(
 
     """
     ms_params, q_params = sfh_params
-    args = (tarr, *mah_params, *ms_params, *q_params, t_peak, lgt0, fb)
+    args = (tarr, *mah_params, *ms_params, *q_params, lgt0, fb)
     sfh = _sfh_singlegal_kern(*args)
     if return_smh:
         smh = cumulative_mstar_formed(tarr, sfh)
@@ -90,9 +90,7 @@ def calc_sfh_singlegal(
 
 
 @partial(jjit, static_argnames="return_smh")
-def calc_sfh_galpop(
-    sfh_params, mah_params, t_peak, tarr, lgt0=LGT0, fb=FB, return_smh=False
-):
+def calc_sfh_galpop(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB, return_smh=False):
     """Calculate the Diffstar SFH for a single galaxy
 
     Parameters
@@ -137,7 +135,7 @@ def calc_sfh_galpop(
 
     """
     ms_params, q_params = sfh_params
-    args = (tarr, *mah_params, *ms_params, *q_params, t_peak, lgt0, fb)
+    args = (tarr, *mah_params, *ms_params, *q_params, lgt0, fb)
     sfh = _sfh_galpop_kern(*args)
     if return_smh:
         smh = _cumulative_mstar_formed_vmap(tarr, sfh)
