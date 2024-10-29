@@ -53,7 +53,7 @@ def tdata_generator_dithertarr(
     while batchnum < n_epochs:
         ran_key, batch_key, dither_key = jran.split(ran_key, 3)
         dither1, dither2 = jran.uniform(
-            dither_key, (2,), maxval=(T0 - T_TABLE_MIN) // n_sfh_table
+            dither_key, (2,), maxval=(T0 - T_TABLE_MIN) / n_sfh_table
         )
         tarr = np.linspace(T_TABLE_MIN + dither1, T0 - dither2, n_sfh_table)
         tdata = _compute_tdata(
