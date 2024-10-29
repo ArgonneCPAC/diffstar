@@ -34,7 +34,7 @@ _TDATA_SFH_ROOTKEYS = ["sfh_params", "sfh", "smh"]
 _TDATA_NOQ_KEYS = [key + "_noq" for key in _TDATA_SFH_ROOTKEYS]
 _TDATA_NOQ_NOLAG_KEYS = [key + "_nolag" for key in _TDATA_NOQ_KEYS]
 SFH_KEYS = _TDATA_SFH_ROOTKEYS + _TDATA_NOQ_KEYS + _TDATA_NOQ_NOLAG_KEYS
-TDATA_KEYS = ["mah_params", "log_mah"] + SFH_KEYS
+TDATA_KEYS = ["mah_params", "log_mah"] + SFH_KEYS + ["time_arr"]
 TData = namedtuple("TData", TDATA_KEYS)
 
 
@@ -227,6 +227,7 @@ def _compute_tdata(
         sfh_params_noq_nolag_out,
         sfh_noq_nolag_out,
         smh_noq_nolag_out,
+        tarr
     )
 
 
