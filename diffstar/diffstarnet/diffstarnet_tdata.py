@@ -38,6 +38,32 @@ TDATA_KEYS = ["mah_params", "log_mah"] + SFH_KEYS
 TData = namedtuple("TData", TDATA_KEYS)
 
 
+def tdata_generator_dithertarr(
+    ran_key,
+    logm0_sample,
+    n_sfh_table=N_SFH_TABLE,
+    logsm0_min=LGSM0_MIN,
+    n_epochs=float("inf")
+):
+    """
+    Same as tdata_generator, but for each generation, a new t_table_min value
+    is drawn uniformly within the first bin sfh_table bin
+    """
+    batchnum = 0
+    while batchnum < n_epochs:
+        ran_key, batch_key, dither_key = jran.split(ran_key, 3)
+        dither1, dither2 = jran.uniform(
+            dither_key, (2,), maxval=(T0 - T_TABLE_MIN) // n_sfh_table
+        )
+        tarr = np.linspace(T_TABLE_MIN + dither1, T0 - dither2, n_sfh_table)
+        tdata = _compute_tdata(
+            batch_key, logm0_sample, n_sfh_table, logsm0_min,
+            tarr=tarr
+        )
+        yield tdata
+        batchnum += 1
+
+
 def tdata_generator(
     ran_key,
     logm0_sample,
@@ -78,10 +104,12 @@ def tdata_generator(
 
 
 def _compute_tdata(
-    ran_key, logm0_sample, n_sfh_table=N_SFH_TABLE, logsm0_min=LGSM0_MIN
+    ran_key, logm0_sample, n_sfh_table=N_SFH_TABLE, logsm0_min=LGSM0_MIN,
+    tarr=None,
 ):
     """"""
-    tarr = np.linspace(T_TABLE_MIN, T0, n_sfh_table)
+    if tarr is None:
+        tarr = np.linspace(T_TABLE_MIN, T0, n_sfh_table)
 
     mah_key, early_late_key, sfh_key = jran.split(ran_key, 3)
 
