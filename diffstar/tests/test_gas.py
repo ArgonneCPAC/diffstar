@@ -36,6 +36,6 @@ def test_lagged_gas():
     sfh_singlegal(tarr, mah_params, DEFAULT_U_MS_PARAMS, DEFAULT_U_Q_PARAMS)
     tau_dep = 2.0
     tau_dep_max = MS_BOUNDING_SIGMOID_PDICT["tau_dep"][3]
-    dmhdt, log_mah = _calc_halo_history(lgtarr, *all_mah_params)
+    dmhdt, log_mah = _calc_halo_history(lgtarr, *all_mah_params[:-1])
     lagged_gas = _get_lagged_gas(lgtarr, dtarr, dmhdt, tau_dep, tau_dep_max)
     assert lagged_gas.shape == dmhdt.shape
