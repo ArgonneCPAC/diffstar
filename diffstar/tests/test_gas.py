@@ -17,7 +17,7 @@ def _get_default_mah_params():
     """Return (logt0, logmp, logtc, k, early, late, tpeak)"""
     return (
         LGT0,
-        DEFAULT_MAH_PARAMS.logmp,
+        DEFAULT_MAH_PARAMS.logm0,
         DEFAULT_MAH_PARAMS.logtc,
         MAH_K,
         DEFAULT_MAH_PARAMS.early_index,
