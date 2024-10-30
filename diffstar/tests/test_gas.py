@@ -1,7 +1,7 @@
 """
 """
 import numpy as np
-from diffmah.defaults import DEFAULT_MAH_PARAMS, MAH_K
+from diffmah.diffmah_kernels import DEFAULT_MAH_PARAMS, MAH_K
 from diffmah.individual_halo_assembly import _calc_halo_history
 
 from ..defaults import DEFAULT_U_MS_PARAMS, DEFAULT_U_Q_PARAMS, LGT0
