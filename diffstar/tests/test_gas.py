@@ -14,7 +14,7 @@ DEFAULT_LOGM0 = 12.0
 
 
 def _get_default_mah_params():
-    """Return (logt0, logmp, logtc, k, early, late)"""
+    """Return (logt0, logmp, logtc, k, early, late, tpeak)"""
     return (
         LGT0,
         DEFAULT_MAH_PARAMS.logmp,
@@ -22,13 +22,14 @@ def _get_default_mah_params():
         MAH_K,
         DEFAULT_MAH_PARAMS.early_index,
         DEFAULT_MAH_PARAMS.late_index,
+        DEFAULT_MAH_PARAMS.t_peak
     )
 
 
 def test_lagged_gas():
     all_mah_params = _get_default_mah_params()
-    lgt0, logmp, mah_logtc, k, early_index, late_index = all_mah_params
-    mah_params = logmp, mah_logtc, early_index, late_index
+    lgt0, logmp, mah_logtc, k, early_index, late_index, t_peak = all_mah_params
+    mah_params = logmp, mah_logtc, early_index, late_index, t_peak
     tarr = np.linspace(0.1, 10**LGT0, 100)
     dtarr = _get_dt_array(tarr)
     lgtarr = np.log10(tarr)
