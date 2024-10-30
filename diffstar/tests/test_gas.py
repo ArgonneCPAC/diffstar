@@ -28,8 +28,8 @@ def _get_default_mah_params():
 
 def test_lagged_gas():
     all_mah_params = _get_default_mah_params()
-    lgt0, logmp, mah_logtc, k, early_index, late_index, t_peak = all_mah_params
-    mah_params = logmp, mah_logtc, early_index, late_index, t_peak
+    lgt0, logm0, mah_logtc, k, early_index, late_index, t_peak = all_mah_params
+    mah_params = logm0, mah_logtc, early_index, late_index
     tarr = np.linspace(0.1, 10**LGT0, 100)
     dtarr = _get_dt_array(tarr)
     lgtarr = np.log10(tarr)
