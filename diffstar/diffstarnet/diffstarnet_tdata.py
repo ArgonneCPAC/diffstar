@@ -47,17 +47,26 @@ def tdata_generator_dithertarr(
 ):
     """
     Same as tdata_generator, but for each generation, a new t_table_min value
-    is drawn uniformly within the first bin sfh_table bin
+    is drawn uniformly within the first bin (and same for logm0_sample)
     """
+    min_m0, max_m0 = logm0_sample.min(), logm0_sample.max()
+    num_m0 = logm0_sample.size
+
+    max_dither_t = (T0 - T_TABLE_MIN) / (n_sfh_table - 1)
+    max_dither_m = (max_m0 - min_m0) / (num_m0 - 1)
     batchnum = 0
     while batchnum < n_epochs:
-        ran_key, batch_key, dither_key = jran.split(ran_key, 3)
+        ran_key, batch_key, *dither_keys = jran.split(ran_key, 4)
         dither1, dither2 = jran.uniform(
-            dither_key, (2,), maxval=(T0 - T_TABLE_MIN) / n_sfh_table
+            dither_keys[0], (2,), maxval=max_dither_t
         )
         tarr = np.linspace(T_TABLE_MIN + dither1, T0 - dither2, n_sfh_table)
+        dither1, dither2 = jran.uniform(
+            dither_keys[1], (2,), maxval=max_dither_m
+        )
+        logm0_new = np.linspace(min_m0 + dither1, max_m0 - dither2, num_m0)
         tdata = _compute_tdata(
-            batch_key, logm0_sample, n_sfh_table, logsm0_min,
+            batch_key, logm0_new, n_sfh_table, logsm0_min,
             tarr=tarr
         )
         yield tdata
