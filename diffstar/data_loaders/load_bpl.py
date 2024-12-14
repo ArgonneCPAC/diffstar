@@ -1,5 +1,6 @@
 """
 """
+
 import os
 from collections import OrderedDict
 
@@ -13,7 +14,7 @@ try:
 except ImportError:
     HAS_ASTROPY = False
 
-from ..kernels.main_sequence_kernels import _get_bounded_sfr_params_vmap
+from ..kernels.main_sequence_kernels_tpeak import _get_bounded_sfr_params_vmap
 from ..kernels.quenching_kernels import _get_bounded_q_params_vmap
 from ..utils import _jax_get_dt_array
 

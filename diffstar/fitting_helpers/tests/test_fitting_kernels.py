@@ -6,10 +6,8 @@ from diffmah.defaults import DEFAULT_MAH_PARAMS, MAH_K
 from diffmah.individual_halo_assembly import _calc_halo_history
 
 from ...defaults import DEFAULT_U_MS_PARAMS, DEFAULT_U_Q_PARAMS, FB, LGT0
-from ...kernels import get_sfh_from_mah_kern
 from ...utils import _jax_get_dt_array
 from ..fitting_kernels import (
-    _sfr_history_from_mah,
     calculate_histories,
     calculate_histories_vmap,
     calculate_sm_sfr_fstar_history_from_mah,
@@ -145,22 +143,3 @@ def test_calculate_histories_vmap():
     mstar_galpop, sfr_galpop, fstar_galpop, dmhdt_galpop, log_mah_galpop = _res
     for x in mstar_galpop, sfr_galpop, dmhdt_galpop, log_mah_galpop:
         assert x.shape == (1, n_t)
-
-
-def test_sfr_history_from_mah():
-    n_t = 200
-    tarr = np.linspace(0.1, 10**LGT0, n_t)
-    lgtarr = np.log10(tarr)
-    dtarr = _jax_get_dt_array(tarr)
-    all_diffmah_args = _get_default_diffmah_args()
-    dmhdt, log_mah = _calc_halo_history(lgtarr, *all_diffmah_args)
-    args = lgtarr, dtarr, dmhdt, log_mah, DEFAULT_U_MS_PARAMS, DEFAULT_U_Q_PARAMS, FB
-    sfh_from_fitting_kernels = _sfr_history_from_mah(*args)
-    lgt0, logmp, logtc, k, early_index, late_index = all_diffmah_args
-    mah_params = logmp, logtc, early_index, late_index
-
-    sfh_kern = get_sfh_from_mah_kern(tobs_loop="vmap")
-    sfh_from_diffstar_kernels = sfh_kern(
-        tarr, mah_params, DEFAULT_U_MS_PARAMS, DEFAULT_U_Q_PARAMS, LGT0, FB
-    )
-    assert np.allclose(sfh_from_fitting_kernels, sfh_from_diffstar_kernels, atol=0.01)

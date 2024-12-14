@@ -1,9 +1,10 @@
 """
 """
+
 import numpy as np
 from jax import random as jran
 
-from ...kernels.main_sequence_kernels import (
+from ...kernels.main_sequence_kernels_tpeak import (
     MS_PARAM_BOUNDS_PDICT,
     _get_bounded_sfr_params_vmap,
     _get_unbounded_sfr_params_vmap,

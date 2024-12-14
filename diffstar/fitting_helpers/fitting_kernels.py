@@ -8,7 +8,7 @@ from jax import vmap
 
 from ..defaults import FB
 from ..kernels.gas_consumption import _get_lagged_gas
-from ..kernels.main_sequence_kernels import (
+from ..kernels.main_sequence_kernels_tpeak import (
     MS_BOUNDING_SIGMOID_PDICT,
     _get_bounded_sfr_params,
     _sfr_eff_plaw,

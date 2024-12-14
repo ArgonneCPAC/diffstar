@@ -1,7 +1,8 @@
 """
 """
+
 from ...defaults import DEFAULT_MS_PDICT
-from ...kernels.main_sequence_kernels import MS_PARAM_BOUNDS_PDICT
+from ...kernels.main_sequence_kernels_tpeak import MS_PARAM_BOUNDS_PDICT
 
 
 def test_sfh_parameter_bounds():
