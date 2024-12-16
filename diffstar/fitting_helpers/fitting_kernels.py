@@ -1,14 +1,14 @@
 """
 """
 
-from diffmah.individual_halo_assembly import _calc_halo_history
+from diffmah import DEFAULT_MAH_PARAMS, mah_singlehalo
 from jax import jit as jjit
 from jax import numpy as jnp
 from jax import vmap
 
-from ..defaults import FB
+from ..defaults import FB, LGT0
 from ..kernels.gas_consumption import _get_lagged_gas
-from ..kernels.main_sequence_kernels import (
+from ..kernels.main_sequence_kernels_tpeak import (
     MS_BOUNDING_SIGMOID_PDICT,
     _get_bounded_sfr_params,
     _sfr_eff_plaw,
@@ -127,13 +127,7 @@ def calculate_sm_sfr_history_from_mah(
 
 @jjit
 def calculate_histories(
-    lgt,
-    dt,
-    mah_params,
-    u_ms_params,
-    u_q_params,
-    fstar_tdelay,
-    fb=FB,
+    lgt, dt, mah_params, u_ms_params, u_q_params, fstar_tdelay, fb=FB, lgt0=LGT0
 ):
     """Calculate individual halo mass MAH and galaxy SFH
 
@@ -185,7 +179,9 @@ def calculate_histories(
         Base-10 log of cumulative peak halo mass in units of Msun assuming h=1
 
     """
-    dmhdt, log_mah = _calc_halo_history(lgt, *mah_params)
+    tarr = 10**lgt
+    mah_params = DEFAULT_MAH_PARAMS._make(mah_params)
+    dmhdt, log_mah = mah_singlehalo(mah_params, tarr, lgt0)
     mstar, sfr, fstar = calculate_sm_sfr_fstar_history_from_mah(
         lgt,
         dt,

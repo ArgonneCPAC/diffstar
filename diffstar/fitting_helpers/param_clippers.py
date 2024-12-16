@@ -1,13 +1,14 @@
 """Functions ms_param_clipper and q_param_clipper implement clips on the diffstar
 parameters to help protect against NaNs and infinities
 """
+
 from collections import OrderedDict
 
 from jax import jit as jjit
 from jax import numpy as jnp
 from jax import vmap
 
-from ..kernels.main_sequence_kernels import MS_PARAM_BOUNDS_PDICT
+from ..kernels.main_sequence_kernels_tpeak import MS_PARAM_BOUNDS_PDICT
 from ..kernels.quenching_kernels import Q_PARAM_BOUNDS_PDICT
 
 _EPS = 0.001

@@ -1,10 +1,11 @@
 """Unit tests enforcing that the behavior of Diffstar on the default params is frozen.
 """
+
 import os
 
 import numpy as np
+from diffmah import mah_singlehalo
 from diffmah.defaults import DEFAULT_MAH_PARAMS, MAH_K
-from diffmah.individual_halo_assembly import _calc_halo_history
 from jax import numpy as jnp
 
 from ...defaults import DEFAULT_U_MS_PARAMS, DEFAULT_U_Q_PARAMS, LGT0
@@ -19,18 +20,6 @@ TESTING_DATA_DRN = os.path.join(
 )
 
 
-def _get_default_mah_params():
-    """Return (logt0, logmp, logtc, k, early, late)"""
-    return (
-        LGT0,
-        DEFAULT_MAH_PARAMS.logmp,
-        DEFAULT_MAH_PARAMS.logtc,
-        MAH_K,
-        DEFAULT_MAH_PARAMS.early_index,
-        DEFAULT_MAH_PARAMS.late_index,
-    )
-
-
 def _get_default_sfr_u_params():
     u_ms_params = jnp.array(DEFAULT_U_MS_PARAMS)
     u_q_params = jnp.array(DEFAULT_U_Q_PARAMS)
@@ -43,11 +32,10 @@ def calc_sfh_on_default_params(n_t=100):
     This function is used to generate the unit-testing data used in this module
     to freeze the behavior of Diffstar evaluated on the default parameters.
     """
-    mah_params = _get_default_mah_params()
 
     lgt = jnp.linspace(-1, LGT0, n_t)
     dt = _get_dt_array(10**lgt)
-    dmhdt, log_mah = _calc_halo_history(lgt, *mah_params)
+    dmhdt, log_mah = mah_singlehalo(DEFAULT_MAH_PARAMS, 10**lgt, LGT0)
     u_ms_params, u_q_params = _get_default_sfr_u_params()
     args = lgt, dt, dmhdt, log_mah, u_ms_params, u_q_params
     sfh = _sfr_history_from_mah(*args)
@@ -120,7 +108,14 @@ def test_diffmah_behavior_is_frozen():
     (at which point this test will need to be updated).
 
     """
-    assumed_default_params = _get_default_mah_params()
+    assumed_default_params = (
+        LGT0,
+        DEFAULT_MAH_PARAMS.logm0,
+        DEFAULT_MAH_PARAMS.logtc,
+        MAH_K,
+        DEFAULT_MAH_PARAMS.early_index,
+        DEFAULT_MAH_PARAMS.late_index,
+    )
     lgt0, logmp, logtc, k, early_index, late_index = assumed_default_params
 
     msg = "Default age of the universe assumed by Diffmah has changed"
@@ -144,7 +139,7 @@ def test_diffmah_behavior_is_frozen():
 
     args, sfh = calc_sfh_on_default_params()
     lgt, dt, dmhdt, log_mah, u_ms_params, u_q_params = args
-    dmhdt, log_mah = _calc_halo_history(lgt, *assumed_default_params)
+    dmhdt, log_mah = mah_singlehalo(DEFAULT_MAH_PARAMS, 10**lgt, lgt0)
 
     log_mah_fn = os.path.join(TESTING_DATA_DRN, "default_params_test_log_mah.txt")
     frozen_log_mah = np.loadtxt(log_mah_fn)
@@ -171,26 +166,28 @@ def test_sfh_is_frozen_on_example_bpl_sample():
     frozen_sfhs = np.loadtxt(sfh_fn)
     lgt_bpl = np.loadtxt(lgt_fn)
     dt_bpl = np.loadtxt(dt_fn)
+    t_bpl = 10**lgt_bpl
+    lgt0 = lgt_bpl[-1]
+    assert np.allclose(LGT0_BPL, lgt0, rtol=1e-3)
+
     mah_params_test_sample = np.loadtxt(mah_params_fn)
     ms_u_params_test_sample = np.loadtxt(ms_params_fn)
     q_u_params_test_sample = np.loadtxt(q_params_fn)
 
     sfh_test_sample = []
     for ih in range(mah_params_test_sample.shape[0]):
-        all_mah_params_ih = np.array(
-            (
-                LGT0_BPL,
-                mah_params_test_sample[ih, 0],
-                mah_params_test_sample[ih, 1],
-                MAH_K,
-                mah_params_test_sample[ih, 2],
-                mah_params_test_sample[ih, 3],
-            )
+        logm0 = mah_params_test_sample[ih, 0]
+        logtc = mah_params_test_sample[ih, 1]
+        early_indx = mah_params_test_sample[ih, 2]
+        late_indx = mah_params_test_sample[ih, 3]
+        t_peak = DEFAULT_MAH_PARAMS.t_peak
+        mah_params = DEFAULT_MAH_PARAMS._make(
+            [logm0, logtc, early_indx, late_indx, t_peak]
         )
         ms_u_params_ih = np.array(ms_u_params_test_sample[ih, :])
         q_u_params_ih = np.array(q_u_params_test_sample[ih, :])
 
-        dmhdt_ih, log_mah_ih = _calc_halo_history(lgt_bpl, *all_mah_params_ih)
+        dmhdt_ih, log_mah_ih = mah_singlehalo(mah_params, t_bpl, lgt0)
         sfh_ih = _sfr_history_from_mah(
             lgt_bpl, dt_bpl, dmhdt_ih, log_mah_ih, ms_u_params_ih, q_u_params_ih
         )

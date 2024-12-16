@@ -146,7 +146,6 @@ def get_loss_data_default(
     log_smah_sim,
     logmp,
     mah_params,
-    t_peak,
     dlogm_cut=DLOGM_CUT,
     t_fit_min=T_FIT_MIN,
     mass_fit_min=MIN_MASS_CUT,
@@ -251,7 +250,7 @@ def get_loss_data_default(
         )
 
     logt = jnp.log10(t_sim)
-    dmhdt, log_mah = _diffmah_kern(mah_params, t_sim, t_peak, lgt0)
+    dmhdt, log_mah = _diffmah_kern(mah_params, t_sim, lgt0)
 
     weight, weight_fstar = get_weights(
         t_sim,

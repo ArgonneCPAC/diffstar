@@ -1,10 +1,11 @@
 """
 """
+
 # flake8: noqa
 from collections import namedtuple
 
 import numpy as np
-from diffmah.defaults import DEFAULT_MAH_PARAMS, DEFAULT_MAH_PDICT
+from diffmah.diffmah_kernels import DEFAULT_MAH_PARAMS, DEFAULT_MAH_PDICT
 from jax import jit as jjit
 
 TODAY = 13.8
@@ -20,7 +21,7 @@ DEFAULT_N_STEPS = 50
 
 
 from .kernels.gas_consumption import FB
-from .kernels.main_sequence_kernels import (
+from .kernels.main_sequence_kernels_tpeak import (
     DEFAULT_MS_PARAMS,
     DEFAULT_MS_PDICT,
     DEFAULT_U_MS_PARAMS,
