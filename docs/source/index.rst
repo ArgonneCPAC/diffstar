@@ -20,7 +20,6 @@ User Guide
 
    installation.rst
    demo_diffstar_sfh.ipynb
-   demos.rst
    reference.rst
 
 See :ref:`Citation Information <cite_info>` for how to acknowledge Diffstar.

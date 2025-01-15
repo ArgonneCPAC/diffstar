@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.10
+  - python=3.11
   - pip
   - pandoc>=3.1,<4.0
   - nbsphinx
@@ -14,5 +14,5 @@ dependencies:
   - numpy
   - jax
   - jaxlib
-  - diffmah>=0.5.0
+  - diffmah>=0.7.0
   - h5py

@@ -1,5 +1,6 @@
 """
 """
+
 import numpy as np
 
 from ...defaults import DEFAULT_Q_PARAMS, DEFAULT_U_Q_PARAMS, Q_PARAM_BOUNDS_PDICT
