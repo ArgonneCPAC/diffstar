@@ -1,3 +1,8 @@
+0.3.3 (2025-01-15)
+------------------
+- Clean out old code so that only tpeak-based diffmah models remain (https://github.com/ArgonneCPAC/diffstar/pull/72)
+
+
 0.3.2 (2024-10-25)
 ------------------
 - Adapt sfh kernels to be compatible with diffmah 0.6.1
