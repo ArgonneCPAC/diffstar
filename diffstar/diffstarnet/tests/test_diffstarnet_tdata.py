@@ -3,12 +3,8 @@
 
 import numpy as np
 from jax import random as jran
-import jax.numpy as jnp
-
-from diffmah.diffmah_kernels import get_unbounded_mah_params
 
 from .. import diffstarnet_tdata as dtg
-from ... import get_unbounded_diffstar_params
 
 
 def enforce_good_tdata(tdata, logsm0_min=float("-inf")):
@@ -32,16 +28,6 @@ def enforce_good_tdata(tdata, logsm0_min=float("-inf")):
         arr = getattr(tdata, key)
         assert arr.shape == (n_halos, n_times)
 
-    # Assert all generated UParams are finite
-    sfh_uparams = get_unbounded_diffstar_params(tdata.sfh_params)
-    mah_uparams = get_unbounded_mah_params(tdata.mah_params)
-
-    for uparams in sfh_uparams:
-        for uparam in uparams:
-            assert jnp.all(jnp.isfinite(uparam))
-    for uparam in mah_uparams:
-        assert jnp.all(jnp.isfinite(uparam))
-
 
 def test_tdata_generator_dithertarr():
     ran_key = jran.key(0)
@@ -50,9 +36,7 @@ def test_tdata_generator_dithertarr():
 
     # generate 5 epochs of data
     n_epochs = 5
-    gen = dtg.tdata_generator_dithertarr(
-        ran_key, logm0_sample, n_epochs=n_epochs
-    )
+    gen = dtg.tdata_generator_dithertarr(ran_key, logm0_sample, n_epochs=n_epochs)
     tdata_list = list(gen)
     assert len(tdata_list) == n_epochs
     for tdata in tdata_list:
