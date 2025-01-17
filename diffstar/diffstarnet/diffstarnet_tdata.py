@@ -34,8 +34,43 @@ _TDATA_SFH_ROOTKEYS = ["sfh_params", "sfh", "smh"]
 _TDATA_NOQ_KEYS = [key + "_noq" for key in _TDATA_SFH_ROOTKEYS]
 _TDATA_NOQ_NOLAG_KEYS = [key + "_nolag" for key in _TDATA_NOQ_KEYS]
 SFH_KEYS = _TDATA_SFH_ROOTKEYS + _TDATA_NOQ_KEYS + _TDATA_NOQ_NOLAG_KEYS
-TDATA_KEYS = ["mah_params", "log_mah"] + SFH_KEYS
+TDATA_KEYS = ["mah_params", "log_mah"] + SFH_KEYS + ["time_arr"]
 TData = namedtuple("TData", TDATA_KEYS)
+
+
+def tdata_generator_dithertarr(
+    ran_key,
+    logm0_sample,
+    n_sfh_table=N_SFH_TABLE,
+    logsm0_min=LGSM0_MIN,
+    n_epochs=float("inf")
+):
+    """
+    Same as tdata_generator, but for each generation, a new t_table_min value
+    is drawn uniformly within the first bin (and same for logm0_sample)
+    """
+    min_m0, max_m0 = logm0_sample.min(), logm0_sample.max()
+    num_m0 = logm0_sample.size
+
+    max_dither_t = (T0 - T_TABLE_MIN) / (n_sfh_table - 1)
+    max_dither_m = (max_m0 - min_m0) / (num_m0 - 1)
+    batchnum = 0
+    while batchnum < n_epochs:
+        ran_key, batch_key, *dither_keys = jran.split(ran_key, 4)
+        dither1, dither2 = jran.uniform(
+            dither_keys[0], (2,), maxval=max_dither_t
+        )
+        tarr = np.linspace(T_TABLE_MIN + dither1, T0 - dither2, n_sfh_table)
+        dither1, dither2 = jran.uniform(
+            dither_keys[1], (2,), maxval=max_dither_m
+        )
+        logm0_new = np.linspace(min_m0 + dither1, max_m0 - dither2, num_m0)
+        tdata = _compute_tdata(
+            batch_key, logm0_new, n_sfh_table, logsm0_min,
+            tarr=tarr
+        )
+        yield tdata
+        batchnum += 1
 
 
 def tdata_generator(
@@ -78,10 +113,12 @@ def tdata_generator(
 
 
 def _compute_tdata(
-    ran_key, logm0_sample, n_sfh_table=N_SFH_TABLE, logsm0_min=LGSM0_MIN
+    ran_key, logm0_sample, n_sfh_table=N_SFH_TABLE, logsm0_min=LGSM0_MIN,
+    tarr=None,
 ):
     """"""
-    tarr = np.linspace(T_TABLE_MIN, T0, n_sfh_table)
+    if tarr is None:
+        tarr = np.linspace(T_TABLE_MIN, T0, n_sfh_table)
 
     mah_key, early_late_key, sfh_key = jran.split(ran_key, 3)
 
@@ -199,6 +236,7 @@ def _compute_tdata(
         sfh_params_noq_nolag_out,
         sfh_noq_nolag_out,
         smh_noq_nolag_out,
+        tarr
     )
 
 
