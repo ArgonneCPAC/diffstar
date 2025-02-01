@@ -1,5 +1,6 @@
 """
 """
+
 import numpy as np
 import pytest
 from jax import random as jran
@@ -14,7 +15,15 @@ try:
 except ImportError:
     HAS_DSPS = False
 
+try:
+    from scipy.integrate import trapezoid
+
+    HAS_SCIPY = True
+except ImportError:
+    HAS_SCIPY = False
+
 MSG_HAS_DSPS = "Must have dsps installed to run this test"
+MSG_HAS_SCIPY = "Must have scipy installed to run this test"
 
 
 def test_jax_get_dt_array_linspace():
@@ -35,6 +44,7 @@ def test_jax_get_dt_array_random():
         assert np.allclose(dtarr_np, dtarr_jnp, atol=0.01)
 
 
+@pytest.mark.skipif(not HAS_SCIPY, reason=MSG_HAS_SCIPY)
 def test_cumtrapz():
     ran_key = jran.PRNGKey(0)
     n_x = 100
@@ -44,9 +54,9 @@ def test_cumtrapz():
         xarr = np.sort(jran.uniform(x_key, minval=0, maxval=1, shape=(n_x,)))
         yarr = jran.uniform(y_key, minval=0, maxval=1, shape=(n_x,))
         jax_result = cumtrapz(xarr, yarr)
-        np_result = [np.trapz(yarr[:-i], x=xarr[:-i]) for i in range(1, n_x)][::-1]
+        np_result = [trapezoid(yarr[:-i], x=xarr[:-i]) for i in range(1, n_x)][::-1]
         assert np.allclose(jax_result[:-1], np_result, rtol=1e-4)
-        assert np.allclose(jax_result[-1], np.trapz(yarr, x=xarr), rtol=1e-4)
+        assert np.allclose(jax_result[-1], trapezoid(yarr, x=xarr), rtol=1e-4)
 
 
 def test_cumulative_mstar_formed_returns_reasonable_arrays():
