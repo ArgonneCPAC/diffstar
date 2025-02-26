@@ -5,6 +5,7 @@ import numpy as np
 from jax import jit as jjit
 from jax import lax, nn
 from jax import numpy as jnp
+from jax import vmap
 from jax.lax import scan
 
 from .defaults import SFR_MIN, T_BIRTH_MIN
@@ -273,3 +274,35 @@ def cumulative_mstar_formed(t_table, sfh_table):
     mstar_formed = cumtrapz(padded_t_table, padded_sfh_table)[1:] * YEAR_PER_GYR
 
     return mstar_formed
+
+
+_cuml_mstar_vmap = jjit(vmap(cumulative_mstar_formed, in_axes=(None, 0)))
+
+
+@jjit
+def cumulative_mstar_formed_galpop(t_table, sfh_table):
+    """Compute the cumulative stellar mass formed at each input time
+
+    Parameters
+    ----------
+    t_table : ndarray, shape (n_t, )
+        Age of the Universe in Gyr.
+        Array should be monotonically increasing and
+        t_table[0] >= dsps.constants.T_TABLE_MIN
+
+    sfh_table : ndarray, shape (n_gals, n_t)
+        SFR in Msun/yr at each of the input times
+
+    Returns
+    -------
+    mstar_formed : ndarray, shape (n_gals, n_t)
+        Cumulative stellar mass formed in Msun at each input time
+
+    Notes
+    -----
+    Mstar formed is calculated using trapezoidal integration
+    and assuming that during the interval (dsps.constants.T_BIRTH_MIN, t_table[0]),
+    SFH is constant and equal to dsps.constants.SFR_MIN
+
+    """
+    return _cuml_mstar_vmap(t_table, sfh_table)
