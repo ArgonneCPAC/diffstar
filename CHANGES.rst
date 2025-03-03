@@ -1,3 +1,8 @@
+0.3.4 (2025-03-03)
+------------------
+- Add convenience function cumulative_mstar_formed_galpop (https://github.com/ArgonneCPAC/diffstar/pull/77)
+
+
 0.3.3 (2025-01-15)
 ------------------
 - Clean out old code so that only tpeak-based diffmah models remain (https://github.com/ArgonneCPAC/diffstar/pull/72)
