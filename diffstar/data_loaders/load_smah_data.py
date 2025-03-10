@@ -100,12 +100,12 @@ def load_fit_mah_tpeak(basename, data_drn=BEBOP):
                 hdf["logtc"][:],
                 hdf["early_index"][:],
                 hdf["late_index"][:],
+                hdf["t_peak"][:],
             ]
         ).T
-        t_peak = hdf["t_peak"][:]
         logmp = hdf["logm0"][:]
 
-    return mah_fit_params, logmp, t_peak
+    return mah_fit_params, logmp
 
 
 def load_fit_sfh(basename, data_drn=BEBOP):

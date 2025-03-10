@@ -100,7 +100,7 @@ if __name__ == "__main__":
         halo_ids, log_smahs, sfrhs, tarr, dt, log_mahs, logmp = _data
 
         subvol_diffmah_str = f"{subvol_str}_diffmah_fits.h5"
-        mah_fit_params, logmp_fit, t_peak_arr = load_fit_mah_tpeak(
+        mah_fit_params, logmp_fit = load_fit_mah_tpeak(
             subvol_diffmah_str, data_drn=indir_diffmah
         )
 
@@ -121,7 +121,6 @@ if __name__ == "__main__":
         sfrhs_for_rank = sfrhs[indx]
         mah_params_for_rank = mah_fit_params[indx]
         logmp_for_rank = logmp[indx]
-        t_peak_for_rank = t_peak_arr[indx]
 
         nhalos_for_rank = len(halo_ids_for_rank)
 
@@ -138,10 +137,9 @@ if __name__ == "__main__":
                 sfrh = sfrhs_for_rank[i, :]
                 mah_params = mah_params_for_rank[i]
                 logmp_halo = logmp_for_rank[i]
-                t_peak = t_peak_for_rank[i]
 
                 p_init, loss_data = fitsmah.get_loss_data_default(
-                    tarr, dt, sfrh, lgsmah, logmp_halo, mah_params, t_peak, **kwargs
+                    tarr, dt, sfrh, lgsmah, logmp_halo, mah_params, **kwargs
                 )
                 _res = minimizer_wrapper(
                     fitsmah.loss_default_clipssfrh,
