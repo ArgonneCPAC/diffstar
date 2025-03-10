@@ -10,6 +10,7 @@ from mpi4py import MPI
 import diffstar.fitting_helpers.fit_smah_helpers_tpeak as fitsmah
 from diffstar.data_loaders.load_smah_data import load_fit_mah_tpeak, load_tng_data
 from diffstar.fitting_helpers.utils import minimizer_wrapper
+from diffmah.diffmah_kernels import DiffmahParams
 
 BEBOP_TNG = "/lcrc/project/halotools/alarcon/data/"
 BEBOP_TNG_MAH = "/lcrc/project/halotools/alarcon/results/tng_diffmah_tpeak/"
@@ -122,7 +123,7 @@ if __name__ == "__main__":
                 halo_id = halo_ids_for_rank[i]
                 lgsmah = log_smahs_for_rank[i, :]
                 sfrh = sfrhs_for_rank[i, :]
-                mah_params = mah_params_for_rank[i]
+                mah_params = DiffmahParams(*mah_params_for_rank[i])
                 logmp_halo = logmp_for_rank[i]
 
                 p_init, loss_data = fitsmah.get_loss_data_default(
