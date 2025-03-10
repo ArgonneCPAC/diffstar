@@ -102,7 +102,8 @@ if __name__ == "__main__":
 
     nhalos_for_rank = len(halo_ids_for_rank)
 
-    chunks = np.arange(nchunks).astype(int)
+    # chunks = np.arange(nchunks).astype(int)
+    chunks = np.arange(istart, iend, 1).astype(int)
 
     for chunknum in chunks:
         comm.Barrier()
@@ -114,6 +115,14 @@ if __name__ == "__main__":
         outbase_chunk = f"chunk_{chunknum_str}"
         rank_basepat = "_".join((outbase_chunk, TMP_OUTPAT))
         rank_outname = os.path.join(args.outdir, rank_basepat).format(rank)
+
+        # If final collated chunk filename already exists,
+        # tell every rank to skip to next chunk.
+        bname = os.path.basename(rank_outname)
+        outbn = "_".join(bname.split("_")[:4]) + ".hdf5"
+        outfn = os.path.join(outdir, outbn)
+        if os.path.exists(outfn):
+            continue
 
         comm.Barrier()
         with open(rank_outname, "w") as fout:
@@ -165,7 +174,6 @@ if __name__ == "__main__":
             outbn = "_".join(fit_data_bnames[0].split("_")[:4]) + ".hdf5"
             outfn = os.path.join(outdir, outbn)
 
-            # fitsmah.write_collated_data(outfn, subvol_i_fit_results, chunk_arr=None)
             fitsmah.write_collated_data(outfn, chunk_fit_results, colnames_out)
 
             # clean up ASCII data for subvol_i
