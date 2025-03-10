@@ -269,7 +269,7 @@ def load_bolshoi_small_data(gal_type, data_drn=BEBOP):
     return halo_ids, log_smahs, sfrh, bpl_t, dt
 
 
-def load_tng_data(gal_type, data_drn=BEBOP):
+def load_tng_data(data_drn=BEBOP):
     """Load the stellar mass histories from the IllustrisTNG simulation.
 
     The loaded stellar mass data has units of Msun assuming the h = H_TNG
@@ -324,7 +324,11 @@ def load_tng_data(gal_type, data_drn=BEBOP):
         warnings.simplefilter("ignore")
         log_smahs = np.where(sm_cumsum == 0, 0, np.log10(sm_cumsum))
 
-    return halo_ids, log_smahs, sfrh, tng_t, dt
+    log_mahs = halos["mpeakh"]
+    log_mahs = np.maximum.accumulate(log_mahs, axis=1)
+    logmp = log_mahs[:, -1]
+
+    return halo_ids, log_smahs, sfrh, tng_t, dt, log_mahs, logmp
 
 
 def load_tng_small_data(gal_type, data_drn=BEBOP):
