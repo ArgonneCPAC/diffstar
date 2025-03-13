@@ -79,7 +79,7 @@ if __name__ == "__main__":
     _data = load_tng_data(indir)
     halo_ids, log_smahs, sfrhs, tarr, dt, log_mahs, logmp = _data
 
-    diffmah_str = "diffmah_fits.hdf5"
+    diffmah_str = "diffmah_tng_fits.hdf5"
     mah_fit_params, logmp_fit = load_fit_mah_tpeak(diffmah_str, data_drn=indir_diffmah)
 
     if rank == 0:
