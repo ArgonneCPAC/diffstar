@@ -102,15 +102,11 @@ if __name__ == "__main__":
 
     nhalos_for_rank = len(halo_ids_for_rank)
 
-    chunknum = rank
-
     ichunk_start = time()
 
     nhalos_tot = comm.reduce(nhalos_for_rank, op=MPI.SUM)
 
-    chunknum_str = f"{chunknum:0{nchar_chunks}d}"
-    outbase_chunk = f"chunk_{chunknum_str}"
-    rank_basepat = "_".join((outbase_chunk, TMP_OUTPAT))
+    rank_basepat = TMP_OUTPAT
     rank_outname = os.path.join(args.outdir, rank_basepat).format(rank)
 
     # If final collated chunk filename already exists,
