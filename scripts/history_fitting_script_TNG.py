@@ -79,7 +79,7 @@ if __name__ == "__main__":
     _data = load_tng_data(indir)
     halo_ids, log_smahs, sfrhs, tarr, dt, log_mahs, logmp = _data
 
-    diffmah_str = "diffmah_fits.h5"
+    diffmah_str = "diffmah_fits.hdf5"
     mah_fit_params, logmp_fit = load_fit_mah_tpeak(diffmah_str, data_drn=indir_diffmah)
 
     if rank == 0:
@@ -102,83 +102,76 @@ if __name__ == "__main__":
 
     nhalos_for_rank = len(halo_ids_for_rank)
 
-    # chunks = np.arange(nchunks).astype(int)
-    chunks = np.arange(istart, iend, 1).astype(int)
+    chunknum = rank
 
-    for chunknum in chunks:
-        comm.Barrier()
-        ichunk_start = time()
+    ichunk_start = time()
 
-        nhalos_tot = comm.reduce(nhalos_for_rank, op=MPI.SUM)
+    nhalos_tot = comm.reduce(nhalos_for_rank, op=MPI.SUM)
 
-        chunknum_str = f"{chunknum:0{nchar_chunks}d}"
-        outbase_chunk = f"chunk_{chunknum_str}"
-        rank_basepat = "_".join((outbase_chunk, TMP_OUTPAT))
-        rank_outname = os.path.join(args.outdir, rank_basepat).format(rank)
+    chunknum_str = f"{chunknum:0{nchar_chunks}d}"
+    outbase_chunk = f"chunk_{chunknum_str}"
+    rank_basepat = "_".join((outbase_chunk, TMP_OUTPAT))
+    rank_outname = os.path.join(args.outdir, rank_basepat).format(rank)
 
-        # If final collated chunk filename already exists,
-        # tell every rank to skip to next chunk.
-        bname = os.path.basename(rank_outname)
-        outbn = "_".join(bname.split("_")[:4]) + ".hdf5"
+    # If final collated chunk filename already exists,
+    # tell every rank to skip to next chunk.
+    bname = os.path.basename(rank_outname)
+    outbn = "_".join(bname.split("_")[:4]) + ".hdf5"
+    outfn = os.path.join(outdir, outbn)
+
+    with open(rank_outname, "w") as fout:
+        fout.write(HEADER)
+
+        for i in range(nhalos_for_rank):
+            halo_id = halo_ids_for_rank[i]
+            lgsmah = log_smahs_for_rank[i, :]
+            sfrh = sfrhs_for_rank[i, :]
+            mah_params = DiffmahParams(*mah_params_for_rank[i])
+            logmp_halo = logmp_for_rank[i]
+
+            p_init, loss_data = fitsmah.get_loss_data_default(
+                tarr, dt, sfrh, lgsmah, logmp_halo, mah_params, **kwargs
+            )
+            _res = minimizer_wrapper(
+                fitsmah.loss_default_clipssfrh,
+                fitsmah.loss_grad_default_clipssfrh_np,
+                p_init,
+                loss_data,
+            )
+            p_best, loss_best, success = _res
+            outline = fitsmah.get_outline_default(
+                halo_id, loss_data, p_best, loss_best, success
+            )
+
+            fout.write(outline)
+
+    ichunk_end = time()
+    comm.Barrier()
+
+    msg = "\n\nWallclock runtime to fit {0} halos with {1} ranks = {2:.1f} seconds\n\n"
+    if rank == 0:
+        runtime = ichunk_end - ichunk_start
+        print(msg.format(nhalos_tot, nranks, runtime))
+
+        #  collate data from ranks and rewrite to disk
+        pat = os.path.join(args.outdir, rank_basepat)
+        fit_data_fnames = [pat.format(i) for i in range(nranks)]
+        collector = []
+        for fit_fn in fit_data_fnames:
+            assert os.path.isfile(fit_fn)
+            fit_data = np.genfromtxt(fit_fn, dtype="str")
+            collector.append(fit_data)
+        chunk_fit_results = np.concatenate(collector)
+
+        fit_data_bnames = [os.path.basename(fn) for fn in fit_data_fnames]
+        outbn = "diffstar_tng_fits.hdf5"
         outfn = os.path.join(outdir, outbn)
-        if os.path.exists(outfn):
-            continue
 
-        comm.Barrier()
-        with open(rank_outname, "w") as fout:
-            fout.write(HEADER)
+        fitsmah.write_collated_data(outfn, chunk_fit_results, colnames_out)
 
-            for i in range(nhalos_for_rank):
-                halo_id = halo_ids_for_rank[i]
-                lgsmah = log_smahs_for_rank[i, :]
-                sfrh = sfrhs_for_rank[i, :]
-                mah_params = DiffmahParams(*mah_params_for_rank[i])
-                logmp_halo = logmp_for_rank[i]
-
-                p_init, loss_data = fitsmah.get_loss_data_default(
-                    tarr, dt, sfrh, lgsmah, logmp_halo, mah_params, **kwargs
-                )
-                _res = minimizer_wrapper(
-                    fitsmah.loss_default_clipssfrh,
-                    fitsmah.loss_grad_default_clipssfrh_np,
-                    p_init,
-                    loss_data,
-                )
-                p_best, loss_best, success = _res
-                outline = fitsmah.get_outline_default(
-                    halo_id, loss_data, p_best, loss_best, success
-                )
-
-                fout.write(outline)
-
-        comm.Barrier()
-        ichunk_end = time()
-
-        msg = "\n\nWallclock runtime to fit {0} halos with {1} ranks = {2:.1f} seconds\n\n"
-        if rank == 0:
-            print("\nFinished with chunk {}".format(chunknum))
-            runtime = ichunk_end - ichunk_start
-            print(msg.format(nhalos_tot, nranks, runtime))
-
-            #  collate data from ranks and rewrite to disk
-            pat = os.path.join(args.outdir, rank_basepat)
-            fit_data_fnames = [pat.format(i) for i in range(nranks)]
-            collector = []
-            for fit_fn in fit_data_fnames:
-                assert os.path.isfile(fit_fn)
-                fit_data = np.genfromtxt(fit_fn, dtype="str")
-                collector.append(fit_data)
-            chunk_fit_results = np.concatenate(collector)
-
-            fit_data_bnames = [os.path.basename(fn) for fn in fit_data_fnames]
-            outbn = "_".join(fit_data_bnames[0].split("_")[:4]) + ".hdf5"
-            outfn = os.path.join(outdir, outbn)
-
-            fitsmah.write_collated_data(outfn, chunk_fit_results, colnames_out)
-
-            # clean up ASCII data for subvol_i
-            bn = fit_data_bnames[0]
-            bnpat = "_".join(bn.split("_")[:-1]) + "_*.dat"
-            fnpat = os.path.join(outdir, bnpat)
-            command = "rm " + fnpat
-            subprocess.os.system(command)
+        # clean up ASCII data for subvol_i
+        bn = fit_data_bnames[0]
+        bnpat = "_".join(bn.split("_")[:-1]) + "_*.dat"
+        fnpat = os.path.join(outdir, bnpat)
+        command = "rm " + fnpat
+        subprocess.os.system(command)
