@@ -87,9 +87,6 @@ def load_fit_mah_tpeak(basename, data_drn=BEBOP):
 
     logmp:  ndarray of shape (n_gal, )
         Base-10 logarithm of the present day peak halo mass
-
-    logmp:  ndarray of shape (n_gal, )
-        Base-10 logarithm of the present day peak halo mass
     """
 
     fn = os.path.join(data_drn, basename)
@@ -100,12 +97,12 @@ def load_fit_mah_tpeak(basename, data_drn=BEBOP):
                 hdf["logtc"][:],
                 hdf["early_index"][:],
                 hdf["late_index"][:],
+                hdf["t_peak"][:],
             ]
         ).T
-        t_peak = hdf["t_peak"][:]
         logmp = hdf["logm0"][:]
 
-    return mah_fit_params, logmp, t_peak
+    return mah_fit_params, logmp
 
 
 def load_fit_sfh(basename, data_drn=BEBOP):
@@ -269,7 +266,7 @@ def load_bolshoi_small_data(gal_type, data_drn=BEBOP):
     return halo_ids, log_smahs, sfrh, bpl_t, dt
 
 
-def load_tng_data(gal_type, data_drn=BEBOP):
+def load_tng_data(data_drn=BEBOP):
     """Load the stellar mass histories from the IllustrisTNG simulation.
 
     The loaded stellar mass data has units of Msun assuming the h = H_TNG
@@ -324,7 +321,11 @@ def load_tng_data(gal_type, data_drn=BEBOP):
         warnings.simplefilter("ignore")
         log_smahs = np.where(sm_cumsum == 0, 0, np.log10(sm_cumsum))
 
-    return halo_ids, log_smahs, sfrh, tng_t, dt
+    log_mahs = halos["mpeakh"]
+    log_mahs = np.maximum.accumulate(log_mahs, axis=1)
+    logmp = log_mahs[:, -1]
+
+    return halo_ids, log_smahs, sfrh, tng_t, dt, log_mahs, logmp
 
 
 def load_tng_small_data(gal_type, data_drn=BEBOP):

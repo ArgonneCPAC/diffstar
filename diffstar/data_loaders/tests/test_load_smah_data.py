@@ -16,13 +16,14 @@ def test_load_fit_mah_tpeak():
     _res = load_fit_mah_tpeak(basename, data_drn=data_drn)
     for x in _res:
         assert np.all(np.isfinite(x))
-    mah_fit_params, logmp, t_peak = _res
+    mah_fit_params, logmp = _res
     n_halos, n_params = mah_fit_params.shape
 
     assert logmp.shape == (n_halos,)
     assert np.all(logmp > 10)
     assert np.all(logmp < 16)
 
+    t_peak = mah_fit_params[:, -1]
     assert t_peak.shape == (n_halos,)
     assert np.all(t_peak > 0)
     assert np.all(t_peak < 14)
