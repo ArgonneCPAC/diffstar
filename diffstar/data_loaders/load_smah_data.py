@@ -87,9 +87,6 @@ def load_fit_mah_tpeak(basename, data_drn=BEBOP):
 
     logmp:  ndarray of shape (n_gal, )
         Base-10 logarithm of the present day peak halo mass
-
-    logmp:  ndarray of shape (n_gal, )
-        Base-10 logarithm of the present day peak halo mass
     """
 
     fn = os.path.join(data_drn, basename)
