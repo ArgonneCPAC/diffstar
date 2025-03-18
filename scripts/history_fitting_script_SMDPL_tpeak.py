@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
     indir = args.indir
     indir_diffmah = args.indir_diffmah
-    outbase = args.outbase
+    # outbase = args.outbase
     istart, iend = args.istart, args.iend
     num_subvols_tot = args.num_subvols_tot  # needed for string formatting
     HEADER, colnames_out = fitsmah.get_header()
