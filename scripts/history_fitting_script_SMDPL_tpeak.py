@@ -115,7 +115,7 @@ if __name__ == "__main__":
         halo_ids, log_smahs, sfrhs, tarr, dt, log_mahs, logmp = _data
 
         if args.sim_name == "DR1":
-            subvol_diffmah_str = f"diffmah_fits_subvol_{subvol_str}.hdf5"
+            subvol_diffmah_str = f"diffmah_fits_subvol_{isubvol}.hdf5"
         elif args.sim_name == "DR1_nomerging":
             subvol_diffmah_str = f"{subvol_str}_diffmah_fits.h5"
 
