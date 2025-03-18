@@ -8,8 +8,13 @@ import numpy as np
 from mpi4py import MPI
 
 import diffstar.fitting_helpers.fit_smah_helpers_tpeak as fitsmah
-from diffstar.data_loaders.load_smah_data import load_fit_mah_tpeak, load_SMDPL_data
+from diffstar.data_loaders.load_smah_data import (
+    load_fit_mah_tpeak,
+    load_SMDPL_nomerging_data,
+    load_SMDPL_DR1_data,
+)
 from diffstar.fitting_helpers.utils import minimizer_wrapper
+from diffmah.diffmah_kernels import DiffmahParams
 
 BEBOP_SMDPL = "/lcrc/project/galsampler/SMDPL/dr1_no_merging_upidh/sfh_binary_catalogs/a_1.000000/"
 BEBOP_SMDPL_MAH = (
@@ -27,11 +32,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("outdir", help="Output directory")
-    parser.add_argument("-outbase", help="Basename of the output hdf5 file")
+    # parser.add_argument("-outbase", help="Basename of the output hdf5 file")
     parser.add_argument(
         "-indir_diffmah", help="Directory of mah parameters", default=BEBOP_SMDPL_MAH
     )
     parser.add_argument("-indir", help="Input directory", default=BEBOP_SMDPL)
+    parser.add_argument(
+        "-sim_name", help="Simulation name", choices=["DR1", "DR1_nomerging"]
+    )
     parser.add_argument(
         "-fstar_tdelay",
         help="Time interval in Gyr for fstar definition.",
@@ -96,10 +104,21 @@ if __name__ == "__main__":
         subvolumes_i = [isubvol]
 
         subvol_data_str = indir
-        _data = load_SMDPL_data(subvolumes_i, subvol_data_str)
+
+        if args.sim_name == "DR1":
+            _data = load_SMDPL_DR1_data(subvolumes_i, subvol_data_str)
+        elif args.sim_name == "DR1_nomerging":
+            _data = load_SMDPL_nomerging_data(subvolumes_i, subvol_data_str)
+        else:
+            raise NotImplementedError
+
         halo_ids, log_smahs, sfrhs, tarr, dt, log_mahs, logmp = _data
 
-        subvol_diffmah_str = f"{subvol_str}_diffmah_fits.h5"
+        if args.sim_name == "DR1":
+            subvol_diffmah_str = f"diffmah_fits_subvol_{subvol_str}.hdf5"
+        elif args.sim_name == "DR1_nomerging":
+            subvol_diffmah_str = f"{subvol_str}_diffmah_fits.h5"
+
         mah_fit_params, logmp_fit = load_fit_mah_tpeak(
             subvol_diffmah_str, data_drn=indir_diffmah
         )
@@ -124,7 +143,7 @@ if __name__ == "__main__":
 
         nhalos_for_rank = len(halo_ids_for_rank)
 
-        rank_basepat = "_".join((subvol_str, outbase, TMP_OUTPAT))
+        rank_basepat = "_".join((subvol_str, TMP_OUTPAT))
         rank_outname = os.path.join(args.outdir, rank_basepat).format(rank)
 
         # breakpoint()
@@ -174,7 +193,7 @@ if __name__ == "__main__":
             subvol_i_fit_results = np.concatenate(collector)
 
             subvol_str = f"subvol_{isubvol:0{nchar_subvol}d}"
-            outbn = "_".join((subvol_str, outbase)) + ".h5"
+            outbn = f"diffstar_fits_subvol_{isubvol}.hdf5"
             outfn = os.path.join(args.outdir, outbn)
 
             # fitsmah.write_collated_data(outfn, subvol_i_fit_results, chunk_arr=None)
