@@ -32,6 +32,14 @@ H_BPL = 0.678
 H_TNG = 0.6774
 H_MDPL = H_BPL
 
+# from https://www.cosmosim.org/metadata/smdpl/
+FB_SMDPL = 0.048206 / 0.307115  # 0,15696
+H_SMDPL = 0.6777
+
+# from https://www.tng-project.org/data/downloads/TNG300-1/
+FB_TNG = 0.0486 / 0.3089  # 0,15733
+H_TNG = 0.6774
+
 
 def load_fit_mah(basename, data_drn=BEBOP):
     """Load the best fit diffmah parameter data
