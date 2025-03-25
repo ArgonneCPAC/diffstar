@@ -96,6 +96,7 @@ if __name__ == "__main__":
         subvolumes = np.arange(istart, iend)
 
     for isubvol in subvolumes:
+        comm.Barrier()
         isubvol_start = time()
 
         nchar_subvol = len(str(num_subvols_tot))
