@@ -1,32 +1,26 @@
 """ """
 
-import warnings
-
-import h5py
 import numpy as np
+from diffmah import mah_singlehalo
 from diffmah.defaults import LGT0
-from diffmah.diffmah_kernels import _diffmah_kern
 from jax import grad
 from jax import jit as jjit
 from jax import numpy as jnp
 
+from .. import calc_sfh_singlegal
 from ..defaults import (
+    DEFAULT_DIFFSTAR_U_PARAMS,
     DEFAULT_MS_PARAMS,
-    DEFAULT_MS_PDICT,
     DEFAULT_Q_PARAMS,
-    DEFAULT_Q_PDICT,
+    DEFAULT_U_MS_PARAMS,
+    DEFAULT_U_Q_PARAMS,
+    FB,
+    SFR_MIN,
+    get_bounded_diffstar_params,
 )
-from ..kernels.main_sequence_kernels_tpeak import (
-    _get_bounded_sfr_params,
-    _get_unbounded_sfr_params,
-)
-from ..kernels.quenching_kernels import (
-    _get_bounded_q_params,
-    _get_bounded_qt,
-    _get_unbounded_q_params,
-)
-from ..utils import compute_fstar, cumulative_mstar_formed
-from .fitting_kernels import calculate_sm_sfr_fstar_history_from_mah
+from ..kernels.main_sequence_kernels_tpeak import _get_unbounded_sfr_params
+from ..kernels.quenching_kernels import _get_unbounded_q_params
+from ..utils import _sigmoid, compute_fstar, cumulative_mstar_formed
 
 T_FIT_MIN = 1.0  # Only fit snapshots above this threshold. Gyr units.
 DLOGM_CUT = 3.5  # Only fit SMH within this dex of the present day stellar mass.
@@ -45,76 +39,83 @@ def get_loss_data_default(
     fstar_tdelay=FSTAR_TIME_DELAY,
     ssfrh_floor=SSFRH_FLOOR,
     lgt0=LGT0,
+    fb=FB,
 ):
-    mstar_table = cumulative_mstar_formed(t_table, sfh_table)
+    sfh_target = np.clip(sfh_table, SFR_MIN, np.inf)
+    mstar_target = cumulative_mstar_formed(t_table, sfh_table)
+    logmstar_target = np.log10(mstar_target)
 
-    fstar_table = compute_fstar(t_table, mstar_table, fstar_tdelay)
+    fstar_table = compute_fstar(t_table, logmstar_target, fstar_tdelay)
+    ssfrh_table = fstar_table / mstar_target
+    ssfrh_target = np.clip(ssfrh_table, ssfrh_floor, np.inf)
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        ssfrh = fstar_table / mstar_table
-        ssfrh = np.clip(ssfrh, ssfrh_floor, np.inf)
-        fstar_sim = ssfrh * mstar_table
-        log_fstar_sim = np.where(
-            fstar_sim == 0.0, np.log10(fstar_sim.max()) - 3.0, np.log10(fstar_sim)
-        )
+    fstar_target = ssfrh_target * mstar_target
+    fstar_target_min = fstar_target.max() / 1000.0
+    fstar_target = np.where(
+        fstar_target < fstar_target_min, fstar_target_min, fstar_target
+    )
+    log_fstar_target = np.log10(fstar_target)
 
-    logt = jnp.log10(t_table)
-    dmhdt, log_mah = _diffmah_kern(mah_params, t_table, lgt0)
+    lgt_table = jnp.log10(t_table)
+    log_mah = mah_singlehalo(mah_params, t_table, lgt0)[1]
+    logmp0 = log_mah[-1]
 
     weight, weight_fstar = get_weights(
         t_table,
-        log_smah_sim,
-        log_fstar_sim,
+        logmstar_target,
+        log_fstar_target,
         fstar_tdelay,
         dlogm_cut,
         t_fit_min,
         mass_fit_min,
     )
 
-    t_fstar_max = logt[np.argmax(log_fstar_sim)]
+    lgt_fstar_max = lgt_table[np.argmax(log_fstar_target)]
 
-    default_sfr_params = np.array(DEFAULT_MS_PARAMS)
-    default_sfr_params[0] = np.clip(0.3 * (logmp0 - 11.0) + 11.4, 11.0, 13.0)
-    default_sfr_params[1] = np.clip(0.2 * (logmp0 - 11.0) - 0.7, -1.5, -0.2)
-    default_sfr_params[2] = np.clip(0.7 * (logmp0 - 11.0) - 0.3, 0.2, 3.0)
-    default_sfr_params[4] = np.clip(-8.0 * (logmp0 - 11.0) + 15, 2.0, 15.0)
-    u_default_sfr_params = np.array(_get_unbounded_sfr_params(*default_sfr_params))
+    ms_params = np.array(DEFAULT_MS_PARAMS)
+    ms_params[0] = np.clip(0.3 * (logmp0 - 11.0) + 11.4, 11.0, 13.0)
+    ms_params[1] = np.clip(0.2 * (logmp0 - 11.0) - 0.7, -1.5, -0.2)
+    ms_params[2] = np.clip(0.7 * (logmp0 - 11.0) - 0.3, 0.2, 3.0)
+    ms_params[4] = np.clip(-8.0 * (logmp0 - 11.0) + 15, 2.0, 15.0)
+    ms_params = DEFAULT_MS_PARAMS._make(ms_params)
+    u_ms_params = np.array(_get_unbounded_sfr_params(*ms_params))
 
-    sfr_ms_params = np.zeros(4)
-    sfr_ms_params[0:3] = u_default_sfr_params[0:3]
-    sfr_ms_params[3] = u_default_sfr_params[4]
-    fixed_hi = u_default_sfr_params[3]
+    varied_u_ms_params = np.zeros(4)
+    varied_u_ms_params[0:3] = u_ms_params[0:3]
+    varied_u_ms_params[3] = u_ms_params[4]
+    u_fixed_hi = u_ms_params[3]
 
-    sfr_ms_params_err = np.array([0.5, 0.5, 1.0, 3.0])
+    u_ms_params_err = np.array([0.5, 0.5, 1.0, 3.0])
 
-    default_q_params = np.array(DEFAULT_Q_PARAMS)
-    default_q_params[0] = np.clip(-0.5 * (logmp0 - 11.0) + 1.5, 0.7, 1.5)
-    default_q_params[2] = -2.0
-    q_params = np.array(_get_unbounded_q_params(*default_q_params))
-    q_params_err = np.array([0.3, 0.5, 0.3, 0.3])
+    varied_q_params = np.array(DEFAULT_Q_PARAMS)
+    varied_q_params[0] = np.clip(-0.5 * (logmp0 - 11.0) + 1.5, 0.7, 1.5)
+    varied_q_params[2] = -2.0
+    varied_q_params = DEFAULT_Q_PARAMS._make(DEFAULT_Q_PARAMS)
+    varied_u_q_params = np.array(_get_unbounded_q_params(*varied_q_params))
+    u_q_params_err = np.array([0.3, 0.5, 0.3, 0.3])
 
     loss_data = (
-        logt,
-        dt,
-        dmhdt,
-        log_mah,
-        smh,
-        log_smah_sim,
-        sfh_table,
-        log_fstar_sim,
+        t_table,
+        mah_params,
+        mstar_target,
+        logmstar_target,
+        sfh_target,
+        log_fstar_target,
         fstar_tdelay,
         ssfrh_floor,
         weight,
         weight_fstar,
-        t_fstar_max,
-        fixed_hi,
+        lgt_fstar_max,
+        u_fixed_hi,
+        lgt0,
+        fb,
     )
-    p_init = (
-        np.concatenate((sfr_ms_params, q_params)),
-        np.concatenate((sfr_ms_params_err, q_params_err)),
+
+    u_p_init_and_err = (
+        np.concatenate((varied_u_ms_params, varied_u_q_params)),
+        np.concatenate((u_ms_params_err, u_q_params_err)),
     )
-    return p_init, loss_data
+    return u_p_init_and_err, loss_data
 
 
 def get_weights(
@@ -144,3 +145,65 @@ def get_weights(
     weight_fstar[t_table < fstar_tdelay + 0.01] = 1e10
 
     return weight, weight_fstar
+
+
+@jjit
+def loss_default_clipssfrh(u_params, loss_data):
+    """
+    MSE loss function for fitting individual stellar mass histories.
+    The parameters k, indx_hi are fixed.
+
+    """
+    (
+        t_table,
+        mah_params,
+        sm_target,
+        log_sm_target,
+        sfh_target,
+        log_fstar_target,
+        fstar_tdelay,
+        ssfrh_floor,
+        weight,
+        weight_fstar,
+        lgt_fstar_max,
+        u_fixed_hi,
+        lgt0,
+        fb,
+    ) = loss_data
+
+    u_ms_params = [*u_params[0:3], u_fixed_hi, u_params[3]]
+    u_ms_params = DEFAULT_U_MS_PARAMS._make(u_ms_params)
+    u_q_params = u_params[4:8]
+    u_q_params = DEFAULT_U_Q_PARAMS._make(u_q_params)
+
+    sfh_u_params = DEFAULT_DIFFSTAR_U_PARAMS._make((u_ms_params, u_q_params))
+    sfh_params = get_bounded_diffstar_params(sfh_u_params)
+    sfh_table, mstar_table = calc_sfh_singlegal(
+        sfh_params, mah_params, t_table, lgt0=lgt0, fb=fb, return_smh=True
+    )
+
+    fstar = compute_fstar(t_table, mstar_table, fstar_tdelay)
+    fstar = jnp.clip(fstar, mstar_table * ssfrh_floor, jnp.inf)
+    log_fstar = jnp.log10(fstar)
+
+    logsm_table = jnp.log10(mstar_table)
+
+    sfr_res = 1e8 * (sfh_table - sfh_target) / sm_target
+    sfr_res = jnp.clip(sfr_res, -1.0, 1.0)
+
+    loss = jnp.mean(((logsm_table - log_sm_target) / weight) ** 2)
+    loss += jnp.mean(((log_fstar - log_fstar_target) / weight_fstar) ** 2)
+    loss += jnp.mean((sfr_res / weight) ** 2)
+
+    # Compute ridge terms
+    loss += _sigmoid(sfh_params.q_params.lg_qt - lgt_fstar_max, 0.0, 50.0, 100.0, 0.0)
+    loss += _sigmoid(sfh_params.ms_params.indx_lo, 0.0, 10.0, 1.0, 0.0)
+    loss += _sigmoid(sfh_params.ms_params.lgy_at_mcrit, 0.0, 20.0, 0.0, 1.0)
+    return loss
+
+
+loss_grad_default_clipssfrh = jjit(grad(loss_default_clipssfrh, argnums=(0)))
+
+
+def loss_grad_default_clipssfrh_np(params, data):
+    return np.array(loss_grad_default_clipssfrh(params, data)).astype(float)
