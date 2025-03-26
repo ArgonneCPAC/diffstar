@@ -9,6 +9,29 @@ from ...utils import cumulative_mstar_formed
 from .. import diffstar_fitting_helpers as dfh
 
 
+def test_loss_default_clipssfrh():
+    ran_key = jran.key(0)
+    n_tests = 100
+    n_times = 200
+    t0_sim = 13.6
+    fb_sim = 0.15
+    t_table = np.linspace(T_TABLE_MIN, t0_sim, n_times)
+
+    for __ in range(n_tests):
+        ran_key, sfh_key = jran.split(ran_key, 2)
+        sfh_table = jran.uniform(sfh_key, minval=0, maxval=100, shape=(n_times,))
+
+        _res = dfh.get_loss_data_default(
+            t_table, sfh_table, DEFAULT_MAH_PARAMS, lgt0=np.log10(t0_sim), fb=fb_sim
+        )
+        u_p_init_and_err, loss_data = _res
+        u_p_init, u_p_init_err = u_p_init_and_err
+        loss_init = dfh.loss_default_clipssfrh(u_p_init, loss_data)
+        assert np.all(np.isfinite(loss_init))
+        assert loss_init > 0
+        assert loss_init < 1_000.0
+
+
 def test_get_loss_data_default():
     ran_key = jran.key(0)
     n_tests = 100
