@@ -127,9 +127,6 @@ def load_bolshoi_data(gal_type, data_drn=BEBOP):
     The loaded stellar mass data has units of Msun assuming the h = H_BPL
     from the cosmology of the underlying simulation.
 
-    The output stellar mass data has units of Msun/h, or units of
-    Mstar[h=H_BPL] using the h value of the simulation.
-
     H_BPL is defined at the top of the module.
 
     Parameters
@@ -149,10 +146,10 @@ def load_bolshoi_data(gal_type, data_drn=BEBOP):
         IDs of the halos in the file
 
     log_smahs: ndarray of shape (n_gal, n_times)
-        Cumulative stellar mass history in units of Msun assuming h=1
+        Cumulative stellar mass history in units of Msun assuming h in the simulation
 
     sfrh: ndarray of shape (n_gal, n_times)
-        Star formation rate history in units of Msun/yr assuming h=1
+        Star formation rate history in units of Msun/yr assuming h in the simulation
 
     bpl_t : ndarray of shape (n_times, )
         Cosmic time of each simulated snapshot in Gyr
@@ -186,9 +183,6 @@ def load_bolshoi_small_data(gal_type, data_drn=BEBOP):
     The loaded stellar mass data has units of Msun assuming the h = H_BPL
     from the cosmology of the underlying simulation.
 
-    The output stellar mass data has units of Msun/h, or units of
-    Mstar[h=H_BPL] using the h value of the simulation.
-
     H_BPL is defined at the top of the module.
 
     Parameters
@@ -208,10 +202,10 @@ def load_bolshoi_small_data(gal_type, data_drn=BEBOP):
         IDs of the halos in the file
 
     log_smahs: ndarray of shape (n_gal, n_times)
-        Cumulative stellar mass history in units of Msun assuming h=1
+        Cumulative stellar mass history in units of Msun assuming h in the simulation
 
     sfrh: ndarray of shape (n_gal, n_times)
-        Star formation rate history in units of Msun/yr assuming h=1
+        Star formation rate history in units of Msun/yr assuming h in the simulation
 
     bpl_t : ndarray of shape (n_times, )
 
@@ -245,9 +239,6 @@ def load_tng_data(data_drn=BEBOP):
     The loaded stellar mass data has units of Msun assuming the h = H_TNG
     from the cosmology of the underlying simulation.
 
-    The output stellar mass data has units of Msun/h, or units of
-    Mstar[h=H_TNG] using the h value of the simulation.
-
     H_TNG is defined at the top of the module.
 
     Parameters
@@ -267,10 +258,10 @@ def load_tng_data(data_drn=BEBOP):
         IDs of the halos in the file
 
     log_smahs: ndarray of shape (n_gal, n_times)
-        Cumulative stellar mass history in units of Msun assuming h=1
+        Cumulative stellar mass history in units of Msun assuming h in the simulation
 
     sfrh: ndarray of shape (n_gal, n_times)
-        Star formation rate history in units of Msun/yr assuming h=1
+        Star formation rate history in units of Msun/yr assuming h in the simulation
 
     tng_t : ndarray of shape (n_times, )
         Cosmic time of each simulated snapshot in Gyr
@@ -308,9 +299,6 @@ def load_tng_small_data(gal_type, data_drn=BEBOP):
     The loaded stellar mass data has units of Msun assuming the h = H_TNG
     from the cosmology of the underlying simulation.
 
-    The output stellar mass data has units of Msun/h, or units of
-    Mstar[h=H_TNG] using the h value of the simulation.
-
     H_TNG is defined at the top of the module.
 
     Parameters
@@ -328,9 +316,9 @@ def load_tng_small_data(gal_type, data_drn=BEBOP):
     halo_ids:  ndarray of shape (n_gal, )
         IDs of the halos in the file.
     log_smahs: ndarray of shape (n_gal, n_times)
-        Cumulative stellar mass history in units of Msun assuming h=1.
+        Cumulative stellar mass history in units of Msun assuming h in the simulation.
     sfrh: ndarray of shape (n_gal, n_times)
-        Star formation rate history in units of Msun/yr assuming h=1.
+        Star formation rate history in units of Msun/yr assuming h in the simulation.
     tng_t : ndarray of shape (n_times, )
         Cosmic time of each simulated snapshot in Gyr
     dt : ndarray of shape (n_times, )
@@ -361,9 +349,6 @@ def load_mdpl_data(gal_type, data_drn=BEBOP):
     The loaded stellar mass data has units of Msun assuming the h = H_MDPL
     from the cosmology of the underlying simulation.
 
-    The output stellar mass data has units of Msun/h, or units of
-    Mstar[h=H_MDPL] using the h value of the simulation.
-
     H_MDPL is defined at the top of the module.
 
     Parameters
@@ -381,9 +366,9 @@ def load_mdpl_data(gal_type, data_drn=BEBOP):
     halo_ids:  ndarray of shape (n_gal, )
         IDs of the halos in the file.
     log_smahs: ndarray of shape (n_gal, n_times)
-        Cumulative stellar mass history in units of Msun assuming h=1.
+        Cumulative stellar mass history in units of Msun assuming h in the simulation.
     sfrh: ndarray of shape (n_gal, n_times)
-        Star formation rate history in units of Msun/yr assuming h=1.
+        Star formation rate history in units of Msun/yr assuming h in the simulation.
     mdpl_t : ndarray of shape (n_times, )
         Cosmic time of each simulated snapshot in Gyr
     dt : ndarray of shape (n_times, )
@@ -415,9 +400,6 @@ def load_mdpl_small_data(gal_type, data_drn=BEBOP):
     The loaded stellar mass data has units of Msun assuming the h = H_MDPL
     from the cosmology of the underlying simulation.
 
-    The output stellar mass data has units of Msun/h, or units of
-    Mstar[h=H_MDPL] using the h value of the simulation.
-
     H_MDPL is defined at the top of the module.
 
     Parameters
@@ -435,9 +417,9 @@ def load_mdpl_small_data(gal_type, data_drn=BEBOP):
     halo_ids:  ndarray of shape (n_gal, )
         IDs of the halos in the file.
     log_smahs: ndarray of shape (n_gal, n_times)
-        Cumulative stellar mass history in units of Msun assuming h=1.
+        Cumulative stellar mass history in units of Msun assuming h in the simulation.
     sfrh: ndarray of shape (n_gal, n_times)
-        Star formation rate history in units of Msun/yr assuming h=1.
+        Star formation rate history in units of Msun/yr assuming h in the simulation.
     mdpl_t : ndarray of shape (n_times, )
         Cosmic time of each simulated snapshot in Gyr
     dt : ndarray of shape (n_times, )
@@ -468,9 +450,6 @@ def load_SMDPL_nomerging_data(subvols, data_drn=BEBOP_SMDPL):
     The loaded stellar mass data has units of Msun assuming the h = H_BPL
     from the cosmology of the underlying simulation.
 
-    The output stellar mass data has units of Msun/h, or units of
-    Mstar[h=H_BPL] using the h value of the simulation.
-
     H_BPL is defined at the top of the module.
 
     Parameters
@@ -488,9 +467,9 @@ def load_SMDPL_nomerging_data(subvols, data_drn=BEBOP_SMDPL):
     halo_ids:  ndarray of shape (n_gal, )
         IDs of the halos in the file.
     log_smahs: ndarray of shape (n_gal, n_times)
-        Cumulative stellar mass history in units of Msun assuming h=1.
+        Cumulative stellar mass history in units of Msun assuming h in the simulation.
     sfrh: ndarray of shape (n_gal, n_times)
-        Star formation rate history in units of Msun/yr assuming h=1.
+        Star formation rate history in units of Msun/yr assuming h in the simulation.
     bpl_t : ndarray of shape (n_times, )
         Cosmic time of each simulated snapshot in Gyr
     dt : ndarray of shape (n_times, )
@@ -532,9 +511,6 @@ def load_SMDPL_DR1_data(subvols, data_drn=BEBOP_SMDPL_DR1):
     The loaded stellar mass data has units of Msun assuming the h = H_BPL
     from the cosmology of the underlying simulation.
 
-    The output stellar mass data has units of Msun/h, or units of
-    Mstar[h=H_BPL] using the h value of the simulation.
-
     H_BPL is defined at the top of the module.
 
     Parameters
@@ -552,9 +528,9 @@ def load_SMDPL_DR1_data(subvols, data_drn=BEBOP_SMDPL_DR1):
     halo_ids:  ndarray of shape (n_gal, )
         IDs of the halos in the file.
     log_smahs: ndarray of shape (n_gal, n_times)
-        Cumulative stellar mass history in units of Msun assuming h=1.
+        Cumulative stellar mass history in units of Msun assuming h=0.67.
     sfrh: ndarray of shape (n_gal, n_times)
-        Star formation rate history in units of Msun/yr assuming h=1.
+        Star formation rate history in units of Msun/yr assuming h=0.67.
     bpl_t : ndarray of shape (n_times, )
         Cosmic time of each simulated snapshot in Gyr
     dt : ndarray of shape (n_times, )
