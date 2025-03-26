@@ -328,7 +328,7 @@ def compute_fstar(tarr, mstar, fstar_tdelay):
     Returns
     -------
     fstar : ndarray of shape (n_times)
-        SFH averaged over timescale fstar_tdelay in units of Msun/yr assuming h=1
+        SFH averaged over timescale fstar_tdelay in units of Msun/yr
 
     Notes
     -------
