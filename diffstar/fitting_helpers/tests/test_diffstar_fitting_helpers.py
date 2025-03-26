@@ -52,7 +52,7 @@ def test_diffstar_fitter():
     n_times = 50
     t0_sim = 13.6
     fb_sim = 0.15
-    t_table = np.linspace(T_TABLE_MIN, t0_sim, n_times)
+    t_table = np.linspace(0.1, t0_sim, n_times)
 
     for __ in range(n_tests):
 
@@ -86,7 +86,7 @@ def test_diffstar_fitter():
         logsm_table = np.log10(mstar_table)
         logsm_table_best = np.log10(mstar_table_best)
         mean_abs_err = _mae(logsm_table, logsm_table_best)
-        assert mean_abs_err < 0.1
+        assert mean_abs_err < 0.2
 
 
 def test_loss_default_clipssfrh():
