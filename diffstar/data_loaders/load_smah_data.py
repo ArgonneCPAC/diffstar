@@ -7,7 +7,7 @@ import h5py
 import numpy as np
 
 from ..defaults import SFR_MIN
-from ..utils import _get_dt_array
+from ..utils import cumulative_mstar_formed_galpop
 
 try:
     from umachine_pyio.load_mock import load_mock_from_binaries
@@ -154,9 +154,6 @@ def load_bolshoi_data(gal_type, data_drn=BEBOP):
     bpl_t : ndarray of shape (n_times, )
         Cosmic time of each simulated snapshot in Gyr
 
-    dt : ndarray of shape (n_times, )
-        Cosmic time steps between each simulated snapshot in Gyr
-
     """
     basename = "bpl_diffmah_{}.npy".format(gal_type)
     fn = os.path.join(data_drn, basename)
@@ -164,16 +161,12 @@ def load_bolshoi_data(gal_type, data_drn=BEBOP):
     bpl_t = np.load(os.path.join(data_drn, "bpl_cosmic_time.npy"))
 
     halo_ids = halos["halo_id"]
-    dt = _get_dt_array(bpl_t)
+
     sfrh = halos["sfr_history_main_prog"]
-    sfrh = np.where(sfrh < SFR_MIN, SFR_MIN, sfrh)
-    sm_cumsum = np.cumsum(sfrh * dt, axis=1) * 1e9
+    mstarh = cumulative_mstar_formed_galpop(bpl_t, sfrh)
+    log_smahs = np.log10(mstarh)
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        log_smahs = np.where(sm_cumsum == 0, 0, np.log10(sm_cumsum))
-
-    return halo_ids, log_smahs, sfrh, bpl_t, dt
+    return halo_ids, log_smahs, sfrh, bpl_t
 
 
 def load_bolshoi_small_data(gal_type, data_drn=BEBOP):
@@ -211,9 +204,6 @@ def load_bolshoi_small_data(gal_type, data_drn=BEBOP):
 
         Cosmic time of each simulated snapshot in Gyr
 
-    dt : ndarray of shape (n_times, )
-        Cosmic time steps between each simulated snapshot in Gyr
-
     """
     basename = "um_histories_subsample_dr1_bpl_{}_diffmah.npy".format(gal_type)
     fn = os.path.join(data_drn, basename)
@@ -221,16 +211,12 @@ def load_bolshoi_small_data(gal_type, data_drn=BEBOP):
     bpl_t = np.load(os.path.join(data_drn, "bpl_cosmic_time.npy"))
 
     halo_ids = halos["halo_id"]
-    dt = _get_dt_array(bpl_t)
+
     sfrh = halos["sfr_history_main_prog"]
-    sfrh = np.where(sfrh < SFR_MIN, SFR_MIN, sfrh)
-    sm_cumsum = np.cumsum(sfrh * dt, axis=1) * 1e9
+    mstarh = cumulative_mstar_formed_galpop(bpl_t, sfrh)
+    log_smahs = np.log10(mstarh)
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        log_smahs = np.where(sm_cumsum == 0, 0, np.log10(sm_cumsum))
-
-    return halo_ids, log_smahs, sfrh, bpl_t, dt
+    return halo_ids, log_smahs, sfrh, bpl_t
 
 
 def load_tng_data(data_drn=BEBOP):
@@ -266,9 +252,6 @@ def load_tng_data(data_drn=BEBOP):
     tng_t : ndarray of shape (n_times, )
         Cosmic time of each simulated snapshot in Gyr
 
-    dt : ndarray of shape (n_times, )
-        Cosmic time steps between each simulated snapshot in Gyr
-
     """
     basename = "tng_diffmah.npy"
     fn = os.path.join(data_drn, basename)
@@ -276,20 +259,16 @@ def load_tng_data(data_drn=BEBOP):
     tng_t = np.load(os.path.join(data_drn, "tng_cosmic_time.npy"))
 
     halo_ids = np.arange(len(halos["mpeak"])).astype("i8")
-    dt = _get_dt_array(tng_t)
-    sfrh = halos["sfh"]
-    sfrh = np.where(sfrh < SFR_MIN, SFR_MIN, sfrh)
-    sm_cumsum = np.cumsum(sfrh * dt, axis=1) * 1e9
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        log_smahs = np.where(sm_cumsum == 0, 0, np.log10(sm_cumsum))
+    sfrh = halos["sfh"]
+    mstarh = cumulative_mstar_formed_galpop(tng_t, sfrh)
+    log_smahs = np.log10(mstarh)
 
     log_mahs = halos["mpeakh"]
     log_mahs = np.maximum.accumulate(log_mahs, axis=1)
     logmp0 = log_mahs[:, -1]
 
-    return halo_ids, log_smahs, sfrh, tng_t, dt, log_mahs, logmp0
+    return halo_ids, log_smahs, sfrh, tng_t, log_mahs, logmp0
 
 
 def load_tng_small_data(gal_type, data_drn=BEBOP):
@@ -321,8 +300,7 @@ def load_tng_small_data(gal_type, data_drn=BEBOP):
         Star formation rate history in units of Msun/yr assuming h in the simulation.
     tng_t : ndarray of shape (n_times, )
         Cosmic time of each simulated snapshot in Gyr
-    dt : ndarray of shape (n_times, )
-        Cosmic time steps between each simulated snapshot in Gyr
+
     """
     basename = "tng_small.npy"
     fn = os.path.join(data_drn, basename)
@@ -330,16 +308,12 @@ def load_tng_small_data(gal_type, data_drn=BEBOP):
     tng_t = np.load(os.path.join(data_drn, "tng_cosmic_time.npy"))
 
     halo_ids = np.arange(len(halos["mpeak"])).astype("i8")
-    dt = _get_dt_array(tng_t)
+
     sfrh = halos["sfh"]
-    sfrh = np.where(sfrh < SFR_MIN, SFR_MIN, sfrh)
-    sm_cumsum = np.cumsum(sfrh * dt, axis=1) * 1e9
+    mstarh = cumulative_mstar_formed_galpop(tng_t, sfrh)
+    log_smahs = np.log10(mstarh)
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        log_smahs = np.where(sm_cumsum == 0, 0, np.log10(sm_cumsum))
-
-    return halo_ids, log_smahs, sfrh, tng_t, dt
+    return halo_ids, log_smahs, sfrh, tng_t
 
 
 def load_mdpl_data(gal_type, data_drn=BEBOP):
@@ -371,8 +345,7 @@ def load_mdpl_data(gal_type, data_drn=BEBOP):
         Star formation rate history in units of Msun/yr assuming h in the simulation.
     mdpl_t : ndarray of shape (n_times, )
         Cosmic time of each simulated snapshot in Gyr
-    dt : ndarray of shape (n_times, )
-        Cosmic time steps between each simulated snapshot in Gyr
+
     """
     basename = "mdpl2_diffmah_{}.npy".format(gal_type)
     fn = os.path.join(data_drn, basename)
@@ -380,16 +353,12 @@ def load_mdpl_data(gal_type, data_drn=BEBOP):
     mdpl_t = np.load(os.path.join(data_drn, "mdpl2_cosmic_time.npy"))
 
     halo_ids = halos["halo_id"]
-    dt = _get_dt_array(mdpl_t)
+
     sfrh = halos["sfr_history_main_prog"]
-    sfrh = np.where(sfrh < SFR_MIN, SFR_MIN, sfrh)
-    sm_cumsum = np.cumsum(sfrh * dt, axis=1) * 1e9
+    mstarh = cumulative_mstar_formed_galpop(mdpl_t, sfrh)
+    log_smahs = np.log10(mstarh)
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        log_smahs = np.where(sm_cumsum == 0, 0, np.log10(sm_cumsum))
-
-    return halo_ids, log_smahs, sfrh, mdpl_t, dt
+    return halo_ids, log_smahs, sfrh, mdpl_t
 
 
 def load_mdpl_small_data(gal_type, data_drn=BEBOP):
@@ -422,8 +391,7 @@ def load_mdpl_small_data(gal_type, data_drn=BEBOP):
         Star formation rate history in units of Msun/yr assuming h in the simulation.
     mdpl_t : ndarray of shape (n_times, )
         Cosmic time of each simulated snapshot in Gyr
-    dt : ndarray of shape (n_times, )
-        Cosmic time steps between each simulated snapshot in Gyr
+
     """
     basename = "um_histories_dr1_mdpl2_small_{}.npy".format(gal_type)
     fn = os.path.join(data_drn, basename)
@@ -431,16 +399,12 @@ def load_mdpl_small_data(gal_type, data_drn=BEBOP):
     mdpl_t = np.load(os.path.join(data_drn, "mdpl2_cosmic_time.npy"))
 
     halo_ids = halos["halo_id"]
-    dt = _get_dt_array(mdpl_t)
+
     sfrh = halos["sfr_history_main_prog"]
-    sfrh = np.where(sfrh < SFR_MIN, SFR_MIN, sfrh)
-    sm_cumsum = np.cumsum(sfrh * dt, axis=1) * 1e9
+    mstarh = cumulative_mstar_formed_galpop(mdpl_t, sfrh)
+    log_smahs = np.log10(mstarh)
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        log_smahs = np.where(sm_cumsum == 0, 0, np.log10(sm_cumsum))
-
-    return halo_ids, log_smahs, sfrh, mdpl_t, dt
+    return halo_ids, log_smahs, sfrh, mdpl_t
 
 
 def load_SMDPL_nomerging_data(subvols, data_drn=BEBOP_SMDPL):
@@ -472,8 +436,7 @@ def load_SMDPL_nomerging_data(subvols, data_drn=BEBOP_SMDPL):
         Star formation rate history in units of Msun/yr assuming h in the simulation.
     bpl_t : ndarray of shape (n_times, )
         Cosmic time of each simulated snapshot in Gyr
-    dt : ndarray of shape (n_times, )
-        Cosmic time steps between each simulated snapshot in Gyr
+
     """
     if not HAS_UM_LOADER:
         raise ImportError("Must have umachine_pyio installed to load this dataset")
@@ -484,13 +447,10 @@ def load_SMDPL_nomerging_data(subvols, data_drn=BEBOP_SMDPL):
     SMDPL_t = np.loadtxt(os.path.join(data_drn, "smdpl_cosmic_time.txt"))
 
     halo_ids = mock["halo_id"]
-    dt = _get_dt_array(SMDPL_t)
-    sfrh = mock["sfr_history_main_prog"]
-    sm_cumsum = np.cumsum(sfrh * dt, axis=1) * 1e9
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        log_smahs = np.where(sm_cumsum == 0, 0, np.log10(sm_cumsum))
+    sfrh = mock["sfr_history_main_prog"]
+    mstarh = cumulative_mstar_formed_galpop(SMDPL_t, sfrh)
+    log_smahs = np.log10(mstarh)
 
     lgmh_min = 7.0
     mh_min = 10**lgmh_min
@@ -501,7 +461,7 @@ def load_SMDPL_nomerging_data(subvols, data_drn=BEBOP_SMDPL):
 
     logmp0 = log_mahs[:, -1]
 
-    return halo_ids, log_smahs, sfrh, SMDPL_t, dt, log_mahs, logmp0
+    return halo_ids, log_smahs, sfrh, SMDPL_t, log_mahs, logmp0
 
 
 def load_SMDPL_DR1_data(subvols, data_drn=BEBOP_SMDPL_DR1):
@@ -533,8 +493,7 @@ def load_SMDPL_DR1_data(subvols, data_drn=BEBOP_SMDPL_DR1):
         Star formation rate history in units of Msun/yr assuming h=0.67.
     bpl_t : ndarray of shape (n_times, )
         Cosmic time of each simulated snapshot in Gyr
-    dt : ndarray of shape (n_times, )
-        Cosmic time steps between each simulated snapshot in Gyr
+
     """
     if not HAS_UM_LOADER:
         raise ImportError("Must have umachine_pyio installed to load this dataset")
@@ -545,13 +504,10 @@ def load_SMDPL_DR1_data(subvols, data_drn=BEBOP_SMDPL_DR1):
     SMDPL_t = np.loadtxt(os.path.join(data_drn, "smdpl_cosmic_time.txt"))
 
     halo_ids = mock["halo_id"]
-    dt = _get_dt_array(SMDPL_t)
-    sfrh = mock["sfr_history_all_prog"]
-    sm_cumsum = np.cumsum(sfrh * dt, axis=1) * 1e9
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        log_smahs = np.where(sm_cumsum == 0, 0, np.log10(sm_cumsum))
+    sfrh = mock["sfr_history_all_prog"]
+    mstarh = cumulative_mstar_formed_galpop(SMDPL_t, sfrh)
+    log_smahs = np.log10(mstarh)
 
     lgmh_min = 7.0
     mh_min = 10**lgmh_min
@@ -562,4 +518,4 @@ def load_SMDPL_DR1_data(subvols, data_drn=BEBOP_SMDPL_DR1):
 
     logmp0 = log_mahs[:, -1]
 
-    return halo_ids, log_smahs, sfrh, SMDPL_t, dt, log_mahs, logmp0
+    return halo_ids, log_smahs, sfrh, SMDPL_t, log_mahs, logmp0
