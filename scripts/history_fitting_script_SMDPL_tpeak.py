@@ -108,17 +108,14 @@ if __name__ == "__main__":
 
         if args.sim_name == "DR1":
             _data = load_SMDPL_DR1_data(subvolumes_i, subvol_data_str)
+            subvol_diffmah_str = f"diffmah_fits_subvol_{isubvol}.hdf5"
         elif args.sim_name == "DR1_nomerging":
             _data = load_SMDPL_nomerging_data(subvolumes_i, subvol_data_str)
+            subvol_diffmah_str = f"{subvol_str}_diffmah_fits.h5"
         else:
             raise NotImplementedError
 
         halo_ids, log_smahs, sfrhs, tarr, dt, log_mahs, logmp = _data
-
-        if args.sim_name == "DR1":
-            subvol_diffmah_str = f"diffmah_fits_subvol_{isubvol}.hdf5"
-        elif args.sim_name == "DR1_nomerging":
-            subvol_diffmah_str = f"{subvol_str}_diffmah_fits.h5"
 
         mah_fit_params, logmp_fit = load_fit_mah_tpeak(
             subvol_diffmah_str, data_drn=indir_diffmah
