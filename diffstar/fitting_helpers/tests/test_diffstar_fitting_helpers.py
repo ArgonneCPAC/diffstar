@@ -4,9 +4,46 @@ import numpy as np
 from diffmah.defaults import DEFAULT_MAH_PARAMS
 from jax import random as jran
 
-from ...defaults import T_TABLE_MIN
+from ... import calc_sfh_singlegal
+from ...defaults import (
+    DEFAULT_DIFFSTAR_U_PARAMS,
+    T_TABLE_MIN,
+    get_bounded_diffstar_params,
+)
 from ...utils import cumulative_mstar_formed
 from .. import diffstar_fitting_helpers as dfh
+
+
+def _get_random_diffstar_params(ran_key):
+    ms_key, q_key = jran.split(ran_key, 2)
+    u_ms = jran.uniform(
+        ms_key,
+        minval=-1,
+        maxval=1,
+        shape=(len(DEFAULT_DIFFSTAR_U_PARAMS.u_ms_params),),
+    )
+    u_q = jran.uniform(
+        ms_key,
+        minval=-1,
+        maxval=1,
+        shape=(len(DEFAULT_DIFFSTAR_U_PARAMS.u_q_params),),
+    )
+
+    u_ms_params = u_ms + np.array(DEFAULT_DIFFSTAR_U_PARAMS.u_ms_params)
+    u_q_params = u_q + np.array(DEFAULT_DIFFSTAR_U_PARAMS.u_q_params)
+
+    u_ms_params = DEFAULT_DIFFSTAR_U_PARAMS.u_ms_params._make(u_ms_params)
+    u_q_params = DEFAULT_DIFFSTAR_U_PARAMS.u_q_params._make(u_q_params)
+
+    u_sfh_params = DEFAULT_DIFFSTAR_U_PARAMS._make((u_ms_params, u_q_params))
+
+    return u_sfh_params
+
+
+def _mae(pred, target):
+    diff = pred - target
+    abserr = np.abs(diff)
+    return np.mean(abserr)
 
 
 def test_diffstar_fitter():
@@ -18,12 +55,38 @@ def test_diffstar_fitter():
     t_table = np.linspace(T_TABLE_MIN, t0_sim, n_times)
 
     for __ in range(n_tests):
-        ran_key, sfh_key = jran.split(ran_key, 2)
-        sfh_table = jran.uniform(sfh_key, minval=0, maxval=100, shape=(n_times,))
+
+        ran_key, u_p_key = jran.split(ran_key, 2)
+        u_sfh_params = _get_random_diffstar_params(u_p_key)
+        sfh_params = get_bounded_diffstar_params(u_sfh_params)
+
+        sfh_table, mstar_table = calc_sfh_singlegal(
+            sfh_params,
+            DEFAULT_MAH_PARAMS,
+            t_table,
+            lgt0=np.log10(t0_sim),
+            fb=fb_sim,
+            return_smh=True,
+        )
 
         p_best, loss_best, success = dfh.diffstar_fitter(
             t_table, sfh_table, DEFAULT_MAH_PARAMS, lgt0=np.log10(t0_sim), fb=fb_sim
         )
+        assert success == 1
+
+        sfh_table_best, mstar_table_best = calc_sfh_singlegal(
+            p_best,
+            DEFAULT_MAH_PARAMS,
+            t_table,
+            lgt0=np.log10(t0_sim),
+            fb=fb_sim,
+            return_smh=True,
+        )
+
+        logsm_table = np.log10(mstar_table)
+        logsm_table_best = np.log10(mstar_table_best)
+        mean_abs_err = _mae(logsm_table, logsm_table_best)
+        assert mean_abs_err < 0.1
 
 
 def test_loss_default_clipssfrh():
