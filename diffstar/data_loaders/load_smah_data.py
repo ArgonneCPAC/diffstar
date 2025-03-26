@@ -1,12 +1,10 @@
 """ """
 
 import os
-import warnings
 
 import h5py
 import numpy as np
 
-from ..defaults import SFR_MIN
 from ..utils import cumulative_mstar_formed_galpop
 
 try:
