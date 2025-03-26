@@ -106,6 +106,7 @@ def test_compute_fstar():
         ran_key, sfh_key, fstar_key = jran.split(ran_key, 3)
         sfh_table = jran.uniform(sfh_key, minval=0, maxval=100, shape=(n_times,))
         mstar_table = utils.cumulative_mstar_formed(t_table, sfh_table)
+        assert np.all(mstar_table > 0)
         fstar_tdelay = jran.uniform(fstar_key, minval=0, maxval=10.0, shape=())
         fstar_history = utils.compute_fstar(t_table, mstar_table, fstar_tdelay)
         assert np.all(np.isfinite(fstar_history))
