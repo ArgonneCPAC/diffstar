@@ -5,16 +5,16 @@ from glob import glob
 from time import time
 
 import numpy as np
+from diffmah.diffmah_kernels import DiffmahParams
 from mpi4py import MPI
 
 import diffstar.fitting_helpers.fit_smah_helpers_tpeak as fitsmah
 from diffstar.data_loaders.load_smah_data import (
     load_fit_mah_tpeak,
-    load_SMDPL_nomerging_data,
     load_SMDPL_DR1_data,
+    load_SMDPL_nomerging_data,
 )
 from diffstar.fitting_helpers.utils import minimizer_wrapper
-from diffmah.diffmah_kernels import DiffmahParams
 
 BEBOP_SMDPL = "/lcrc/project/galsampler/SMDPL/dr1_no_merging_upidh/sfh_binary_catalogs/a_1.000000/"
 BEBOP_SMDPL_MAH = (
