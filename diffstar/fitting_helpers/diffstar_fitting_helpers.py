@@ -42,6 +42,7 @@ def diffstar_fitter(
     lgt0=LGT0,
     fb=FB,
 ):
+    """Run the diffstar fitter on the input SFH"""
     u_p_init_and_err, loss_data = get_loss_data_default(
         t_table,
         sfh_table,
@@ -61,12 +62,15 @@ def diffstar_fitter(
         loss_data,
     )
     varied_u_p_best, loss_best, success = _res
+
+    # Transform varied_u_p_best into p_best
     u_indx_hi = DEFAULT_DIFFSTAR_U_PARAMS.u_ms_params.u_indx_hi
     u_p_best = (*varied_u_p_best[:3], u_indx_hi, *varied_u_p_best[3:])
     u_ms_params = DEFAULT_MS_PARAMS._make(u_p_best[:5])
     u_q_params = DEFAULT_Q_PARAMS._make(u_p_best[5:])
     u_p_best = DEFAULT_DIFFSTAR_U_PARAMS._make((u_ms_params, u_q_params))
     p_best = get_bounded_diffstar_params(u_p_best)
+
     return p_best, loss_best, success
 
 
@@ -82,6 +86,7 @@ def get_loss_data_default(
     lgt0=LGT0,
     fb=FB,
 ):
+    """Get loss data to use with diffstar_fitter"""
     sfh_target = np.clip(sfh_table, SFR_MIN, np.inf)
     mstar_target = cumulative_mstar_formed(t_table, sfh_table)
     logmstar_target = np.log10(mstar_target)
