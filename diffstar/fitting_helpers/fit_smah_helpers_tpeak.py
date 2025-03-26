@@ -35,6 +35,31 @@ FSTAR_TIME_DELAY = 1.0  # Time period of averaged SFH (aka fstar). Gyr units.
 SSFRH_FLOOR = 1e-12  # Clip SFH to this minimum sSFR value. 1/yr units.
 
 
+def diffstar_fitter(
+    tarr,
+    dt,
+    sfrh,
+    lgsmah,
+    logmp0_halo,
+    mah_params,
+    mass_fit_min,
+    fstar_tdelay,
+    ssfrh_floor,
+):
+    """Fit simulated SFH with diffstar"""
+    p_init, loss_data = get_loss_data_default(
+        tarr,
+        dt,
+        sfrh,
+        lgsmah,
+        logmp0_halo,
+        mah_params,
+        mass_fit_min=mass_fit_min,
+        fstar_tdelay=fstar_tdelay,
+        ssfrh_floor=ssfrh_floor,
+    )
+
+
 def get_header():
     """ """
     colnames = ["halo_id"]
