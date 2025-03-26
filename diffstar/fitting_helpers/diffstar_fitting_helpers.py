@@ -91,7 +91,7 @@ def get_loss_data_default(
     mstar_target = cumulative_mstar_formed(t_table, sfh_table)
     logmstar_target = np.log10(mstar_target)
 
-    fstar_table = compute_fstar(t_table, logmstar_target, fstar_tdelay)
+    fstar_table = compute_fstar(t_table, mstar_target, fstar_tdelay)
     ssfrh_table = fstar_table / mstar_target
     ssfrh_target = np.clip(ssfrh_table, ssfrh_floor, np.inf)
 

@@ -52,7 +52,7 @@ def test_diffstar_fitter():
     n_times = 50
     t0_sim = 13.6
     fb_sim = 0.15
-    t_table = np.linspace(0.1, t0_sim, n_times)
+    t_table = np.linspace(T_TABLE_MIN, t0_sim, n_times)
 
     for __ in range(n_tests):
 
@@ -83,10 +83,11 @@ def test_diffstar_fitter():
             return_smh=True,
         )
 
-        logsm_table = np.log10(mstar_table)
-        logsm_table_best = np.log10(mstar_table_best)
+        msk_t_fit = t_table > dfh.T_FIT_MIN
+        logsm_table = np.log10(mstar_table)[msk_t_fit]
+        logsm_table_best = np.log10(mstar_table_best)[msk_t_fit]
         mean_abs_err = _mae(logsm_table, logsm_table_best)
-        assert mean_abs_err < 0.2
+        assert mean_abs_err < 0.05
 
 
 def test_loss_default_clipssfrh():
@@ -166,8 +167,8 @@ def test_get_loss_data_default():
         assert np.all(weight_fstar >= 0)
 
         assert np.all(np.isfinite(log_fstar_table))
-        assert np.all(log_fstar_table > -20)
-        assert np.all(log_fstar_table < 0)
+        assert np.all(log_fstar_table > -10)
+        assert np.all(log_fstar_table < np.log10(sfh_table.max()))
 
         assert 10**lgt_fstar_max > t_table[0]
         assert 10**lgt_fstar_max < t_table[-1]
