@@ -21,12 +21,53 @@ from ..defaults import (
 from ..kernels.main_sequence_kernels_tpeak import _get_unbounded_sfr_params
 from ..kernels.quenching_kernels import _get_unbounded_q_params
 from ..utils import _sigmoid, compute_fstar, cumulative_mstar_formed
+from .utils import minimizer_wrapper
 
 T_FIT_MIN = 1.0  # Only fit snapshots above this threshold. Gyr units.
 DLOGM_CUT = 3.5  # Only fit SMH within this dex of the present day stellar mass.
 MIN_MASS_CUT = 7.0  # Only fit SMH above this threshold. Log10(Msun) units.
 FSTAR_TIME_DELAY = 1.0  # Time period of averaged SFH (aka fstar). Gyr units.
 SSFRH_FLOOR = 1e-12  # Clip SFH to this minimum sSFR value. 1/yr units.
+
+
+def diffstar_fitter(
+    t_table,
+    sfh_table,
+    mah_params,
+    dlogm_cut=DLOGM_CUT,
+    t_fit_min=T_FIT_MIN,
+    mass_fit_min=MIN_MASS_CUT,
+    fstar_tdelay=FSTAR_TIME_DELAY,
+    ssfrh_floor=SSFRH_FLOOR,
+    lgt0=LGT0,
+    fb=FB,
+):
+    u_p_init_and_err, loss_data = get_loss_data_default(
+        t_table,
+        sfh_table,
+        mah_params,
+        dlogm_cut=dlogm_cut,
+        t_fit_min=t_fit_min,
+        mass_fit_min=mass_fit_min,
+        fstar_tdelay=fstar_tdelay,
+        ssfrh_floor=ssfrh_floor,
+        lgt0=lgt0,
+        fb=fb,
+    )
+    _res = minimizer_wrapper(
+        loss_default_clipssfrh,
+        loss_grad_default_clipssfrh_np,
+        u_p_init_and_err,
+        loss_data,
+    )
+    varied_u_p_best, loss_best, success = _res
+    u_indx_hi = DEFAULT_DIFFSTAR_U_PARAMS.u_ms_params.u_indx_hi
+    u_p_best = (*varied_u_p_best[:3], u_indx_hi, *varied_u_p_best[3:])
+    u_ms_params = DEFAULT_MS_PARAMS._make(u_p_best[:5])
+    u_q_params = DEFAULT_Q_PARAMS._make(u_p_best[5:])
+    u_p_best = DEFAULT_DIFFSTAR_U_PARAMS._make((u_ms_params, u_q_params))
+    p_best = get_bounded_diffstar_params(u_p_best)
+    return p_best, loss_best, success
 
 
 def get_loss_data_default(
