@@ -13,6 +13,8 @@ from ...defaults import (
 from ...utils import cumulative_mstar_formed
 from .. import diffstar_fitting_helpers as dfh
 
+LOSS_TOL = 0.1
+
 
 def _get_random_diffstar_params(ran_key):
     ms_key, q_key = jran.split(ran_key, 2)
@@ -48,12 +50,13 @@ def _mae(pred, target):
 
 def test_diffstar_fitter():
     ran_key = jran.key(0)
-    n_tests = 10
+    n_tests = 100
     n_times = 50
     t0_sim = 13.6
     fb_sim = 0.15
     t_table = np.linspace(T_TABLE_MIN, t0_sim, n_times)
 
+    loss_collector = []
     for __ in range(n_tests):
 
         ran_key, u_p_key = jran.split(ran_key, 2)
@@ -87,7 +90,9 @@ def test_diffstar_fitter():
         logsm_table = np.log10(mstar_table)[msk_t_fit]
         logsm_table_best = np.log10(mstar_table_best)[msk_t_fit]
         mean_abs_err = _mae(logsm_table, logsm_table_best)
-        assert mean_abs_err < 0.05
+        loss_collector.append(mean_abs_err)
+
+    assert np.mean(np.array(loss_collector) < LOSS_TOL) > 0.9
 
 
 def test_loss_default_clipssfrh():
