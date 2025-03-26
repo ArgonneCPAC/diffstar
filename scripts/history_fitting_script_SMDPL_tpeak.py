@@ -36,7 +36,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-indir_diffmah", help="Directory of mah parameters", default=BEBOP_SMDPL_MAH
     )
-    parser.add_argument("-indir", help="Input directory", default=BEBOP_SMDPL)
+    parser.add_argument("-indir_sfh", help="Input directory", default=BEBOP_SMDPL)
     parser.add_argument(
         "-sim_name", help="Simulation name", choices=["DR1", "DR1_nomerging"]
     )
@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    indir = args.indir
+    indir_sfh = args.indir_sfh
     indir_diffmah = args.indir_diffmah
     # outbase = args.outbase
     istart, iend = args.istart, args.iend
@@ -83,7 +83,7 @@ if __name__ == "__main__":
     start = time()
 
     all_avail_subvol_names = [
-        os.path.basename(drn) for drn in glob(os.path.join(indir, "subvol_*"))
+        os.path.basename(drn) for drn in glob(os.path.join(indir_sfh, "subvol_*"))
     ]
     all_avail_subvolumes = [int(s.split("_")[1]) for s in all_avail_subvol_names]
     all_avail_subvolumes = sorted(all_avail_subvolumes)
@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
         subvolumes_i = [isubvol]
 
-        subvol_data_str = indir
+        subvol_data_str = indir_sfh
 
         if args.sim_name == "DR1":
             _data = load_SMDPL_DR1_data(subvolumes_i, subvol_data_str)
