@@ -31,6 +31,10 @@ def test_loss_default_clipssfrh():
         assert loss_init > 0
         assert loss_init < 1_000.0
 
+        loss_grads = dfh.loss_grad_default_clipssfrh(u_p_init, loss_data)
+        assert np.all(np.isfinite(loss_grads))
+        assert not np.any(np.isclose(loss_grads, 0.0))
+
 
 def test_get_loss_data_default():
     ran_key = jran.key(0)
