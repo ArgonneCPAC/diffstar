@@ -143,7 +143,7 @@ def get_loss_data_default(
     dt,
     sfrh,
     log_smah_sim,
-    logmp,
+    logmp0,
     mah_params,
     dlogm_cut=DLOGM_CUT,
     t_fit_min=T_FIT_MIN,
@@ -165,7 +165,7 @@ def get_loss_data_default(
         Star formation history of simulated snapshots in Msun/yr units.
     log_smah_sim : ndarray of shape (nt, )
         Base-10 log of cumulative stellar mass in Msun units.
-    logmp : float
+    logmp0 : float
         Base-10 log present day halo mass in Msun units.
     mah_params : ndarray of shape (4, )
         Best fit diffmah halo parameters. Includes (logtc, k, early, late).
@@ -264,10 +264,10 @@ def get_loss_data_default(
     t_fstar_max = logt[np.argmax(log_fstar_sim)]
 
     default_sfr_params = np.array(DEFAULT_MS_PARAMS)
-    default_sfr_params[0] = np.clip(0.3 * (logmp - 11.0) + 11.4, 11.0, 13.0)
-    default_sfr_params[1] = np.clip(0.2 * (logmp - 11.0) - 0.7, -1.5, -0.2)
-    default_sfr_params[2] = np.clip(0.7 * (logmp - 11.0) - 0.3, 0.2, 3.0)
-    default_sfr_params[4] = np.clip(-8.0 * (logmp - 11.0) + 15, 2.0, 15.0)
+    default_sfr_params[0] = np.clip(0.3 * (logmp0 - 11.0) + 11.4, 11.0, 13.0)
+    default_sfr_params[1] = np.clip(0.2 * (logmp0 - 11.0) - 0.7, -1.5, -0.2)
+    default_sfr_params[2] = np.clip(0.7 * (logmp0 - 11.0) - 0.3, 0.2, 3.0)
+    default_sfr_params[4] = np.clip(-8.0 * (logmp0 - 11.0) + 15, 2.0, 15.0)
     u_default_sfr_params = np.array(_get_unbounded_sfr_params(*default_sfr_params))
 
     sfr_ms_params = np.zeros(4)
@@ -278,7 +278,7 @@ def get_loss_data_default(
     sfr_ms_params_err = np.array([0.5, 0.5, 1.0, 3.0])
 
     default_q_params = np.array(DEFAULT_Q_PARAMS)
-    default_q_params[0] = np.clip(-0.5 * (logmp - 11.0) + 1.5, 0.7, 1.5)
+    default_q_params[0] = np.clip(-0.5 * (logmp0 - 11.0) + 1.5, 0.7, 1.5)
     default_q_params[2] = -2.0
     q_params = np.array(_get_unbounded_q_params(*default_q_params))
     q_params_err = np.array([0.3, 0.5, 0.3, 0.3])

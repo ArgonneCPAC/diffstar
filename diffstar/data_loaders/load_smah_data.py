@@ -40,45 +40,6 @@ FB_TNG = 0.0486 / 0.3089  # 0,15733
 H_TNG = 0.6774
 
 
-def load_fit_mah(basename, data_drn=BEBOP):
-    """Load the best fit diffmah parameter data
-
-    Parameters
-    ----------
-    basename : string
-        Name of the h5 file where the diffmah best fit parameters are stored
-
-    data_drn : string
-        Filepath where the Diffstar best-fit parameters are stored
-
-    Returns
-    -------
-    mah_fit_params:  ndarray of shape (n_gal, 4)
-        Best fit parameters for each halo:
-            (logtc, k, early_index, late_index)
-
-    logmp:  ndarray of shape (n_gal, )
-        Base-10 logarithm of the present day peak halo mass
-
-    logmp:  ndarray of shape (n_gal, )
-        Base-10 logarithm of the present day peak halo mass
-    """
-
-    fn = os.path.join(data_drn, basename)
-    with h5py.File(fn, "r") as hdf:
-        mah_fit_params = np.array(
-            [
-                hdf["logm0"][:],
-                hdf["logtc"][:],
-                hdf["early_index"][:],
-                hdf["late_index"][:],
-            ]
-        ).T
-        logmp = hdf["logm0"][:]
-
-    return mah_fit_params, logmp
-
-
 def load_fit_mah_tpeak(basename, data_drn=BEBOP):
     """Load the best fit diffmah parameter data
 
@@ -96,8 +57,9 @@ def load_fit_mah_tpeak(basename, data_drn=BEBOP):
         Best fit parameters for each halo:
             (logtc, k, early_index, late_index)
 
-    logmp:  ndarray of shape (n_gal, )
-        Base-10 logarithm of the present day peak halo mass
+    logm0:  ndarray of shape (n_gal, )
+        Diffmah parameter logm0
+
     """
 
     fn = os.path.join(data_drn, basename)
@@ -111,9 +73,9 @@ def load_fit_mah_tpeak(basename, data_drn=BEBOP):
                 hdf["t_peak"][:],
             ]
         ).T
-        logmp = hdf["logm0"][:]
+        logm0 = hdf["logm0"][:]
 
-    return mah_fit_params, logmp
+    return mah_fit_params, logm0
 
 
 def load_fit_sfh(basename, data_drn=BEBOP):
@@ -334,9 +296,9 @@ def load_tng_data(data_drn=BEBOP):
 
     log_mahs = halos["mpeakh"]
     log_mahs = np.maximum.accumulate(log_mahs, axis=1)
-    logmp = log_mahs[:, -1]
+    logmp0 = log_mahs[:, -1]
 
-    return halo_ids, log_smahs, sfrh, tng_t, dt, log_mahs, logmp
+    return halo_ids, log_smahs, sfrh, tng_t, dt, log_mahs, logmp0
 
 
 def load_tng_small_data(gal_type, data_drn=BEBOP):
@@ -558,9 +520,9 @@ def load_SMDPL_nomerging_data(subvols, data_drn=BEBOP_SMDPL):
     log_mahs = np.log10(clipped_mahs)
     log_mahs = np.maximum.accumulate(log_mahs, axis=1)
 
-    logmp = log_mahs[:, -1]
+    logmp0 = log_mahs[:, -1]
 
-    return halo_ids, log_smahs, sfrh, SMDPL_t, dt, log_mahs, logmp
+    return halo_ids, log_smahs, sfrh, SMDPL_t, dt, log_mahs, logmp0
 
 
 def load_SMDPL_DR1_data(subvols, data_drn=BEBOP_SMDPL_DR1):
@@ -622,6 +584,6 @@ def load_SMDPL_DR1_data(subvols, data_drn=BEBOP_SMDPL_DR1):
     log_mahs = np.log10(clipped_mahs)
     log_mahs = np.maximum.accumulate(log_mahs, axis=1)
 
-    logmp = log_mahs[:, -1]
+    logmp0 = log_mahs[:, -1]
 
-    return halo_ids, log_smahs, sfrh, SMDPL_t, dt, log_mahs, logmp
+    return halo_ids, log_smahs, sfrh, SMDPL_t, dt, log_mahs, logmp0
