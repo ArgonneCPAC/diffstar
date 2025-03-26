@@ -1,5 +1,4 @@
-"""
-"""
+""" """
 
 import numpy as np
 from jax import jit as jjit
@@ -306,3 +305,38 @@ def cumulative_mstar_formed_galpop(t_table, sfh_table):
 
     """
     return _cuml_mstar_vmap(t_table, sfh_table)
+
+
+@jjit
+def compute_fstar(tarr, mstar, fstar_tdelay):
+    """Time averaged SFH that has ocurred over some previous time period
+
+    fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay
+
+    Parameters
+    ----------
+    tarr : ndarray of shape (n_times, )
+        Cosmic time of each simulated snapshot in Gyr
+
+    mstar : ndarray of shape (n_times, )
+        Stellar mass history in Msun units
+
+    fstar_tdelay: float
+        Time interval in Gyr units for fstar definition.
+        fstar = (mstar(t) - mstar(t-fstar_tdelay)) / fstar_tdelay
+
+    Returns
+    -------
+    fstar : ndarray of shape (n_times)
+        SFH averaged over timescale fstar_tdelay in units of Msun/yr assuming h=1
+
+    Notes
+    -------
+    for t-fstar_tdelay < 0 t<tarr, and jnp.interp returns by default mstar[0],
+    so fstar will always be positive.
+
+    """
+    mstar_low = jnp.interp(tarr - fstar_tdelay, tarr, mstar)
+    fstar = (mstar - mstar_low) / fstar_tdelay / 1e9
+    fstar = jnp.where(fstar > 0.0, fstar, 0.0)
+    return fstar

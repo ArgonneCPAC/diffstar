@@ -1,5 +1,4 @@
-"""
-"""
+""" """
 
 import numpy as np
 import pytest
@@ -95,3 +94,20 @@ def test_cumulative_mstar_formed_vmap():
     for ig in range(n_gals):
         smh_table_ig = utils.cumulative_mstar_formed(t_table, sfh_table_galpop[ig, :])
         assert np.allclose(smh_table_ig, smh_table_galpop[ig, :], rtol=1e-5)
+
+
+def test_compute_fstar():
+    ran_key = jran.key(0)
+    n_tests = 100
+    n_times = 200
+    t_table = np.linspace(T_TABLE_MIN, 13.8, n_times)
+
+    for __ in range(n_tests):
+        ran_key, sfh_key, fstar_key = jran.split(ran_key, 3)
+        sfh_table = jran.uniform(sfh_key, minval=0, maxval=100, shape=(n_times,))
+        mstar_table = utils.cumulative_mstar_formed(t_table, sfh_table)
+        fstar_tdelay = jran.uniform(fstar_key, minval=0, maxval=10.0, shape=())
+        fstar_history = utils.compute_fstar(t_table, mstar_table, fstar_tdelay)
+        assert np.all(np.isfinite(fstar_history))
+        assert np.all(fstar_history[1:] > 0)
+        assert np.all(fstar_history <= sfh_table.max())
