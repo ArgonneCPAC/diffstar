@@ -1,5 +1,6 @@
 """ """
 
+import h5py
 import numpy as np
 from diffmah import mah_singlehalo
 from diffmah.defaults import LGT0
@@ -253,3 +254,49 @@ loss_grad_default_clipssfrh = jjit(grad(loss_default_clipssfrh, argnums=(0)))
 
 def loss_grad_default_clipssfrh_np(params, data):
     return np.array(loss_grad_default_clipssfrh(params, data)).astype(float)
+
+
+def get_header():
+    """ """
+    colnames = ["halo_id"]
+    colnames.extend(list(DEFAULT_MS_PARAMS._fields))
+    colnames.extend(list(DEFAULT_Q_PARAMS._fields))
+    colnames.extend(["loss", "success"])
+    header_str = "# " + " ".join(colnames) + "\n"
+    return header_str, colnames
+
+
+def get_outline(halo_id, p_best, loss_best, success):
+    """Return the string storing fitting results that will be written to disk"""
+    _d = np.array((*p_best.ms_params, *p_best.q_params)).astype("f4")
+    data_out = (*_d, float(loss_best))
+    out = str(halo_id) + " " + " ".join(["{:.5e}".format(x) for x in data_out])
+    out = out + " " + str(success)
+    return out + "\n"
+
+
+def get_outline_nofit(halo_id):
+    """Return the string storing output that will be written to disk
+    for galaxies without a diffstar fit"""
+    n_sfh_params = len(DEFAULT_MS_PARAMS) + len(DEFAULT_Q_PARAMS)
+    _d = np.zeros(n_sfh_params) + -1.0
+    loss_best = -1.0
+    success = -1
+
+    data_out = (*_d, float(loss_best))
+    out = str(halo_id) + " " + " ".join(["{:.5e}".format(x) for x in data_out])
+    out = out + " " + str(success)
+    return out + "\n"
+
+
+def write_collated_data(outname, data, colnames):
+
+    ncols = np.shape(data)[1]
+    assert len(colnames) == ncols, "data mismatched with header"
+
+    with h5py.File(outname, "w") as hdf:
+        for i, name in enumerate(colnames):
+            if (name == "halo_id") | (name == "success"):
+                hdf[name] = data[:, i].astype(int)
+            else:
+                hdf[name] = data[:, i].astype(float)

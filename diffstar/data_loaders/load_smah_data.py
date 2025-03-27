@@ -4,6 +4,7 @@ import os
 
 import h5py
 import numpy as np
+from diffmah import diffmah_kernels as dk
 
 from ..utils import cumulative_mstar_formed_galpop
 
@@ -32,13 +33,17 @@ H_MDPL = H_BPL
 # from https://www.cosmosim.org/metadata/smdpl/
 FB_SMDPL = 0.048206 / 0.307115  # 0,15696
 H_SMDPL = 0.6777
+OM0_SMDPL = 0.307115
+T0_SMDPL = 13.820002  # dsps.cosmology.flat_wcdm.age_at_z0
 
 # from https://www.tng-project.org/data/downloads/TNG300-1/
 FB_TNG = 0.0486 / 0.3089  # 0,15733
 H_TNG = 0.6774
 
+NPTS_FIT_MIN = 5  # Number of non-trivial points in the MAH, excluding MAH(z=0)
 
-def load_fit_mah_tpeak(basename, data_drn=BEBOP):
+
+def load_smdpl_diffmah_fits(basename, data_drn=BEBOP, npts_fit_min=NPTS_FIT_MIN):
     """Load the best fit diffmah parameter data
 
     Parameters
@@ -51,29 +56,54 @@ def load_fit_mah_tpeak(basename, data_drn=BEBOP):
 
     Returns
     -------
-    mah_fit_params:  ndarray of shape (n_gal, 4)
-        Best fit parameters for each halo:
-            (logtc, k, early_index, late_index)
+    mah_fit_params : namedtuple
+        Sequence of ndarrays with shape (n_gal, )
 
-    logm0:  ndarray of shape (n_gal, )
-        Diffmah parameter logm0
+    logmp0:  ndarray of shape (n_gal, )
+        Log10 halo mass at z=0
+
+    loss:  ndarray of shape (n_gal, )
+        Value of the loss function, equals -1 for halos without a fit
+
+    n_points_per_fit:  ndarray of shape (n_gal, )
+        Number of points in the simulated MAH used as target data in the fit
 
     """
 
     fn = os.path.join(data_drn, basename)
     with h5py.File(fn, "r") as hdf:
-        mah_fit_params = np.array(
-            [
-                hdf["logm0"][:],
-                hdf["logtc"][:],
-                hdf["early_index"][:],
-                hdf["late_index"][:],
-                hdf["t_peak"][:],
-            ]
-        ).T
         logm0 = hdf["logm0"][:]
+        logtc = hdf["logtc"][:]
+        early = hdf["early_index"][:]
+        late = hdf["late_index"][:]
+        t_peak = hdf["t_peak"][:]
+        loss = hdf["loss"][:]
+        n_points_per_fit = hdf["n_points_per_fit"][:]
 
-    return mah_fit_params, logm0
+    # Temporarily fill no-fit halos with default params
+    # so we can call mah_halopop to compute logmp0 without crashing
+    msk_nofit = (loss < 0) | (n_points_per_fit < npts_fit_min)
+    _zz = np.zeros_like(loss)
+    logm0 = np.where(msk_nofit, _zz + dk.DEFAULT_MAH_PARAMS.logm0, logm0)
+    logtc = np.where(msk_nofit, _zz + dk.DEFAULT_MAH_PARAMS.logtc, logtc)
+    early = np.where(msk_nofit, _zz + dk.DEFAULT_MAH_PARAMS.early_index, early)
+    late = np.where(msk_nofit, _zz + dk.DEFAULT_MAH_PARAMS.late_index, late)
+    t_peak = np.where(msk_nofit, _zz + dk.DEFAULT_MAH_PARAMS.t_peak, t_peak)
+    mah_params = dk.DEFAULT_MAH_PARAMS._make((logm0, logtc, early, late, t_peak))
+
+    # Compute logmp0
+    tarr = np.zeros(1) + T0_SMDPL
+    logmp0 = dk.mah_halopop(mah_params, tarr, np.log10(T0_SMDPL))[1].flatten()
+
+    # Fill no-fit halos with -1
+    logm0 = np.where(msk_nofit, _zz - 1.0, logm0)
+    logtc = np.where(msk_nofit, _zz - 1.0, logtc)
+    early = np.where(msk_nofit, _zz - 1.0, early)
+    late = np.where(msk_nofit, _zz - 1.0, late)
+    t_peak = np.where(msk_nofit, _zz - 1.0, t_peak)
+    mah_params = dk.DEFAULT_MAH_PARAMS._make((logm0, logtc, early, late, t_peak))
+
+    return mah_params, logmp0, loss, n_points_per_fit
 
 
 def load_fit_sfh(basename, data_drn=BEBOP):
