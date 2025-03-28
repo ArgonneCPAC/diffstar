@@ -13,6 +13,6 @@
 
 # Load software
 source ~/.bash_profile
-cd ~/source/diffmah/scripts/
+cd /home/ahearin/work/random/0328
 
-mpiexec -n 20 python diffstar_fitting_script_umachine.py /lcrc/project/halotools/random_data/0328 -sim_name DR1 -test
+mpiexec -n 20 python diffstar_fitting_script_umachine.py /lcrc/project/halotools/random_data/0328 -sim_name DR1 -istart 0 -iend 1
