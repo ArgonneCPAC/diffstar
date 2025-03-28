@@ -41,14 +41,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("outdir", help="Output directory")
+    parser.add_argument(
+        "sim_name", help="Simulation name", choices=["DR1", "DR1_nomerging"]
+    )
     # parser.add_argument("-outbase", help="Basename of the output hdf5 file")
     # parser.add_argument(
     #     "-indir_diffmah", help="Directory of mah parameters", default=BEBOP_SMDPL_MAH
     # )
     # parser.add_argument("-indir_sfh", help="Input directory", default=BEBOP_SMDPL)
-    parser.add_argument(
-        "-sim_name", help="Simulation name", choices=["DR1", "DR1_nomerging"]
-    )
     parser.add_argument(
         "-fstar_tdelay",
         help="Time interval in Gyr for fstar definition.",
