@@ -164,7 +164,7 @@ if __name__ == "__main__":
                 halo_id = halo_ids_for_rank[i]
                 lgsmah = log_smahs_for_rank[i, :]
                 sfh = sfh_sim_for_rank[i, :]
-                mah_params = DiffmahParams([x[i] for x in mah_params_for_rank])
+                mah_params = DiffmahParams(*[x[i] for x in mah_params_for_rank])
                 logmp0_halo = logmp0_for_rank[i]
                 halo_has_diffmah_fit = has_diffmah_fit_for_rank[i]
 
