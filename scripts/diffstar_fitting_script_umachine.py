@@ -168,7 +168,7 @@ if __name__ == "__main__":
                 logmp0_halo = logmp0_for_rank[i]
                 halo_has_diffmah_fit = has_diffmah_fit_for_rank[i]
 
-                run_fitter = (mah_params > logmp0_min) & halo_has_diffmah_fit
+                run_fitter = (logmp0_halo > logmp0_min) & halo_has_diffmah_fit
                 if run_fitter:
                     _res = dfh.diffstar_fitter(
                         t_smdpl,
