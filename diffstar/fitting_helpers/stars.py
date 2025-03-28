@@ -1,5 +1,5 @@
-"""
-"""
+""" """
+
 import numpy as np
 
 from ..utils import _get_dt_array

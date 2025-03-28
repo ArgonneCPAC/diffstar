@@ -1,16 +1,15 @@
 import argparse
 import os
 import subprocess
-from glob import glob
 from time import time
 
 import numpy as np
+from diffmah.diffmah_kernels import DiffmahParams
 from mpi4py import MPI
 
 import diffstar.fitting_helpers.fit_smah_helpers_tpeak as fitsmah
 from diffstar.data_loaders.load_smah_data import load_fit_mah_tpeak, load_tng_data
 from diffstar.fitting_helpers.utils import minimizer_wrapper
-from diffmah.diffmah_kernels import DiffmahParams
 
 BEBOP_TNG = "/lcrc/project/halotools/alarcon/data/"
 BEBOP_TNG_MAH = "/lcrc/project/halotools/alarcon/results/tng_diffmah_tpeak/"

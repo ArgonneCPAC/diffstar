@@ -8,13 +8,17 @@ import numpy as np
 from diffmah.diffmah_kernels import DiffmahParams
 from mpi4py import MPI
 
-import diffstar.fitting_helpers.fit_smah_helpers_tpeak as fitsmah
+import diffstar.fitting_helpers.diffstar_fitting_helpers as dfh
 from diffstar.data_loaders.load_smah_data import (
-    load_fit_mah_tpeak,
+    FB_SMDPL,
+    T0_SMDPL,
+    load_smdpl_diffmah_fits,
     load_SMDPL_DR1_data,
     load_SMDPL_nomerging_data,
 )
-from diffstar.fitting_helpers.utils import minimizer_wrapper
+
+LOGMP0_MIN = 10.5
+MIN_MASS_CUT = 7.0
 
 BEBOP_SMDPL = "/lcrc/project/galsampler/SMDPL/dr1_no_merging_upidh/sfh_binary_catalogs/a_1.000000/"
 BEBOP_SMDPL_MAH = (
@@ -50,19 +54,26 @@ if __name__ == "__main__":
         "-mass_fit_min",
         help="Minimum mass included in stellar mass histories.",
         type=float,
-        default=fitsmah.MIN_MASS_CUT,
+        default=MIN_MASS_CUT,
     )
     parser.add_argument(
         "-ssfrh_floor",
         help="Clipping floor for sSFH",
         type=float,
-        default=fitsmah.SSFRH_FLOOR,
+        default=dfh.SSFRH_FLOOR,
     )
     parser.add_argument("-test", help="Short test run?", type=bool, default=False)
     parser.add_argument("-istart", help="First subvolume in loop", type=int, default=0)
     parser.add_argument("-iend", help="Last subvolume in loop", type=int, default=-1)
     parser.add_argument(
         "-num_subvols_tot", help="Total # subvols", type=int, default=NUM_SUBVOLS_SMDPL
+    )
+
+    parser.add_argument(
+        "-logmp0_min",
+        help="Minimum mass required to run the diffstar fitter",
+        type=float,
+        default=LOGMP0_MIN,
     )
 
     args = parser.parse_args()
@@ -72,7 +83,9 @@ if __name__ == "__main__":
     # outbase = args.outbase
     istart, iend = args.istart, args.iend
     num_subvols_tot = args.num_subvols_tot  # needed for string formatting
-    HEADER, colnames_out = fitsmah.get_header()
+    logmp0_min = args.logmp0_min
+
+    HEADER, colnames_out = dfh.get_header()
 
     kwargs = {
         "fstar_tdelay": args.fstar_tdelay,
@@ -107,22 +120,20 @@ if __name__ == "__main__":
         subvol_data_str = indir_sfh
 
         if args.sim_name == "DR1":
-            _data = load_SMDPL_DR1_data(subvolumes_i, subvol_data_str)
-            subvol_diffmah_str = f"diffmah_fits_subvol_{isubvol}.hdf5"
+            _sfh_data = load_SMDPL_DR1_data(subvolumes_i, subvol_data_str)
         elif args.sim_name == "DR1_nomerging":
-            _data = load_SMDPL_nomerging_data(subvolumes_i, subvol_data_str)
-            subvol_diffmah_str = f"{subvol_str}_diffmah_fits.h5"
+            _sfh_data = load_SMDPL_nomerging_data(subvolumes_i, subvol_data_str)
         else:
             raise NotImplementedError
+        halo_ids, log_smahs_sim, sfhs_sim, t_smdpl = _sfh_data[:4]
 
-        halo_ids, log_smahs, sfrhs, tarr, dt, log_mahs, logmp0 = _data
-
-        mah_fit_params, __ = load_fit_mah_tpeak(
-            subvol_diffmah_str, data_drn=indir_diffmah
-        )
+        subvol_diffmah_str = f"{subvol_str}_diffmah_fits.h5"
+        _mah_fits = load_smdpl_diffmah_fits(subvol_diffmah_str, data_drn=indir_diffmah)
+        mah_params, logmp0, diffmah_loss, n_points_per_diffmah_fit = _mah_fits
+        has_diffmah_fit = (diffmah_loss > 0) & (logmp0 > logmp0_min)
 
         if rank == 0:
-            print("Number of galaxies in mock = {}".format(len(halo_ids)))
+            print("Number of galaxies in subvolume = {}".format(len(halo_ids)))
 
         # Get data for rank
         if args.test:
@@ -134,40 +145,44 @@ if __name__ == "__main__":
         indx = np.array_split(indx_all, nranks)[rank]
 
         halo_ids_for_rank = halo_ids[indx]
-        log_smahs_for_rank = log_smahs[indx]
-        sfrhs_for_rank = sfrhs[indx]
-        mah_params_for_rank = mah_fit_params[indx]
+        log_smahs_for_rank = log_smahs_sim[indx]
+        sfh_sim_for_rank = sfhs_sim[indx]
+        mah_params_for_rank = mah_params._make([x[indx] for x in mah_params])
         logmp0_for_rank = logmp0[indx]
+        has_diffmah_fit_for_rank = has_diffmah_fit[indx]
 
         nhalos_for_rank = len(halo_ids_for_rank)
 
         rank_basepat = "_".join((subvol_str, TMP_OUTPAT))
         rank_outname = os.path.join(args.outdir, rank_basepat).format(rank)
 
-        # breakpoint()
+        comm.Barrier()
         with open(rank_outname, "w") as fout:
             fout.write(HEADER)
 
             for i in range(nhalos_for_rank):
                 halo_id = halo_ids_for_rank[i]
                 lgsmah = log_smahs_for_rank[i, :]
-                sfrh = sfrhs_for_rank[i, :]
-                mah_params = DiffmahParams(*mah_params_for_rank[i])
+                sfh = sfh_sim_for_rank[i, :]
+                mah_params = DiffmahParams(*[x[i] for x in mah_params_for_rank])
                 logmp0_halo = logmp0_for_rank[i]
+                halo_has_diffmah_fit = has_diffmah_fit_for_rank[i]
 
-                p_init, loss_data = fitsmah.get_loss_data_default(
-                    tarr, dt, sfrh, lgsmah, logmp0_halo, mah_params, **kwargs
-                )
-                _res = minimizer_wrapper(
-                    fitsmah.loss_default_clipssfrh,
-                    fitsmah.loss_grad_default_clipssfrh_np,
-                    p_init,
-                    loss_data,
-                )
-                p_best, loss_best, success = _res
-                outline = fitsmah.get_outline_default(
-                    halo_id, loss_data, p_best, loss_best, success
-                )
+                run_fitter = (logmp0_halo > logmp0_min) & halo_has_diffmah_fit
+                if run_fitter:
+                    _res = dfh.diffstar_fitter(
+                        t_smdpl,
+                        sfh,
+                        mah_params,
+                        lgt0=np.log10(T0_SMDPL),
+                        fb=FB_SMDPL,
+                    )
+                    sfh_params_best, diffstar_loss, diffstar_fit_success = _res
+                    outline = dfh.get_outline(
+                        halo_id, sfh_params_best, diffstar_loss, diffstar_fit_success
+                    )
+                else:
+                    outline = dfh.get_outline_nofit(halo_id)
 
                 fout.write(outline)
 
@@ -195,7 +210,7 @@ if __name__ == "__main__":
             outfn = os.path.join(args.outdir, outbn)
 
             # fitsmah.write_collated_data(outfn, subvol_i_fit_results, chunk_arr=None)
-            fitsmah.write_collated_data(outfn, subvol_i_fit_results, colnames_out)
+            dfh.write_collated_data(outfn, subvol_i_fit_results, colnames_out)
 
             # clean up ASCII data for subvol_i
             bnpat = subvol_str + "*.dat"
