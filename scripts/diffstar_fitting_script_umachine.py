@@ -101,7 +101,7 @@ if __name__ == "__main__":
     if args.sim_name == "DR1":
         indir_sfh = SMDPL_DR1_SFH_LCRC_DRN
         indir_diffmah = SMDPL_DR1_DIFFMAH_LCRC_DRN
-        subvol_diffmah_pat = "diffmah_fits_subvol_{}.h5"
+        subvol_diffmah_pat = "diffmah_fits_subvol_{}.hdf5"
     elif args.sim_name == "DR1_nomerging":
         indir_sfh = SMDPL_NOMERGING_SFH_LCRC_DRN
         indir_diffmah = SMDPL_NOMERGING_DIFFMAH_LCRC_DRN
