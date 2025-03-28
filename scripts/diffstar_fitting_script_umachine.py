@@ -20,10 +20,15 @@ from diffstar.data_loaders.load_smah_data import (
 LOGMP0_MIN = 10.5
 MIN_MASS_CUT = 7.0
 
-BEBOP_SMDPL = "/lcrc/project/galsampler/SMDPL/dr1_no_merging_upidh/sfh_binary_catalogs/a_1.000000/"
-BEBOP_SMDPL_MAH = (
+SMDPL_NOMERGING_SFH_LCRC_DRN = "/lcrc/project/galsampler/SMDPL/dr1_no_merging_upidh/sfh_binary_catalogs/a_1.000000/"
+SMDPL_DR1_SFH_LCRC_DRN = (
+    "/lcrc/project/halotools/UniverseMachine/SMDPL/sfh_binaries_dr1_bestfit/a_1.000000/"
+)
+
+SMDPL_NOMERGING_DIFFMAH_LCRC_DRN = (
     "/lcrc/project/halotools/SMDPL/dr1_no_merging_upidh/diffmah_tpeak_fits/"
 )
+SMDPL_DR1_DIFFMAH_LCRC_DRN = "/lcrc/project/halotools/UniverseMachine/SMDPL/sfh_binaries_dr1_bestfit/diffmah_tpeak_fits/"
 
 TMP_OUTPAT = "tmp_sfh_fits_rank_{0}.dat"
 NUM_SUBVOLS_SMDPL = 576
@@ -37,10 +42,10 @@ if __name__ == "__main__":
 
     parser.add_argument("outdir", help="Output directory")
     # parser.add_argument("-outbase", help="Basename of the output hdf5 file")
-    parser.add_argument(
-        "-indir_diffmah", help="Directory of mah parameters", default=BEBOP_SMDPL_MAH
-    )
-    parser.add_argument("-indir_sfh", help="Input directory", default=BEBOP_SMDPL)
+    # parser.add_argument(
+    #     "-indir_diffmah", help="Directory of mah parameters", default=BEBOP_SMDPL_MAH
+    # )
+    # parser.add_argument("-indir_sfh", help="Input directory", default=BEBOP_SMDPL)
     parser.add_argument(
         "-sim_name", help="Simulation name", choices=["DR1", "DR1_nomerging"]
     )
@@ -78,8 +83,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    indir_sfh = args.indir_sfh
-    indir_diffmah = args.indir_diffmah
     # outbase = args.outbase
     istart, iend = args.istart, args.iend
     num_subvols_tot = args.num_subvols_tot  # needed for string formatting
@@ -94,6 +97,17 @@ if __name__ == "__main__":
     }
 
     start = time()
+
+    if args.sim_name == "DR1":
+        indir_sfh = SMDPL_DR1_SFH_LCRC_DRN
+        indir_diffmah = SMDPL_DR1_DIFFMAH_LCRC_DRN
+        subvol_diffmah_pat = "diffmah_fits_{}.h5"
+    elif args.sim_name == "DR1_nomerging":
+        indir_sfh = SMDPL_NOMERGING_SFH_LCRC_DRN
+        indir_diffmah = SMDPL_NOMERGING_DIFFMAH_LCRC_DRN
+        subvol_diffmah_pat = "{}_diffmah_fits.h5"
+    else:
+        raise NotImplementedError
 
     all_avail_subvol_names = [
         os.path.basename(drn) for drn in glob(os.path.join(indir_sfh, "subvol_*"))
@@ -117,19 +131,23 @@ if __name__ == "__main__":
 
         subvolumes_i = [isubvol]
 
-        subvol_data_str = indir_sfh
-
         if args.sim_name == "DR1":
-            _sfh_data = load_SMDPL_DR1_data(subvolumes_i, subvol_data_str)
+            _sfh_data = load_SMDPL_DR1_data(subvolumes_i, indir_sfh)
         elif args.sim_name == "DR1_nomerging":
-            _sfh_data = load_SMDPL_nomerging_data(subvolumes_i, subvol_data_str)
+            _sfh_data = load_SMDPL_nomerging_data(subvolumes_i, indir_sfh)
         else:
             raise NotImplementedError
         halo_ids, log_smahs_sim, sfhs_sim, t_smdpl = _sfh_data[:4]
 
-        subvol_diffmah_str = f"{subvol_str}_diffmah_fits.h5"
+        subvol_diffmah_str = subvol_diffmah_pat.format(isubvol)
         _mah_fits = load_smdpl_diffmah_fits(subvol_diffmah_str, data_drn=indir_diffmah)
         mah_params, logmp0, diffmah_loss, n_points_per_diffmah_fit = _mah_fits
+
+        msg = "Mismatch: Nrows(sfh_data)={0} Nrows(diffmah_data)={1}"
+        n_diffstar = halo_ids.size
+        n_diffmah = logmp0.size
+        assert n_diffstar == n_diffmah, msg.format(n_diffstar, n_diffmah)
+
         has_diffmah_fit = (diffmah_loss > 0) & (logmp0 > logmp0_min)
 
         if rank == 0:
