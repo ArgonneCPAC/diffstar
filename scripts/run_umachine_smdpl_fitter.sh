@@ -15,4 +15,4 @@
 source ~/.bash_profile
 cd ~/source/diffmah/scripts/
 
-# python diffstar_fitting_script_umachine.py /lcrc/project/halotools/random_data/0328 -sim_name DR1 -test 1
+mpiexec -n 20 python diffstar_fitting_script_umachine.py /lcrc/project/halotools/random_data/0328 -sim_name DR1 -test
