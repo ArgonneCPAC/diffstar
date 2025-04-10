@@ -43,7 +43,19 @@ H_TNG = 0.6774
 NPTS_FIT_MIN = 5  # Number of non-trivial points in the MAH, excluding MAH(z=0)
 
 
-def load_smdpl_diffmah_fits(basename, data_drn=BEBOP, npts_fit_min=NPTS_FIT_MIN):
+def load_precomputed_diffmah_fits(fn, t0, npts_fit_min=NPTS_FIT_MIN):
+    basename = os.path.basename(fn)
+    data_drn = os.path.dirname(fn)
+    _res = load_smdpl_diffmah_fits(
+        basename, data_drn=data_drn, npts_fit_min=npts_fit_min, t0=t0
+    )
+    mah_params, logmp0, loss, n_points_per_fit = _res
+    return mah_params, logmp0, loss, n_points_per_fit
+
+
+def load_smdpl_diffmah_fits(
+    basename, data_drn=BEBOP, npts_fit_min=NPTS_FIT_MIN, t0=T0_SMDPL
+):
     """Load the best fit diffmah parameter data
 
     Parameters
@@ -92,8 +104,8 @@ def load_smdpl_diffmah_fits(basename, data_drn=BEBOP, npts_fit_min=NPTS_FIT_MIN)
     mah_params = dk.DEFAULT_MAH_PARAMS._make((logm0, logtc, early, late, t_peak))
 
     # Compute logmp0
-    tarr = np.zeros(1) + T0_SMDPL
-    logmp0 = dk.mah_halopop(mah_params, tarr, np.log10(T0_SMDPL))[1].flatten()
+    tarr = np.zeros(1) + t0
+    logmp0 = dk.mah_halopop(mah_params, tarr, np.log10(t0))[1].flatten()
 
     # Fill no-fit halos with -1
     logm0 = np.where(msk_nofit, _zz - 1.0, logm0)
