@@ -45,11 +45,7 @@ NPTS_FIT_MIN = 5  # Number of non-trivial points in the MAH, excluding MAH(z=0)
 
 
 def load_precomputed_diffmah_fits(
-    fn,
-    t0,
-    npts_fit_min=NPTS_FIT_MIN,
-    istart=0,
-    iend=None,
+    fn, t0, npts_fit_min=NPTS_FIT_MIN, istart=0, iend=None
 ):
     basename = os.path.basename(fn)
     data_drn = os.path.dirname(fn)
