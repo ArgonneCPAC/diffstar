@@ -1,5 +1,4 @@
-"""
-"""
+""" """
 
 from diffmah import DEFAULT_MAH_PARAMS, mah_singlehalo
 from jax import jit as jjit
@@ -14,6 +13,7 @@ from ..kernels.main_sequence_kernels_tpeak import (
     _sfr_eff_plaw,
 )
 from ..kernels.quenching_kernels import _quenching_kern_u_params
+from ..utils import cumulative_mstar_formed
 
 
 @jjit
@@ -72,10 +72,11 @@ def calculate_sm_sfr_fstar_history_from_mah(
         SFH averaged over timescale fstar_tdelay in units of Msun/yr assuming h=1
 
     """
-    sfr = _sfr_history_from_mah(lgt, dt, dmhdt, log_mah, u_ms_params, u_q_params, fb=fb)
-    mstar = _integrate_sfr(sfr, dt)
+    sfh = _sfr_history_from_mah(lgt, dt, dmhdt, log_mah, u_ms_params, u_q_params, fb=fb)
+    tarr = 10**lgt
+    mstar = cumulative_mstar_formed(tarr, sfh)
     fstar = compute_fstar(10**lgt, mstar, fstar_tdelay)
-    return mstar, sfr, fstar
+    return mstar, sfh, fstar
 
 
 @jjit
@@ -120,9 +121,10 @@ def calculate_sm_sfr_history_from_mah(
         Star formation rate history in units of Msun/yr assuming h=1
 
     """
-    sfr = _sfr_history_from_mah(lgt, dt, dmhdt, log_mah, u_ms_params, u_q_params, fb=fb)
-    mstar = _integrate_sfr(sfr, dt)
-    return mstar, sfr
+    sfh = _sfr_history_from_mah(lgt, dt, dmhdt, log_mah, u_ms_params, u_q_params, fb=fb)
+    tarr = 10**lgt
+    mstar = cumulative_mstar_formed(tarr, sfh)
+    return mstar, sfh
 
 
 @jjit
@@ -198,12 +200,6 @@ def calculate_histories(
 calculate_histories_vmap = jjit(
     vmap(calculate_histories, in_axes=(None, None, 0, 0, 0, None, None))
 )
-
-
-@jjit
-def _integrate_sfr(sfr, dt):
-    """Calculate the cumulative stellar mass history."""
-    return jnp.cumsum(sfr * dt) * 1e9
 
 
 @jjit
