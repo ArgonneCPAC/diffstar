@@ -7,6 +7,7 @@ import numpy as np
 from diffmah import diffmah_kernels as dk
 
 from ..utils import cumulative_mstar_formed_galpop
+from .utils import load_flat_hdf5
 
 try:
     from umachine_pyio.load_mock import load_mock_from_binaries
@@ -43,18 +44,34 @@ H_TNG = 0.6774
 NPTS_FIT_MIN = 5  # Number of non-trivial points in the MAH, excluding MAH(z=0)
 
 
-def load_precomputed_diffmah_fits(fn, t0, npts_fit_min=NPTS_FIT_MIN):
+def load_precomputed_diffmah_fits(
+    fn,
+    t0,
+    npts_fit_min=NPTS_FIT_MIN,
+    istart=0,
+    iend=None,
+):
     basename = os.path.basename(fn)
     data_drn = os.path.dirname(fn)
     _res = load_smdpl_diffmah_fits(
-        basename, data_drn=data_drn, npts_fit_min=npts_fit_min, t0=t0
+        basename,
+        data_drn=data_drn,
+        npts_fit_min=npts_fit_min,
+        t0=t0,
+        istart=istart,
+        iend=iend,
     )
     mah_params, logmp0, loss, n_points_per_fit = _res
     return mah_params, logmp0, loss, n_points_per_fit
 
 
 def load_smdpl_diffmah_fits(
-    basename, data_drn=BEBOP, npts_fit_min=NPTS_FIT_MIN, t0=T0_SMDPL
+    basename,
+    data_drn=BEBOP,
+    npts_fit_min=NPTS_FIT_MIN,
+    t0=T0_SMDPL,
+    istart=0,
+    iend=None,
 ):
     """Load the best fit diffmah parameter data
 
@@ -83,14 +100,23 @@ def load_smdpl_diffmah_fits(
     """
 
     fn = os.path.join(data_drn, basename)
-    with h5py.File(fn, "r") as hdf:
-        logm0 = hdf["logm0"][:]
-        logtc = hdf["logtc"][:]
-        early = hdf["early_index"][:]
-        late = hdf["late_index"][:]
-        t_peak = hdf["t_peak"][:]
-        loss = hdf["loss"][:]
-        n_points_per_fit = hdf["n_points_per_fit"][:]
+    keys = (
+        "logm0",
+        "logtc",
+        "early_index",
+        "late_index",
+        "t_peak",
+        "loss",
+        "n_points_per_fit",
+    )
+    diffmah_fit_data = load_flat_hdf5(fn, istart=istart, iend=iend, keys=keys)
+    logm0 = diffmah_fit_data["logm0"]
+    logtc = diffmah_fit_data["logtc"]
+    early = diffmah_fit_data["early_index"]
+    late = diffmah_fit_data["late_index"]
+    t_peak = diffmah_fit_data["t_peak"]
+    loss = diffmah_fit_data["loss"]
+    n_points_per_fit = diffmah_fit_data["n_points_per_fit"]
 
     # Temporarily fill no-fit halos with default params
     # so we can call mah_halopop to compute logmp0 without crashing
