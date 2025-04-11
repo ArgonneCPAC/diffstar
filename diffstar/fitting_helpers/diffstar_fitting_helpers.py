@@ -31,6 +31,9 @@ FSTAR_TIME_DELAY = 1.0  # Time period of averaged SFH (aka fstar). Gyr units.
 SSFRH_FLOOR = 1e-12  # Clip SFH to this minimum sSFR value. 1/yr units.
 
 
+NOFIT_FILL = -99.0
+
+
 def diffstar_fitter(
     t_table,
     sfh_table,
@@ -279,7 +282,7 @@ def get_outline_nofit(halo_id):
     """Return the string storing output that will be written to disk
     for galaxies without a diffstar fit"""
     n_sfh_params = len(DEFAULT_MS_PARAMS) + len(DEFAULT_Q_PARAMS)
-    _d = np.zeros(n_sfh_params) + -1.0
+    _d = np.zeros(n_sfh_params) + NOFIT_FILL
     loss_best = -1.0
     success = -1
 
