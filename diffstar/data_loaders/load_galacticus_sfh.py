@@ -14,6 +14,12 @@ BN_GALCUS = "galacticus_11To14.2Mhalo_SFHinsitu_AHearin.hdf5"
 BN_GALCUS_REDUCTION = "sfh_disk_bulge_in_ex_situ.hdf5"
 
 
+# Planck18 cosmology assumed in BNAME_APH2
+Ob0 = 0.04930
+Om0 = 0.31530
+FB = Ob0 / Om0
+
+
 def load_galacticus_diffstar_data(drn):
     """Load data used in DiffstarPop analysis of Galacticus SFH
 
