@@ -8,7 +8,7 @@ from . import load_flat_hdf5
 
 DRN_LCRC = "/lcrc/project/halotools/Galacticus/diffstarpop_data"
 DRN_POBOY = "/Users/aphearin/work/DATA/Galacticus/diffstarpop_data"
-BN_DIFFSTAR = "diffstar_fits.hdf5"
+BN_DIFFSTAR_IN_SITU = "diffstar_fits_in_situ.hdf5"
 BN_DIFFMAH = "diffmah_fits.h5"
 BN_GALCUS = "galacticus_11To14.2Mhalo_SFHinsitu_AHearin.hdf5"
 BN_GALCUS_REDUCTION = "sfh_disk_bulge_in_ex_situ.hdf5"
@@ -27,7 +27,7 @@ def load_galacticus_diffstar_data(drn):
     diffmah_fit_data : dict
         Columns store the diffmah fitter results
 
-    diffstar_fit_data : dict
+    diffstar_in_situ_fit_data : dict
         Columns store the diffstar fitter results
 
     galcus_sfh_data : dict
@@ -37,8 +37,8 @@ def load_galacticus_diffstar_data(drn):
     fn_diffmah = os.path.join(drn, BN_DIFFMAH)
     diffmah_fit_data = load_flat_hdf5(fn_diffmah)
 
-    fn_diffstar = os.path.join(drn, BN_DIFFSTAR)
-    diffstar_fit_data = load_flat_hdf5(fn_diffstar)
+    fn_diffstar = os.path.join(drn, BN_DIFFSTAR_IN_SITU)
+    diffstar_in_situ_fit_data = load_flat_hdf5(fn_diffstar)
 
     fn_sfh_target_data = os.path.join(drn, BN_GALCUS_REDUCTION)
     raw_sfh_data = load_flat_hdf5(fn_sfh_target_data)
@@ -59,7 +59,7 @@ def load_galacticus_diffstar_data(drn):
 
     galcus_sfh_data["is_cen"] = nodeIsIsolated
 
-    return diffmah_fit_data, diffstar_fit_data, galcus_sfh_data
+    return diffmah_fit_data, diffstar_in_situ_fit_data, galcus_sfh_data
 
 
 def load_galacticus_sfh_data_block(fn, istart, iend):
