@@ -1,10 +1,7 @@
-name: test_released_dependencies
+name: tests
 
 on:
   workflow_dispatch: null
-  schedule:
-    # Runs "every Monday & Thursday at 3:05am Central"
-    - cron: '5 8 * * 1,4'
   push:
     branches:
       - main
@@ -29,13 +26,11 @@ jobs:
           miniforge-version: latest
 
       - name: configure conda and install code
-      # Test against current confa-forge release of diffmah
         shell: bash -l {0}
         run: |
           conda config --set always_yes yes
           conda install --quiet \
             --file=requirements.txt
-          python -m pip install --no-deps -e .
           conda install -y -q \
             flake8 \
             pytest \
@@ -44,6 +39,7 @@ jobs:
             pip \
             setuptools \
             "setuptools_scm>=7,<8" \
+            scipy \
             python-build
           python -m pip install --no-build-isolation --no-deps -e .
 
@@ -54,6 +50,8 @@ jobs:
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: test versions
         shell: bash -el {0}
