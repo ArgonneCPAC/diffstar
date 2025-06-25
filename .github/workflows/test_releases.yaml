@@ -2,9 +2,6 @@ name: tests
 
 on:
   workflow_dispatch: null
-  schedule:
-    # Runs "every Monday & Thursday at 3:05am Central"
-    - cron: '5 8 * * 1,4'
   push:
     branches:
       - main
