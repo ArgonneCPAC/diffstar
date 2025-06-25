@@ -1,4 +1,4 @@
-name: test_released_dependencies
+name: tests
 
 on:
   workflow_dispatch: null
@@ -29,7 +29,6 @@ jobs:
           miniforge-version: latest
 
       - name: configure conda and install code
-      # Test against current confa-forge release of diffmah
         shell: bash -l {0}
         run: |
           conda config --set always_yes yes
@@ -43,6 +42,7 @@ jobs:
             pip \
             setuptools \
             "setuptools_scm>=7,<8" \
+            scipy \
             python-build
           python -m pip install --no-build-isolation --no-deps -e .
 
