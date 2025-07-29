@@ -115,7 +115,7 @@ def write_galacticus_sfh_data_block(drn):
 
 def load_galacticus_sfh_data_block(fn, istart, iend):
     tarr_dict = load_flat_hdf5(fn, keys=["tarr"])
-    block_keys = ("sfh_in_situ", "sfh_tot")
+    block_keys = ("sfh_in_situ", "sfh_tot", "is_cen")
     sfh_data_block = load_flat_hdf5(fn, istart=istart, iend=iend, keys=block_keys)
     sfh_data_block["tarr"] = tarr_dict["tarr"]
 
