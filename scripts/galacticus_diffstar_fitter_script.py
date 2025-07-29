@@ -88,11 +88,9 @@ if __name__ == "__main__":
     comm.Barrier()
 
     if sfh_type == "in_situ":
-        bulge_colname = "sfh_in_situ_bulge"
-        disk_colname = "sfh_in_situ_disk"
+        sfh_colname = "sfh_in_situ"
     elif sfh_type == "in_plus_ex_situ":
-        bulge_colname = "sfh_tot_bulge"
-        disk_colname = "sfh_tot_disk"
+        sfh_colname = "sfh_tot"
 
     with h5py.File(fn_sfh_block, "r") as hdf:
         nhalos_tot = hdf["sfh_in_situ_bulge"].shape[0]
@@ -137,9 +135,7 @@ if __name__ == "__main__":
             logmp0_halo = logmp0_for_rank[i]
             halo_has_diffmah_fit = has_diffmah_fit_for_rank[i]
 
-            sfh_bulge = sfh_data_for_rank[bulge_colname][i] / 1e9
-            sfh_disk = sfh_data_for_rank[disk_colname][i] / 1e9
-            sfh = sfh_bulge + sfh_disk
+            sfh = sfh_data_for_rank[sfh_colname][i]
             logsm_z0 = np.log10(cumulative_mstar_formed(tarr, sfh)[-1])
 
             run_fitter = logmp0_halo > logmp0_min
