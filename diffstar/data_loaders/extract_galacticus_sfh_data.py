@@ -58,8 +58,8 @@ def extract_galacticus_sfh_tables(fn, colname, istart=0, iend=None):
                 n_t = _x[0].size
                 break
 
-        sfh_in_situ_table = np.zeros((n_gals_out, n_t))
-        sfh_tot_table = np.zeros((n_gals_out, n_t))
+        delta_mstar_in_situ_table = np.zeros((n_gals_out, n_t))
+        delta_mstar_tot_table = np.zeros((n_gals_out, n_t))
 
         for igal in range(istart, iend):
             sfh_data_igal = SFH_data[igal]
@@ -71,10 +71,10 @@ def extract_galacticus_sfh_tables(fn, colname, istart=0, iend=None):
                     [sfh_data_igal[j] for j in range(n_met, 2 * n_met)]
                 )
 
-                sfh_in_situ_table[igal, :] = np.sum(X_sfh_in_situ, axis=0)
-                sfh_tot_table[igal, :] = np.sum(X_sfh_tot, axis=0)
+                delta_mstar_in_situ_table[igal, :] = np.sum(X_sfh_in_situ, axis=0)
+                delta_mstar_tot_table[igal, :] = np.sum(X_sfh_tot, axis=0)
 
-    return sfh_tot_table, sfh_in_situ_table, tarr
+    return delta_mstar_tot_table, delta_mstar_in_situ_table, tarr
 
 
 if __name__ == "__main__":
@@ -106,17 +106,19 @@ if __name__ == "__main__":
         colname = BULGE_COLNAME
 
     start = time()
-    sfh_tot, sfh_in_situ, tarr = extract_galacticus_sfh_tables(
+    dmstar_tot, dmstar_in_situ, tarr = extract_galacticus_sfh_tables(
         fn, colname, istart=istart, iend=iend
     )
     end = time()
     runtime = end - start
 
     msg = "Runtime to extract {0} SFH for {1} galaxies = {2:.2f} seconds"
-    print(msg.format(component, sfh_tot.shape[0], runtime))
+    print(msg.format(component, dmstar_tot.shape[0], runtime))
 
-    np.save(os.path.join(outdrn, "sfh_tot_{}".format(component)), sfh_tot)
+    np.save(os.path.join(outdrn, "delta_mstar_tot_{}".format(component)), dmstar_tot)
 
-    np.save(os.path.join(outdrn, "sfh_in_situ_{}".format(component)), sfh_in_situ)
+    np.save(
+        os.path.join(outdrn, "delta_mstar_in_situ_{}".format(component)), dmstar_in_situ
+    )
 
     np.save(os.path.join(outdrn, "tarr_{}".format(component)), tarr)
