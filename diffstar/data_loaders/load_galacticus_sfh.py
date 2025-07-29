@@ -5,6 +5,7 @@ from collections import namedtuple
 
 import h5py
 
+from ..utils import _get_dt_array
 from . import load_flat_hdf5
 
 DRN_LCRC = "/lcrc/project/halotools/Galacticus/diffstarpop_data"
@@ -59,11 +60,12 @@ def load_galacticus_diffstar_data(drn):
     galcus_sfh_data = dict()
     galcus_sfh_data["tarr"] = raw_sfh_data["tarr"]
 
-    # raw SFH data is in units of Msun/Gyr, so we divide by 1e9
+    # raw SFH data gives ΔMstar(Δt) in units of ΔMsun and ΔGyr, so we divide by Δt*1e9
+    dtarr = _get_dt_array(galcus_sfh_data["tarr"])
     _raw_in_situ = raw_sfh_data["sfh_in_situ_bulge"] + raw_sfh_data["sfh_in_situ_disk"]
-    galcus_sfh_data["sfh_in_situ"] = _raw_in_situ / 1e9
+    galcus_sfh_data["sfh_in_situ"] = _raw_in_situ / dtarr / 1e9
     _raw_tot_sfh = raw_sfh_data["sfh_tot_bulge"] + raw_sfh_data["sfh_tot_disk"]
-    galcus_sfh_data["sfh_tot"] = _raw_tot_sfh / 1e9
+    galcus_sfh_data["sfh_tot"] = _raw_tot_sfh / dtarr / 1e9
 
     fn_galcus = os.path.join(drn, BN_GALCUS)
     with h5py.File(fn_galcus, "r") as hdf:
