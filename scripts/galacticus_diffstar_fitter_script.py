@@ -93,7 +93,7 @@ if __name__ == "__main__":
         sfh_colname = "sfh_tot"
 
     with h5py.File(fn_sfh_block, "r") as hdf:
-        nhalos_tot = hdf["sfh_in_situ_bulge"].shape[0]
+        nhalos_tot = hdf["sfh_in_situ"].shape[0]
 
     _a = np.arange(0, nhalos_tot).astype("i8")
     indx_for_rank = np.array_split(_a, nranks)[rank]
