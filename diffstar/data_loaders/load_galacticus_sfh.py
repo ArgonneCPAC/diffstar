@@ -118,6 +118,5 @@ def load_galacticus_sfh_data_block(fn, istart, iend):
     block_keys = ("sfh_in_situ", "sfh_tot")
     sfh_data_block = load_flat_hdf5(fn, istart=istart, iend=iend, keys=block_keys)
     sfh_data_block["tarr"] = tarr_dict["tarr"]
-    sfh_data_block["is_cen"] = tarr_dict["is_cen"]
 
     return sfh_data_block
