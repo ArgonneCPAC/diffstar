@@ -4,6 +4,7 @@ import os
 from collections import namedtuple
 
 import h5py
+import numpy as np
 
 from ..utils import _get_dt_array
 from . import load_flat_hdf5
@@ -54,25 +55,7 @@ def load_galacticus_diffstar_data(drn):
     fn_diffstar_tot_sfh = os.path.join(drn, BN_DIFFSTAR_IN_PLUS_EX_SITU)
     diffstar_in_plus_ex_situ_fit_data = load_flat_hdf5(fn_diffstar_tot_sfh)
 
-    fn_sfh_target_data = os.path.join(drn, BN_GALCUS_REDUCTION)
-    raw_sfh_data = load_flat_hdf5(fn_sfh_target_data)
-
-    galcus_sfh_data = dict()
-    galcus_sfh_data["tarr"] = raw_sfh_data["tarr"]
-
-    # raw SFH data gives ΔMstar(Δt) in units of ΔMsun and ΔGyr, so we divide by Δt*1e9
-    dtarr = _get_dt_array(galcus_sfh_data["tarr"])
-    _raw_in_situ = raw_sfh_data["sfh_in_situ_bulge"] + raw_sfh_data["sfh_in_situ_disk"]
-    galcus_sfh_data["sfh_in_situ"] = _raw_in_situ / dtarr / 1e9
-    _raw_tot_sfh = raw_sfh_data["sfh_tot_bulge"] + raw_sfh_data["sfh_tot_disk"]
-    galcus_sfh_data["sfh_tot"] = _raw_tot_sfh / dtarr / 1e9
-
-    fn_galcus = os.path.join(drn, BN_GALCUS)
-    with h5py.File(fn_galcus, "r") as hdf:
-        nodeData = hdf["Outputs"]["Output1"]["nodeData"]
-        nodeIsIsolated = nodeData["nodeIsIsolated"][:]
-
-    galcus_sfh_data["is_cen"] = nodeIsIsolated
+    galcus_sfh_data = load_galacticus_sfh_target_data(drn)
 
     ret_colnames = (
         "diffmah_fit_data",
@@ -88,6 +71,35 @@ def load_galacticus_diffstar_data(drn):
         galcus_sfh_data,
     )
     return diffstar_fit_data
+
+
+def load_galacticus_sfh_target_data(drn):
+    galcus_sfh_data = dict()
+    galcus_sfh_data["tarr"] = np.load(os.path.join(drn, "tarr_bulge.npy"))
+    dtarr = _get_dt_array(galcus_sfh_data["tarr"])
+
+    # raw SFH data gives ΔMstar(Δt) in units of ΔMsun and ΔGyr, so we divide by Δt*1e9
+    dmstar_in_situ_bulge = np.load(os.path.join(drn, "delta_mstar_in_situ_bulge.npy"))
+    dmstar_in_situ_disk = np.load(os.path.join(drn, "delta_mstar_in_situ_disk.npy"))
+    dmstar_in_situ = dmstar_in_situ_bulge + dmstar_in_situ_disk
+    sfh_in_situ = dmstar_in_situ / dtarr / 1e9
+
+    dmstar_tot_bulge = np.load(os.path.join(drn, "delta_mstar_tot_bulge.npy"))
+    dmstar_tot_disk = np.load(os.path.join(drn, "delta_mstar_tot_disk.npy"))
+    dmstar_tot = dmstar_tot_bulge + dmstar_tot_disk
+    sfh_tot = dmstar_tot / dtarr / 1e9
+
+    galcus_sfh_data["sfh_in_situ"] = sfh_in_situ
+    galcus_sfh_data["sfh_tot"] = sfh_tot
+
+    fn_galcus = os.path.join(drn, BN_GALCUS)
+    with h5py.File(fn_galcus, "r") as hdf:
+        nodeData = hdf["Outputs"]["Output1"]["nodeData"]
+        nodeIsIsolated = nodeData["nodeIsIsolated"][:]
+
+    galcus_sfh_data["is_cen"] = nodeIsIsolated
+
+    return galcus_sfh_data
 
 
 def load_galacticus_sfh_data_block(fn, istart, iend):
