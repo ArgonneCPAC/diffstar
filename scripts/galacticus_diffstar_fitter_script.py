@@ -16,7 +16,6 @@ from diffstar.utils import cumulative_mstar_formed
 DRN_POBOY = "/Users/aphearin/work/DATA/Galacticus/diffstarpop_data"
 DRN_LCRC = "/lcrc/project/halotools/Galacticus/diffstarpop_data"
 BNAME_APH2 = "galacticus_11To14.2Mhalo_SFHinsitu_AHearin.hdf5"
-BNAME_SFH_DATA = "sfh_disk_bulge_in_ex_situ.hdf5"
 
 LOGMP0_MIN = 10.5
 MIN_MASS_CUT = 7.0
@@ -36,7 +35,7 @@ if __name__ == "__main__":
     parser.add_argument("sfh_type", choices=["in_situ", "in_plus_ex_situ"])
 
     parser.add_argument("-indir", help="Input directory", default=DRN_LCRC)
-    parser.add_argument("-inbn", help="Input basename", default=BNAME_SFH_DATA)
+    parser.add_argument("-inbn", help="Input basename", default=lgs.BNAME_SFH_DATA)
     parser.add_argument("-outdir", help="Output directory", default="")
     parser.add_argument(
         "-fstar_tdelay",

@@ -16,6 +16,7 @@ BN_DIFFSTAR_IN_PLUS_EX_SITU = "diffstar_fits_in_plus_ex_situ.hdf5"
 BN_DIFFMAH = "diffmah_fits.h5"
 BN_GALCUS = "galacticus_11To14.2Mhalo_SFHinsitu_AHearin.hdf5"
 BN_GALCUS_REDUCTION = "sfh_disk_bulge_in_ex_situ.hdf5"
+BNAME_SFH_DATA = "sfh_disk_bulge_in_ex_situ.hdf5"
 
 
 # Planck18 cosmology assumed in BNAME_APH2
@@ -102,17 +103,21 @@ def load_galacticus_sfh_target_data(drn):
     return galcus_sfh_data
 
 
+def write_galacticus_sfh_data_block(drn):
+    galcus_sfh_data = load_galacticus_sfh_target_data(drn)
+    fnout = os.path.join(drn, BNAME_SFH_DATA)
+    with h5py.File(fnout, "w") as hdf:
+        hdf["sfh_in_situ"] = galcus_sfh_data["sfh_in_situ"]
+        hdf["sfh_tot"] = galcus_sfh_data["sfh_tot"]
+        hdf["is_cen"] = galcus_sfh_data["is_cen"]
+        hdf["tarr"] = galcus_sfh_data["tarr"]
+
+
 def load_galacticus_sfh_data_block(fn, istart, iend):
-    msg = "This function is used by galacticus_diffstar_fitter_script.py and needs to be replaced"
-    raise NotImplementedError(msg)
     tarr_dict = load_flat_hdf5(fn, keys=["tarr"])
-    block_keys = (
-        "sfh_in_situ_bulge",
-        "sfh_in_situ_disk",
-        "sfh_tot_bulge",
-        "sfh_tot_disk",
-    )
+    block_keys = ("sfh_in_situ", "sfh_tot")
     sfh_data_block = load_flat_hdf5(fn, istart=istart, iend=iend, keys=block_keys)
     sfh_data_block["tarr"] = tarr_dict["tarr"]
+    sfh_data_block["is_cen"] = tarr_dict["is_cen"]
 
     return sfh_data_block
