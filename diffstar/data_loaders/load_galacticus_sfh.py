@@ -103,6 +103,8 @@ def load_galacticus_sfh_target_data(drn):
 
 
 def load_galacticus_sfh_data_block(fn, istart, iend):
+    msg = "This function is used by galacticus_diffstar_fitter_script.py and needs to be replaced"
+    raise NotImplementedError(msg)
     tarr_dict = load_flat_hdf5(fn, keys=["tarr"])
     block_keys = (
         "sfh_in_situ_bulge",
