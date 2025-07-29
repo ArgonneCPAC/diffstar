@@ -13,6 +13,6 @@
 
 # Load software
 source ~/.bash_profile
-cd /home/ahearin/work/random/0409
-
+cd /home/ahearin/work/random/0729
+rsync /home/ahearin/work/repositories/python/diffstar/diffstar/data_loaders/extract_galacticus_sfh_data.py ./
 python extract_galacticus_sfh_data.py disk
