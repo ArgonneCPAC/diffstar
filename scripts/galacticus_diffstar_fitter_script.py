@@ -23,7 +23,7 @@ MIN_LOGSM_Z0 = 8.0
 
 NHALOS_TEST = 30
 
-TMP_OUTPAT = "tmp_sfh_fits_rank_{0}.dat"
+TMP_OUTPAT = "tmp_sfh_fits_rank_{0}_{1}.dat"
 
 
 if __name__ == "__main__":
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     if rank == 0:
         print("Number of galaxies for rank 0 = {}".format(nhalos_for_rank))
 
-    rank_outname = os.path.join(outdir, TMP_OUTPAT).format(rank)
+    rank_outname = os.path.join(outdir, TMP_OUTPAT).format(rank, sfh_type)
 
     comm.Barrier()
 
@@ -167,7 +167,7 @@ if __name__ == "__main__":
 
         #  collate data from ranks and rewrite to disk
         pat = os.path.join(outdir, TMP_OUTPAT)
-        fit_data_fnames = [pat.format(i) for i in range(nranks)]
+        fit_data_fnames = [pat.format(i, sfh_type) for i in range(nranks)]
         collector = []
         for fit_fn in fit_data_fnames:
             assert os.path.isfile(fit_fn), fit_fn
@@ -182,7 +182,6 @@ if __name__ == "__main__":
         dfh.write_collated_data(outfn, subvol_i_fit_results, colnames_out)
 
         # clean up ASCII data for subvol_i
-        bnpat = TMP_OUTPAT.format("*")
-        fnpat = os.path.join(outdir, bnpat)
-        command = "rm " + fnpat
-        subprocess.os.system(command)
+        for fn in fit_data_fnames:
+            command = "rm " + fn
+            subprocess.os.system(command)
