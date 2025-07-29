@@ -15,7 +15,7 @@ BNAME_APH1 = "galacticus_11To14.2Mhalo_SFHinsitu_AHearin_9583trees.hdf5"
 DISK_COLNAME = "diskStarFormationHistoryMass"
 BULGE_COLNAME = "spheroidStarFormationHistoryMass"
 
-DRN_LCRC_APH2 = "/lcrc/project/halotools/Galacticus/diffstarpop_data/nstep_390"
+DRN_LCRC_APH2 = "/lcrc/project/halotools/Galacticus/diffstarpop_data"
 BNAME_APH2 = "galacticus_11To14.2Mhalo_SFHinsitu_AHearin.hdf5"
 
 
