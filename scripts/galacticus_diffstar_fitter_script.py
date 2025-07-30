@@ -16,7 +16,6 @@ from diffstar.utils import cumulative_mstar_formed
 DRN_POBOY = "/Users/aphearin/work/DATA/Galacticus/diffstarpop_data"
 DRN_LCRC = "/lcrc/project/halotools/Galacticus/diffstarpop_data"
 BNAME_APH2 = "galacticus_11To14.2Mhalo_SFHinsitu_AHearin.hdf5"
-BNAME_SFH_DATA = "sfh_disk_bulge_in_ex_situ.hdf5"
 
 LOGMP0_MIN = 10.5
 MIN_MASS_CUT = 7.0
@@ -24,7 +23,7 @@ MIN_LOGSM_Z0 = 8.0
 
 NHALOS_TEST = 30
 
-TMP_OUTPAT = "tmp_sfh_fits_rank_{0}.dat"
+TMP_OUTPAT = "tmp_sfh_fits_rank_{0}_{1}.dat"
 
 
 if __name__ == "__main__":
@@ -36,7 +35,7 @@ if __name__ == "__main__":
     parser.add_argument("sfh_type", choices=["in_situ", "in_plus_ex_situ"])
 
     parser.add_argument("-indir", help="Input directory", default=DRN_LCRC)
-    parser.add_argument("-inbn", help="Input basename", default=BNAME_SFH_DATA)
+    parser.add_argument("-inbn", help="Input basename", default=lgs.BNAME_SFH_DATA)
     parser.add_argument("-outdir", help="Output directory", default="")
     parser.add_argument(
         "-fstar_tdelay",
@@ -89,14 +88,12 @@ if __name__ == "__main__":
     comm.Barrier()
 
     if sfh_type == "in_situ":
-        bulge_colname = "sfh_in_situ_bulge"
-        disk_colname = "sfh_in_situ_disk"
+        sfh_colname = "sfh_in_situ"
     elif sfh_type == "in_plus_ex_situ":
-        bulge_colname = "sfh_tot_bulge"
-        disk_colname = "sfh_tot_disk"
+        sfh_colname = "sfh_tot"
 
     with h5py.File(fn_sfh_block, "r") as hdf:
-        nhalos_tot = hdf["sfh_in_situ_bulge"].shape[0]
+        nhalos_tot = hdf["sfh_in_situ"].shape[0]
 
     _a = np.arange(0, nhalos_tot).astype("i8")
     indx_for_rank = np.array_split(_a, nranks)[rank]
@@ -123,7 +120,7 @@ if __name__ == "__main__":
     if rank == 0:
         print("Number of galaxies for rank 0 = {}".format(nhalos_for_rank))
 
-    rank_outname = os.path.join(outdir, TMP_OUTPAT).format(rank)
+    rank_outname = os.path.join(outdir, TMP_OUTPAT).format(rank, sfh_type)
 
     comm.Barrier()
 
@@ -138,9 +135,7 @@ if __name__ == "__main__":
             logmp0_halo = logmp0_for_rank[i]
             halo_has_diffmah_fit = has_diffmah_fit_for_rank[i]
 
-            sfh_bulge = sfh_data_for_rank[bulge_colname][i] / 1e9
-            sfh_disk = sfh_data_for_rank[disk_colname][i] / 1e9
-            sfh = sfh_bulge + sfh_disk
+            sfh = sfh_data_for_rank[sfh_colname][i]
             logsm_z0 = np.log10(cumulative_mstar_formed(tarr, sfh)[-1])
 
             run_fitter = logmp0_halo > logmp0_min
@@ -172,7 +167,7 @@ if __name__ == "__main__":
 
         #  collate data from ranks and rewrite to disk
         pat = os.path.join(outdir, TMP_OUTPAT)
-        fit_data_fnames = [pat.format(i) for i in range(nranks)]
+        fit_data_fnames = [pat.format(i, sfh_type) for i in range(nranks)]
         collector = []
         for fit_fn in fit_data_fnames:
             assert os.path.isfile(fit_fn), fit_fn
@@ -187,7 +182,6 @@ if __name__ == "__main__":
         dfh.write_collated_data(outfn, subvol_i_fit_results, colnames_out)
 
         # clean up ASCII data for subvol_i
-        bnpat = TMP_OUTPAT.format("*")
-        fnpat = os.path.join(outdir, bnpat)
-        command = "rm " + fnpat
-        subprocess.os.system(command)
+        for fn in fit_data_fnames:
+            command = "rm " + fn
+            subprocess.os.system(command)
