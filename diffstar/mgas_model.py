@@ -1,5 +1,4 @@
 from collections import namedtuple
-from functools import partial
 
 from jax import jit as jjit
 from jax import vmap
