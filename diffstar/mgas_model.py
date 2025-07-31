@@ -33,7 +33,7 @@ GalHistory = namedtuple("GalHistory", ("sfh", "smh", "dmgash", "mgash"))
 
 @jjit
 def calc_mgas_singlegal(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB):
-    """Calculate the Diffstar SFH for a single galaxy
+    """Calculate the Diffstar SFH and Mgas for a single galaxy
 
     Parameters
     ----------
@@ -99,7 +99,7 @@ def calc_mgas_singlegal(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB):
 
 @jjit
 def calc_mgas_galpop(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB):
-    """Calculate the Diffstar SFH for a single galaxy
+    """Calculate the Diffstar SFH and Mgas for a single galaxy
 
     Parameters
     ----------
