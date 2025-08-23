@@ -77,7 +77,7 @@ def load_galacticus_diffstar_data(drn):
 def load_galacticus_sfh_target_data(drn):
     galcus_sfh_data = dict()
     galcus_sfh_data["tarr"] = np.load(os.path.join(drn, "tarr_bulge.npy"))
-    dtarr = _get_dt_array(galcus_sfh_data["tarr"])
+    dtarr = np.diff(np.concatenate(([0.0], galcus_sfh_data["tarr"])))
 
     # raw SFH data gives ΔMstar(Δt) in units of ΔMsun and ΔGyr, so we divide by Δt*1e9
     dmstar_in_situ_bulge = np.load(os.path.join(drn, "delta_mstar_in_situ_bulge.npy"))
