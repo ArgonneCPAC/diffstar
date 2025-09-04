@@ -25,7 +25,7 @@ Om0 = 0.31530
 FB = Ob0 / Om0
 
 
-def load_galacticus_diffstar_data(drn):
+def load_galacticus_diffstar_data(drn, diffstar_drn=DRN_LCRC, diffmah_drn=DRN_LCRC):
     """Load data used in DiffstarPop analysis of Galacticus SFH
 
     Parameters
@@ -47,13 +47,13 @@ def load_galacticus_diffstar_data(drn):
             Columns are ('tarr', 'sfh_in_situ', 'sfh_tot', 'is_cen')
 
     """
-    fn_diffmah = os.path.join(drn, BN_DIFFMAH)
+    fn_diffmah = os.path.join(diffmah_drn, BN_DIFFMAH)
     diffmah_fit_data = load_flat_hdf5(fn_diffmah)
 
-    fn_diffstar = os.path.join(drn, BN_DIFFSTAR_IN_SITU)
+    fn_diffstar = os.path.join(diffstar_drn, BN_DIFFSTAR_IN_SITU)
     diffstar_in_situ_fit_data = load_flat_hdf5(fn_diffstar)
 
-    fn_diffstar_tot_sfh = os.path.join(drn, BN_DIFFSTAR_IN_PLUS_EX_SITU)
+    fn_diffstar_tot_sfh = os.path.join(diffstar_drn, BN_DIFFSTAR_IN_PLUS_EX_SITU)
     diffstar_in_plus_ex_situ_fit_data = load_flat_hdf5(fn_diffstar_tot_sfh)
 
     galcus_sfh_data = load_galacticus_sfh_target_data(drn)
