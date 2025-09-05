@@ -13,6 +13,7 @@ from diffstar.data_loaders.load_smah_data import (
     load_tng_data,
     FB_TNG,
 )
+from diffstar.data_loaders import load_precomputed_diffmah_fits
 from diffstar.fitting_helpers.utils import minimizer_wrapper
 
 BEBOP_TNG = "/lcrc/project/halotools/alarcon/data/"
@@ -53,8 +54,6 @@ if __name__ == "__main__":
         default=dfh.SSFRH_FLOOR,
     )
     parser.add_argument("-test", help="Short test run?", type=bool, default=False)
-    parser.add_argument("-istart", help="First subvolume in loop", type=int, default=0)
-    parser.add_argument("-iend", help="Last subvolume in loop", type=int, default=-1)
     parser.add_argument("-nchunks", help="Number of chunks", type=int, default=NCHUNKS)
 
     args = parser.parse_args()
@@ -63,7 +62,6 @@ if __name__ == "__main__":
     outdir = args.outdir
     indir_diffmah = args.indir_diffmah
     outbase = args.outbase
-    istart, iend = args.istart, args.iend
     nchunks = args.nchunks
     nchar_chunks = len(str(nchunks))
 
@@ -83,9 +81,6 @@ if __name__ == "__main__":
     halo_ids, log_smahs, sfrhs, tarr, dt, log_mahs, logmp = _data
     T0 = tarr[-1]
 
-    diffmah_str = "diffmah_tng_fits.hdf5"
-    mah_fit_params, logmp_fit = load_fit_mah_tpeak(diffmah_str, data_drn=indir_diffmah)
-
     if rank == 0:
         print("Number of galaxies in mock = {}".format(len(halo_ids)))
 
@@ -96,13 +91,16 @@ if __name__ == "__main__":
         nhalos_tot = len(halo_ids)
 
     _a = np.arange(0, nhalos_tot).astype("i8")
-    indx = np.array_split(_a, nranks)[rank]
+    indx_for_rank = np.array_split(_a, nranks)[rank]
+    istart = indx_for_rank[0]
+    iend = indx_for_rank[-1] + 1
 
-    halo_ids_for_rank = halo_ids[indx]
-    log_smahs_for_rank = log_smahs[indx]
-    sfrhs_for_rank = sfrhs[indx]
-    mah_params_for_rank = mah_fit_params[indx]
-    logmp_for_rank = logmp[indx]
+    _res = load_precomputed_diffmah_fits(indir_diffmah, T0, istart=istart, iend=iend)
+    mah_params_for_rank, logmp_for_rank = _res[:2]
+
+    halo_ids_for_rank = halo_ids[indx_for_rank]
+    log_smahs_for_rank = log_smahs[indx_for_rank]
+    sfrhs_for_rank = sfrhs[indx_for_rank]
 
     nhalos_for_rank = len(halo_ids_for_rank)
 
@@ -155,13 +153,14 @@ if __name__ == "__main__":
             assert os.path.isfile(fit_fn)
             fit_data = np.genfromtxt(fit_fn, dtype="str")
             collector.append(fit_data)
-        chunk_fit_results = np.concatenate(collector)
+        subvol_i_fit_results = np.concatenate(collector)
 
         fit_data_bnames = [os.path.basename(fn) for fn in fit_data_fnames]
         outbn = "diffstar_tng_fits.hdf5"
         outfn = os.path.join(outdir, outbn)
 
-        fitsmah.write_collated_data(outfn, chunk_fit_results, colnames_out)
+        # fitsmah.write_collated_data(outfn, chunk_fit_results, colnames_out)
+        dfh.write_collated_data(outfn, subvol_i_fit_results, colnames_out)
 
         # clean up ASCII data for subvol_i
         bn = fit_data_bnames[0]
