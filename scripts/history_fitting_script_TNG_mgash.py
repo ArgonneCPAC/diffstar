@@ -9,7 +9,6 @@ from mpi4py import MPI
 
 import diffstar.fitting_helpers.diffstar_fitting_helpers_mgash as dfh
 from diffstar.data_loaders.load_smah_data import (
-    load_fit_mah_tpeak,
     load_tng_data,
     FB_TNG,
 )
