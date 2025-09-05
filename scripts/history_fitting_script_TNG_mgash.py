@@ -125,7 +125,7 @@ if __name__ == "__main__":
             halo_id = halo_ids_for_rank[i]
             lgsmah = log_smahs_for_rank[i, :]
             sfrh = sfrhs_for_rank[i, :]
-            mah_params = DiffmahParams(*mah_params_for_rank[i])
+            mah_params = DiffmahParams(*[x[i] for x in mah_params_for_rank])
             logmp_halo = logmp_for_rank[i]
 
             _res = dfh.diffstar_fitter(
