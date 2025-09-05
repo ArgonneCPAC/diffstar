@@ -105,7 +105,7 @@ if __name__ == "__main__":
     elif args.sim_name == "DR1_nomerging":
         indir_sfh = SMDPL_NOMERGING_SFH_LCRC_DRN
         indir_diffmah = SMDPL_NOMERGING_DIFFMAH_LCRC_DRN
-        subvol_diffmah_pat = "{}_diffmah_fits.h5"
+        subvol_diffmah_pat = "subvol_{}_diffmah_fits.h5"
     else:
         raise NotImplementedError
 
