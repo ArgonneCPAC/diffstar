@@ -94,7 +94,9 @@ if __name__ == "__main__":
     istart = indx_for_rank[0]
     iend = indx_for_rank[-1] + 1
 
-    _res = load_precomputed_diffmah_fits(indir_diffmah, T0, istart=istart, iend=iend)
+    diffmah_str = "diffmah_tng_fits.hdf5"
+    bn_diffmah = os.path.join(indir_diffmah, diffmah_str)
+    _res = load_precomputed_diffmah_fits(bn_diffmah, T0, istart=istart, iend=iend)
     mah_params_for_rank, logmp_for_rank = _res[:2]
 
     halo_ids_for_rank = halo_ids[indx_for_rank]
