@@ -77,7 +77,7 @@ if __name__ == "__main__":
     start = time()
 
     _data = load_tng_data(indir)
-    halo_ids, log_smahs, sfrhs, tarr, dt, log_mahs, logmp = _data
+    halo_ids, log_smahs, sfrhs, tarr, log_mahs, logmp = _data
     T0 = tarr[-1]
 
     if rank == 0:
