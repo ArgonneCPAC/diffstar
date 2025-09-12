@@ -237,7 +237,7 @@ def loss_default_clipssfrh(u_params, loss_data):
     loss += 0.5 * (log_fstar - log_fstar_target)[-1] ** 2
 
     # Compute ridge terms
-    # loss += _sigmoid(sfh_params.q_params.lg_qt - lgt_fstar_max, 0.0, 50.0, 100.0, 0.0)
+    loss += _sigmoid(sfh_params.q_params.lg_qt - lgt_fstar_max, 0.0, 50.0, 100.0, 0.0)
     # loss += _sigmoid(sfh_params.ms_params.indx_lo, 0.0, 10.0, 1.0, 0.0)
     # loss += _sigmoid(sfh_params.ms_params.lgy_at_mcrit, 0.0, 20.0, 0.0, 1.0)
     return loss
