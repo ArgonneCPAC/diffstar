@@ -1,5 +1,7 @@
 # diffstar
 
+Code documentation can be found at [diffstar.readthedocs.io](https://diffstar.readthedocs.io/en/latest/).
+
 ## Installation
 The latest release of diffstar is available for installation with either pip or conda-forge:
 ```
