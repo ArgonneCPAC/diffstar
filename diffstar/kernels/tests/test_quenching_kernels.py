@@ -1,5 +1,4 @@
-"""
-"""
+""" """
 
 import numpy as np
 
@@ -8,6 +7,7 @@ from ..quenching_kernels import (
     DEFAULT_Q_PARAMS_UNQUENCHED,
     DEFAULT_Q_U_PARAMS_UNQUENCHED,
     DEFAULT_U_Q_PDICT,
+    DEFAULT_Q_PDICT,
     _get_bounded_q_params,
     _get_unbounded_q_params,
     _quenching_kern,
@@ -33,7 +33,7 @@ def test_default_quenching_params_respect_bounds():
 
     for key, bounds in Q_PARAM_BOUNDS_PDICT.items():
         lo, hi = bounds
-        default_val = DEFAULT_U_Q_PDICT["u_" + key]
+        default_val = DEFAULT_Q_PDICT[key]
         assert lo < default_val < hi
 
 
