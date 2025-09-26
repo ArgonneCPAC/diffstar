@@ -11,7 +11,6 @@ from ..defaults_mgash_model import (
     DEFAULT_U_Q_PARAMS,
     FB,
     LGT0,
-    DiffstarParams,
     DiffstarUParams,
     MSUParams,
     QUParams,
