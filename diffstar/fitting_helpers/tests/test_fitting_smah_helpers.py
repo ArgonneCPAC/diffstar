@@ -1,5 +1,4 @@
-"""
-"""
+""" """
 
 import numpy as np
 from diffmah.diffmah_kernels import DEFAULT_MAH_PARAMS

@@ -1,5 +1,4 @@
-"""
-"""
+""" """
 
 # flake8: noqa
 from collections import namedtuple
