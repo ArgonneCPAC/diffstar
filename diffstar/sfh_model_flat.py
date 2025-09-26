@@ -64,7 +64,7 @@ def calc_sfh_singlegal(
         This variable is only returned if return_smh=True
 
     """
-    ms_params, q_params = sfh_params
+    ms_params, q_params = sfh_params[:4], sfh_params[4:]
     args = (tarr, mah_params, ms_params, q_params, lgt0, fb)
     sfh = _sfh_singlegal_kern(*args)
     if return_smh:
@@ -119,7 +119,7 @@ def calc_sfh_galpop(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB, return_smh=F
         This variable is only returned if return_smh=True
 
     """
-    ms_params, q_params = sfh_params
+    ms_params, q_params = sfh_params[:4], sfh_params[4:]
     args = (
         tarr,
         jnp.array(mah_params).T,
