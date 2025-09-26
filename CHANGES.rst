@@ -1,3 +1,8 @@
+0.3.5 (2025-09-26)
+------------------
+- Add modules and fitting scripts of new formulation of diffstar (https://github.com/ArgonneCPAC/diffstar/pull/89)
+
+
 0.3.4 (2025-03-03)
 ------------------
 - Add convenience function cumulative_mstar_formed_galpop (https://github.com/ArgonneCPAC/diffstar/pull/77)
