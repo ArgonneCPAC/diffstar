@@ -6,7 +6,6 @@ from collections import namedtuple
 import h5py
 import numpy as np
 
-from ..utils import _get_dt_array
 from . import load_flat_hdf5
 
 DRN_LCRC = "/lcrc/project/halotools/Galacticus/diffstarpop_data"

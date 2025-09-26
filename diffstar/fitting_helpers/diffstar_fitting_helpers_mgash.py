@@ -9,7 +9,6 @@ from jax import jit as jjit
 from jax import numpy as jnp
 
 from ..sfh_model_mgash import calc_sfh_singlegal
-from ..kernels.history_kernel_builders_mgash import _sfh_singlegal_kern
 from ..defaults_mgash_model import (
     DEFAULT_DIFFSTAR_U_PARAMS,
     DEFAULT_MS_PARAMS,

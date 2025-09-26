@@ -3,13 +3,12 @@
 from collections import OrderedDict, namedtuple
 
 import numpy as np
-from diffmah.diffmah_kernels import _diffmah_kern, _diffmah_kern_scalar, _log_mah_kern
+from diffmah.diffmah_kernels import _log_mah_kern
 from jax import jit as jjit
-from jax import lax
 from jax import numpy as jnp
 from jax import vmap
 
-from ..utils import _inverse_sigmoid, _jax_get_dt_array, _sigmoid
+from ..utils import _inverse_sigmoid, _sigmoid
 
 DEFAULT_MS_PDICT = OrderedDict(
     lgmcrit=12.0,

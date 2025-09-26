@@ -6,7 +6,7 @@ from functools import partial
 from jax import jit as jjit
 from jax import vmap
 from jax import numpy as jnp
-from .defaults import DEFAULT_N_STEPS, FB, LGT0, T_BIRTH_MIN
+from .defaults import FB, LGT0
 from .kernels.history_kernel_builders_mgash import _sfh_singlegal_kern, _sfh_galpop_kern
 from .utils import cumulative_mstar_formed
 
