@@ -60,19 +60,13 @@ def get_bounded_diffstar_params(diffstar_u_params):
 
     Parameters
     ----------
-    diffstar_u_params : namedtuple, length 2
-        DiffstarUParams = u_ms_params, u_q_params
-            u_ms_params and u_q_params are tuples of floats or ndarrays
-            u_ms_params = u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_tau_dep
-            u_q_params = u_lg_qt, u_qlglgdt, u_lg_drop, u_lg_rejuv
+    diffstar_u_params : namedtuple, length 9
+        u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_lg_qt, u_qlglgdt, u_lg_drop, u_lg_rejuv
 
     Returns
     -------
-    diffstar_params : namedtuple, length 2
-        DiffstarParams = ms_params, q_params
-            ms_params and q_params are tuples of floats or ndarrays
-            ms_params = lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, tau_dep
-            q_params = lg_qt, qlglgdt, lg_drop, lg_rejuv
+    diffstar_params : namedtuple, length 8
+        lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, lg_qt, qlglgdt, lg_drop, lg_rejuv
 
     """
     u_ms_params = diffstar_u_params[:4]
@@ -90,19 +84,13 @@ def get_unbounded_diffstar_params(diffstar_params):
 
     Parameters
     ----------
-    diffstar_params : namedtuple, length 2
-        DiffstarParams = ms_params, q_params
-            ms_params and q_params are tuples of floats or ndarrays
-            ms_params = lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, tau_dep
-            q_params = lg_qt, qlglgdt, lg_drop, lg_rejuv
+    diffstar_params : namedtuple, length 8
+        lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, lg_qt, qlglgdt, lg_drop, lg_rejuv
 
     Returns
     -------
-    diffstar_u_params : namedtuple, length 2
-        DiffstarUParams = u_ms_params, u_q_params
-            u_ms_params and u_q_params are tuples of floats or ndarrays
-            u_ms_params = u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_tau_dep
-            u_q_params = u_lg_qt, u_qlglgdt, u_lg_drop, u_lg_rejuv
+    diffstar_u_params : namedtuple, length 9
+        u_lgmcrit, u_lgy_at_mcrit, u_indx_lo, u_indx_hi, u_lg_qt, u_qlglgdt, u_lg_drop, u_lg_rejuv
 
     """
     ms_params = diffstar_params[:4]

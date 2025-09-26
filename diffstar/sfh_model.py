@@ -24,12 +24,9 @@ def calc_sfh_singlegal(
 
     Parameters
     ----------
-    sfh_params : namedtuple, length 2
-        DiffstarParams = ms_params, q_params
-            ms_params and q_params are tuples of floats
-            ms_params = lgmcrit, lgy_at_mcrit, indx_lo, indx_hi
-            q_params = lg_qt, qlglgdt, lg_drop, lg_rejuv
-
+    sfh_params : namedtuple, length 8
+        sfh_params is a tuple of floats
+        lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, lg_qt, qlglgdt, lg_drop, lg_rejuv
 
     mah_params : namedtuple, length 5
         mah_params is a tuple of floats
@@ -80,11 +77,9 @@ def calc_sfh_galpop(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB, return_smh=F
 
     Parameters
     ----------
-    sfh_params : namedtuple, length 2
-        DiffstarParams = ms_params, q_params
-            ms_params and q_params are tuples of ndarrays of shape (ngals, )
-            ms_params = lgmcrit, lgy_at_mcrit, indx_lo, indx_hi
-            q_params = lg_qt, qlglgdt, lg_drop, lg_rejuv
+    sfh_params : namedtuple, length 8
+        sfh_params is a tuple of ndarrays of shape (ngals, )
+        lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, lg_qt, qlglgdt, lg_drop, lg_rejuv
 
     mah_params : namedtuple, length 5
         mah_params is a tuple of ndarrays of shape (ngals, )
