@@ -16,7 +16,7 @@ from ..defaults import (
     QUParams,
     get_bounded_diffstar_params,
 )
-from ..mgas_model import calc_mgas_singlegal
+from ..mgas_model import calc_mgas_galpop, calc_mgas_singlegal
 
 
 def _get_all_default_params():
@@ -48,9 +48,9 @@ def test_sfh_singlegal_evaluates_on_wide_param_range():
     ran_keys = jran.split(ran_key, ntests)
     for test_key in ran_keys:
         ms_key, q_key = jran.split(test_key, 2)
-        u_ms_params = jran.normal(ms_key, shape=(5,)) + np.array(u_ms_params_init)
+        u_ms_params = jran.normal(ms_key, shape=(4,)) + np.array(u_ms_params_init)
         u_q_params = jran.normal(q_key, shape=(4,)) + np.array(u_q_params_init)
-        sfh_u_params = DiffstarUParams(MSUParams(*u_ms_params), QUParams(*u_q_params))
+        sfh_u_params = DiffstarUParams(*MSUParams(*u_ms_params), *QUParams(*u_q_params))
         sfh_params = get_bounded_diffstar_params(sfh_u_params)
         res = calc_mgas_singlegal(sfh_params, mah_params, tarr, lgt0=lgt0, fb=FB)
         assert np.all(np.isfinite(res.sfh))
@@ -66,3 +66,22 @@ def test_sfh_singlegal_evaluates_on_wide_param_range():
         assert np.all(np.isfinite(res2.mgash))
         assert np.allclose(res.sfh, res2.sfh)
         assert np.allclose(res.mgash, res2.mgash)
+
+
+def test_calc_mgas_galpop_evaluates():
+    n_gals = 50
+    ZZ = np.zeros(n_gals)
+    ms_params = DEFAULT_MS_PARAMS._make([ZZ + x for x in DEFAULT_MS_PARAMS])
+    q_params = DEFAULT_Q_PARAMS._make([ZZ + x for x in DEFAULT_Q_PARAMS])
+    sfh_params = DiffstarUParams(*ms_params, *q_params)
+    mah_params = DEFAULT_MAH_PARAMS._make([ZZ + x for x in DEFAULT_MAH_PARAMS])
+    tarr = np.linspace(0.1, 13.8, 30)
+    gal_history = calc_mgas_galpop(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB)
+
+    assert gal_history._fields == ("sfh", "smh", "dmgash", "mgash")
+    for x in gal_history:
+        assert np.all(np.isfinite(x))
+
+    assert np.all(gal_history.sfh > 0)
+    assert np.all(gal_history.smh > 0)
+    assert np.all(gal_history.mgash > 0)

@@ -3,8 +3,8 @@
 import numpy as np
 import pytest
 
-from .. import defaults
-from ..kernels.main_sequence_kernels_tpeak import (
+from .. import defaults as defaults
+from ..kernels.main_sequence_kernels import (
     DEFAULT_MS_PDICT,
     DEFAULT_U_MS_PDICT,
     _get_bounded_sfr_params,
@@ -33,18 +33,20 @@ def test_get_bounded_diffstar_params_return_unbounded_namedtuple():
     diffstar_params = defaults.get_bounded_diffstar_params(
         defaults.DEFAULT_DIFFSTAR_U_PARAMS
     )
-    assert diffstar_params._fields == ("ms_params", "q_params")
-    assert diffstar_params.ms_params._fields == tuple(DEFAULT_MS_PDICT.keys())
-    assert diffstar_params.q_params._fields == tuple(DEFAULT_Q_PDICT.keys())
+    assert diffstar_params._fields == (
+        *DEFAULT_MS_PDICT.keys(),
+        *DEFAULT_Q_PDICT.keys(),
+    )
 
 
 def test_get_unbounded_diffstar_params_return_unbounded_namedtuple():
     u_diffstar_params = defaults.get_unbounded_diffstar_params(
         defaults.DEFAULT_DIFFSTAR_PARAMS
     )
-    assert u_diffstar_params._fields == ("u_ms_params", "u_q_params")
-    assert u_diffstar_params.u_ms_params._fields == tuple(DEFAULT_U_MS_PDICT.keys())
-    assert u_diffstar_params.u_q_params._fields == tuple(DEFAULT_U_Q_PDICT.keys())
+    assert u_diffstar_params._fields == (
+        *DEFAULT_U_MS_PDICT.keys(),
+        *DEFAULT_U_Q_PDICT.keys(),
+    )
 
 
 def test_default_params_imports_from_top_level():
@@ -97,32 +99,22 @@ def test_default_diffstar_params():
     for key, u_key in gen:
         assert "u_" + key == u_key
 
-    assert defaults.DEFAULT_DIFFSTAR_PARAMS._fields == ("ms_params", "q_params")
-    assert defaults.DEFAULT_DIFFSTAR_U_PARAMS._fields == ("u_ms_params", "u_q_params")
-
-    assert np.allclose(
-        defaults.DEFAULT_DIFFSTAR_U_PARAMS.u_ms_params,
-        np.array(list(DEFAULT_U_MS_PDICT.values())),
-    )
-    assert np.allclose(
-        defaults.DEFAULT_DIFFSTAR_U_PARAMS.u_q_params,
-        np.array(list(DEFAULT_U_Q_PDICT.values())),
-    )
-
 
 def test_get_bounded_diffstar_params():
-    p = defaults.get_bounded_diffstar_params(defaults.DEFAULT_DIFFSTAR_U_PARAMS)
-    assert np.allclose(p.ms_params, defaults.DEFAULT_DIFFSTAR_PARAMS.ms_params)
-    assert np.allclose(p.q_params, defaults.DEFAULT_DIFFSTAR_PARAMS.q_params)
+    diffstar_params = defaults.get_bounded_diffstar_params(
+        defaults.DEFAULT_DIFFSTAR_U_PARAMS
+    )
+    assert np.allclose(diffstar_params, defaults.DEFAULT_DIFFSTAR_PARAMS)
 
-    u_p = defaults.get_unbounded_diffstar_params(defaults.DEFAULT_DIFFSTAR_PARAMS)
-    assert np.allclose(u_p.u_ms_params, defaults.DEFAULT_DIFFSTAR_U_PARAMS.u_ms_params)
-    assert np.allclose(u_p.u_q_params, defaults.DEFAULT_DIFFSTAR_U_PARAMS.u_q_params)
+    diffstar_u_params = defaults.get_unbounded_diffstar_params(
+        defaults.DEFAULT_DIFFSTAR_PARAMS
+    )
+    assert np.allclose(diffstar_u_params, defaults.DEFAULT_DIFFSTAR_U_PARAMS)
 
 
 def test_default_ms_params_are_frozen():
     p = defaults.DEFAULT_MS_PARAMS
-    frozen_defaults = np.array((12.0, -1.0, 1.0, -1.0, 2.0))
+    frozen_defaults = np.array((12.0, -10.0, 1.0, -1.0))
     assert np.allclose(p, frozen_defaults)
 
 
@@ -216,11 +208,7 @@ def test_default_q_params_unquenched():
 @pytest.mark.skipif(not HAS_DSPS, reason=MSG_HAS_DSPS)
 def test_consistency_with_dsps_defaults():
     assert np.allclose(defaults.SFR_MIN, dsps.constants.SFR_MIN)
-    assert np.allclose(defaults.T_BIRTH_MIN, dsps.constants.T_BIRTH_MIN)
     assert np.allclose(defaults.T_TABLE_MIN, dsps.constants.T_TABLE_MIN)
-    assert np.allclose(
-        defaults.N_T_LGSM_INTEGRATION, dsps.constants.N_T_LGSM_INTEGRATION
-    )
 
 
 def test_consistency_with_diffmah_defaults():

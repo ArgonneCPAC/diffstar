@@ -4,12 +4,12 @@ import numpy as np
 from diffmah.defaults import DEFAULT_MAH_PARAMS
 from jax import random as jran
 
-from ... import calc_sfh_singlegal
 from ...defaults import (
     DEFAULT_DIFFSTAR_U_PARAMS,
     T_TABLE_MIN,
     get_bounded_diffstar_params,
 )
+from ...sfh_model import calc_sfh_singlegal
 from ...utils import cumulative_mstar_formed
 from .. import diffstar_fitting_helpers as dfh
 
@@ -18,26 +18,9 @@ LOSS_TOL = 0.1
 
 def _get_random_diffstar_params(ran_key):
     ms_key, q_key = jran.split(ran_key, 2)
-    u_ms = jran.uniform(
-        ms_key,
-        minval=-1,
-        maxval=1,
-        shape=(len(DEFAULT_DIFFSTAR_U_PARAMS.u_ms_params),),
-    )
-    u_q = jran.uniform(
-        ms_key,
-        minval=-1,
-        maxval=1,
-        shape=(len(DEFAULT_DIFFSTAR_U_PARAMS.u_q_params),),
-    )
-
-    u_ms_params = u_ms + np.array(DEFAULT_DIFFSTAR_U_PARAMS.u_ms_params)
-    u_q_params = u_q + np.array(DEFAULT_DIFFSTAR_U_PARAMS.u_q_params)
-
-    u_ms_params = DEFAULT_DIFFSTAR_U_PARAMS.u_ms_params._make(u_ms_params)
-    u_q_params = DEFAULT_DIFFSTAR_U_PARAMS.u_q_params._make(u_q_params)
-
-    u_sfh_params = DEFAULT_DIFFSTAR_U_PARAMS._make((u_ms_params, u_q_params))
+    n_params = len(DEFAULT_DIFFSTAR_U_PARAMS)
+    uran = jran.uniform(ms_key, minval=-1, maxval=1, shape=(n_params,))
+    u_sfh_params = DEFAULT_DIFFSTAR_U_PARAMS._make(uran)
 
     return u_sfh_params
 
@@ -155,7 +138,6 @@ def test_get_loss_data_default():
             weight,
             weight_fstar,
             lgt_fstar_max,
-            u_fixed_hi,
             lgt0,
             fb,
         ) = loss_data

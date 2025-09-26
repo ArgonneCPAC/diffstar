@@ -8,7 +8,7 @@ import numpy as np
 from diffmah.diffmah_kernels import DiffmahParams
 from mpi4py import MPI
 
-import diffstar.fitting_helpers.diffstar_fitting_helpers_mgash as dfh
+import diffstar.fitting_helpers.diffstar_fitting_helpers as dfh
 from diffstar.data_loaders.load_smah_data import (
     FB_SMDPL,
     T0_SMDPL,

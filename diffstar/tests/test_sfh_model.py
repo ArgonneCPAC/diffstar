@@ -2,6 +2,7 @@
 
 import numpy as np
 from diffmah.diffmah_kernels import DEFAULT_MAH_PARAMS
+from jax import numpy as jnp
 from jax import random as jran
 
 from ..defaults import (
@@ -16,7 +17,7 @@ from ..defaults import (
     QUParams,
     get_bounded_diffstar_params,
 )
-from ..sfh_model_tpeak import calc_sfh_singlegal
+from ..sfh_model import calc_sfh_galpop, calc_sfh_singlegal
 
 
 def _get_all_default_params():
@@ -48,9 +49,9 @@ def test_sfh_singlegal_evaluates_on_wide_param_range():
     ran_keys = jran.split(ran_key, ntests)
     for test_key in ran_keys:
         ms_key, q_key = jran.split(test_key, 2)
-        u_ms_params = jran.normal(ms_key, shape=(5,)) + np.array(u_ms_params_init)
+        u_ms_params = jran.normal(ms_key, shape=(4,)) + np.array(u_ms_params_init)
         u_q_params = jran.normal(q_key, shape=(4,)) + np.array(u_q_params_init)
-        sfh_u_params = DiffstarUParams(MSUParams(*u_ms_params), QUParams(*u_q_params))
+        sfh_u_params = DiffstarUParams(*MSUParams(*u_ms_params), *QUParams(*u_q_params))
         sfh_params = get_bounded_diffstar_params(sfh_u_params)
         sfh_new = calc_sfh_singlegal(sfh_params, mah_params, tarr, lgt0=lgt0, fb=FB)
         assert np.all(np.isfinite(sfh_new))
@@ -60,3 +61,27 @@ def test_sfh_singlegal_evaluates_on_wide_param_range():
         )
         assert np.allclose(sfh_new, sfh_new2)
         assert np.all(np.isfinite(smh_new2))
+
+
+def test_sfh_galpop_evaluates_on_wide_param_range():
+    lgt0, def_mah_params, u_ms_params_init, u_q_params_init = (
+        _get_all_default_u_params()
+    )
+
+    n_t = 100
+    ngal = 50
+    tarr = np.linspace(0.1, 10**lgt0, n_t)
+
+    ran_key = jran.PRNGKey(0)
+    ms_key, q_key = jran.split(ran_key, 2)
+
+    mah_params = jnp.ones((ngal, len(def_mah_params))) * np.array(def_mah_params)
+    mah_params = DEFAULT_MAH_PARAMS._make(mah_params.T)
+
+    u_ms_params = jran.normal(ms_key, shape=(ngal, 4)) + np.array(u_ms_params_init)
+    u_q_params = jran.normal(q_key, shape=(ngal, 4)) + np.array(u_q_params_init)
+    sfh_u_params = DiffstarUParams(*MSUParams(*u_ms_params.T), *QUParams(*u_q_params.T))
+    sfh_params = get_bounded_diffstar_params(sfh_u_params)
+    sfh_new = calc_sfh_galpop(sfh_params, mah_params, tarr, lgt0=lgt0, fb=FB)
+
+    assert np.all(np.isfinite(sfh_new))
