@@ -230,8 +230,8 @@ def loss_default_clipssfrh(u_params, loss_data):
 
     # Compute ridge terms
     loss += _sigmoid(sfh_params.lg_qt - lgt_fstar_max, 0.0, 50.0, 100.0, 0.0)
-    # loss += _sigmoid(sfh_params.ms_params.indx_lo, 0.0, 10.0, 1.0, 0.0)
-    # loss += _sigmoid(sfh_params.ms_params.lgy_at_mcrit, 0.0, 20.0, 0.0, 1.0)
+    # loss += _sigmoid(sfh_params.indx_lo, 0.0, 10.0, 1.0, 0.0)
+    # loss += _sigmoid(sfh_params.lgy_at_mcrit, 0.0, 20.0, 0.0, 1.0)
     return loss
 
 
@@ -254,7 +254,7 @@ def get_header():
 
 def get_outline(halo_id, p_best, loss_best, success):
     """Return the string storing fitting results that will be written to disk"""
-    _d = np.array((*p_best.ms_params, *p_best.q_params)).astype("f4")
+    _d = np.array((p_best)).astype("f4")
     data_out = (*_d, float(loss_best))
     out = str(halo_id) + " " + " ".join(["{:.5e}".format(x) for x in data_out])
     out = out + " " + str(success)
