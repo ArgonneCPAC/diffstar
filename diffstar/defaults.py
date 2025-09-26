@@ -43,12 +43,12 @@ from .kernels.quenching_kernels import (
     _get_unbounded_q_params,
 )
 
-pnames = ["ms_params", "q_params"]
+pnames = [*DEFAULT_MS_PARAMS._fields, *DEFAULT_Q_PARAMS._fields]
 DiffstarParams = namedtuple("DiffstarParams", pnames)
-DEFAULT_DIFFSTAR_PARAMS = DiffstarParams(DEFAULT_MS_PARAMS, DEFAULT_Q_PARAMS)
+DEFAULT_DIFFSTAR_PARAMS = DiffstarParams(*DEFAULT_MS_PARAMS, *DEFAULT_Q_PARAMS)
 
 DiffstarUParams = namedtuple("DiffstarUParams", ["u_" + key for key in pnames])
-DEFAULT_DIFFSTAR_U_PARAMS = DiffstarUParams(DEFAULT_U_MS_PARAMS, DEFAULT_U_Q_PARAMS)
+DEFAULT_DIFFSTAR_U_PARAMS = DiffstarUParams(*DEFAULT_U_MS_PARAMS, *DEFAULT_U_Q_PARAMS)
 
 
 @jjit
@@ -75,9 +75,11 @@ def get_bounded_diffstar_params(diffstar_u_params):
             q_params = lg_qt, qlglgdt, lg_drop, lg_rejuv
 
     """
-    ms_params = MSParams(*_get_bounded_sfr_params(*diffstar_u_params.u_ms_params))
-    q_params = QParams(*_get_bounded_q_params(*diffstar_u_params.u_q_params))
-    return DiffstarParams(ms_params, q_params)
+    u_ms_params = diffstar_u_params[:4]
+    u_q_params = diffstar_u_params[4:]
+    ms_params = MSParams(*_get_bounded_sfr_params(*u_ms_params))
+    q_params = QParams(*_get_bounded_q_params(*u_q_params))
+    return DiffstarParams(*ms_params, *q_params)
 
 
 @jjit
@@ -103,6 +105,8 @@ def get_unbounded_diffstar_params(diffstar_params):
             u_q_params = u_lg_qt, u_qlglgdt, u_lg_drop, u_lg_rejuv
 
     """
-    u_ms_params = MSUParams(*_get_unbounded_sfr_params(*diffstar_params.ms_params))
-    u_q_params = QUParams(*_get_unbounded_q_params(*diffstar_params.q_params))
-    return DiffstarUParams(u_ms_params, u_q_params)
+    ms_params = diffstar_params[:4]
+    q_params = diffstar_params[4:]
+    u_ms_params = MSUParams(*_get_unbounded_sfr_params(*ms_params))
+    u_q_params = QUParams(*_get_unbounded_q_params(*q_params))
+    return DiffstarUParams(*u_ms_params, *u_q_params)

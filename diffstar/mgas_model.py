@@ -4,8 +4,8 @@ from diffmah.diffmah_kernels import mah_halopop, mah_singlehalo
 from jax import jit as jjit
 from jax import vmap
 
-from .defaults import FB, LGT0
-from .kernels.history_kernel_builders import _sfh_galpop_kern, _sfh_singlegal_kern
+from .defaults_flat import FB, LGT0
+from .kernels.history_kernel_builders_flat import _sfh_galpop_kern, _sfh_singlegal_kern
 from .utils import _jax_get_dt_array, cumulative_mstar_formed
 
 _cumulative_mstar_formed_vmap = jjit(vmap(cumulative_mstar_formed, in_axes=(None, 0)))
@@ -63,7 +63,7 @@ def calc_mgas_singlegal(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB):
             Total remaining gas mass in units of Msun
 
     """
-    ms_params, q_params = sfh_params
+    ms_params, q_params = sfh_params[:4], sfh_params[4:]
     args = (tarr, mah_params, ms_params, q_params, lgt0, fb)
     sfh = _sfh_singlegal_kern(*args)
 
@@ -128,7 +128,7 @@ def calc_mgas_galpop(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB):
             Total remaining gas mass in units of Msun
 
     """
-    ms_params, q_params = sfh_params
+    ms_params, q_params = sfh_params[:4], sfh_params[4:]
     args = (tarr, mah_params, ms_params, q_params, lgt0, fb)
     sfh = _sfh_galpop_kern(*args)
 

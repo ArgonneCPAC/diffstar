@@ -1,8 +1,10 @@
 """"""
 
 import numpy as np
-from jax import random as jran
+from diffmah.diffmah_kernels import DEFAULT_MAH_PARAMS
 from jax import numpy as jnp
+from jax import random as jran
+
 from ..defaults import (
     DEFAULT_MS_PARAMS,
     DEFAULT_Q_PARAMS,
@@ -15,8 +17,7 @@ from ..defaults import (
     QUParams,
     get_bounded_diffstar_params,
 )
-from ..sfh_model import calc_sfh_singlegal, calc_sfh_galpop
-from diffmah.diffmah_kernels import DEFAULT_MAH_PARAMS
+from ..sfh_model import calc_sfh_galpop, calc_sfh_singlegal
 
 
 def _get_all_default_params():
@@ -50,7 +51,7 @@ def test_sfh_singlegal_evaluates_on_wide_param_range():
         ms_key, q_key = jran.split(test_key, 2)
         u_ms_params = jran.normal(ms_key, shape=(4,)) + np.array(u_ms_params_init)
         u_q_params = jran.normal(q_key, shape=(4,)) + np.array(u_q_params_init)
-        sfh_u_params = DiffstarUParams(MSUParams(*u_ms_params), QUParams(*u_q_params))
+        sfh_u_params = DiffstarUParams(*MSUParams(*u_ms_params), *QUParams(*u_q_params))
         sfh_params = get_bounded_diffstar_params(sfh_u_params)
         sfh_new = calc_sfh_singlegal(sfh_params, mah_params, tarr, lgt0=lgt0, fb=FB)
         assert np.all(np.isfinite(sfh_new))
@@ -79,7 +80,7 @@ def test_sfh_galpop_evaluates_on_wide_param_range():
 
     u_ms_params = jran.normal(ms_key, shape=(ngal, 4)) + np.array(u_ms_params_init)
     u_q_params = jran.normal(q_key, shape=(ngal, 4)) + np.array(u_q_params_init)
-    sfh_u_params = DiffstarUParams(MSUParams(*u_ms_params.T), QUParams(*u_q_params.T))
+    sfh_u_params = DiffstarUParams(*MSUParams(*u_ms_params.T), *QUParams(*u_q_params.T))
     sfh_params = get_bounded_diffstar_params(sfh_u_params)
     sfh_new = calc_sfh_galpop(sfh_params, mah_params, tarr, lgt0=lgt0, fb=FB)
 

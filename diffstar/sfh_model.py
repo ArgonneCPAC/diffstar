@@ -7,8 +7,8 @@ from jax import jit as jjit
 from jax import numpy as jnp
 from jax import vmap
 
-from .defaults import FB, LGT0
-from .kernels.history_kernel_builders import _sfh_galpop_kern, _sfh_singlegal_kern
+from .defaults_flat import FB, LGT0
+from .kernels.history_kernel_builders_flat import _sfh_galpop_kern, _sfh_singlegal_kern
 from .utils import cumulative_mstar_formed
 
 _cumulative_mstar_formed_vmap = jjit(vmap(cumulative_mstar_formed, in_axes=(None, 0)))
@@ -64,7 +64,7 @@ def calc_sfh_singlegal(
         This variable is only returned if return_smh=True
 
     """
-    ms_params, q_params = sfh_params
+    ms_params, q_params = sfh_params[:4], sfh_params[4:]
     args = (tarr, mah_params, ms_params, q_params, lgt0, fb)
     sfh = _sfh_singlegal_kern(*args)
     if return_smh:
@@ -119,7 +119,7 @@ def calc_sfh_galpop(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB, return_smh=F
         This variable is only returned if return_smh=True
 
     """
-    ms_params, q_params = sfh_params
+    ms_params, q_params = sfh_params[:4], sfh_params[4:]
     args = (
         tarr,
         jnp.array(mah_params).T,

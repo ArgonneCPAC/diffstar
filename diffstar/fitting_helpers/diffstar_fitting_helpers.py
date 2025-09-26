@@ -8,19 +8,17 @@ from jax import grad
 from jax import jit as jjit
 from jax import numpy as jnp
 
-from ..sfh_model import calc_sfh_singlegal
 from ..defaults import (
     DEFAULT_DIFFSTAR_U_PARAMS,
     DEFAULT_MS_PARAMS,
     DEFAULT_Q_PARAMS,
-    DEFAULT_U_MS_PARAMS,
-    DEFAULT_U_Q_PARAMS,
     FB,
     SFR_MIN,
     get_bounded_diffstar_params,
 )
 from ..kernels.main_sequence_kernels import _get_unbounded_sfr_params
 from ..kernels.quenching_kernels import _get_unbounded_q_params
+from ..sfh_model import calc_sfh_singlegal
 from ..utils import _sigmoid, compute_fstar, cumulative_mstar_formed
 from .utils import minimizer_wrapper
 
@@ -68,9 +66,7 @@ def diffstar_fitter(
     varied_u_p_best, loss_best, success = _res
 
     # Transform varied_u_p_best into p_best
-    u_ms_params = DEFAULT_MS_PARAMS._make(varied_u_p_best[:4])
-    u_q_params = DEFAULT_Q_PARAMS._make(varied_u_p_best[4:])
-    u_p_best = DEFAULT_DIFFSTAR_U_PARAMS._make((u_ms_params, u_q_params))
+    u_p_best = DEFAULT_DIFFSTAR_U_PARAMS._make((varied_u_p_best))
     p_best = get_bounded_diffstar_params(u_p_best)
 
     return p_best, loss_best, success
@@ -211,10 +207,7 @@ def loss_default_clipssfrh(u_params, loss_data):
         fb,
     ) = loss_data
 
-    u_ms_params = DEFAULT_U_MS_PARAMS._make(u_params[:4])
-    u_q_params = DEFAULT_U_Q_PARAMS._make(u_params[4:])
-
-    sfh_u_params = DEFAULT_DIFFSTAR_U_PARAMS._make((u_ms_params, u_q_params))
+    sfh_u_params = DEFAULT_DIFFSTAR_U_PARAMS._make((u_params))
     sfh_params = get_bounded_diffstar_params(sfh_u_params)
     sfh_table, mstar_table = calc_sfh_singlegal(
         sfh_params, mah_params, t_table, lgt0=lgt0, fb=fb, return_smh=True
@@ -236,7 +229,7 @@ def loss_default_clipssfrh(u_params, loss_data):
     loss += 0.5 * (log_fstar - log_fstar_target)[-1] ** 2
 
     # Compute ridge terms
-    loss += _sigmoid(sfh_params.q_params.lg_qt - lgt_fstar_max, 0.0, 50.0, 100.0, 0.0)
+    loss += _sigmoid(sfh_params.lg_qt - lgt_fstar_max, 0.0, 50.0, 100.0, 0.0)
     # loss += _sigmoid(sfh_params.ms_params.indx_lo, 0.0, 10.0, 1.0, 0.0)
     # loss += _sigmoid(sfh_params.ms_params.lgy_at_mcrit, 0.0, 20.0, 0.0, 1.0)
     return loss
