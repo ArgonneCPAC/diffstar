@@ -4,26 +4,12 @@ from collections import namedtuple
 from functools import partial
 
 from jax import jit as jjit
+from jax import numpy as jnp
 from jax import vmap
 
-from .defaults import DEFAULT_N_STEPS, FB, LGT0, T_BIRTH_MIN
-from .kernels.history_kernel_builders_tpeak import build_sfh_from_mah_kernel
+from .defaults import FB, LGT0
+from .kernels.history_kernel_builders import _sfh_galpop_kern, _sfh_singlegal_kern
 from .utils import cumulative_mstar_formed
-
-_sfh_singlegal_kern = build_sfh_from_mah_kernel(
-    n_steps=DEFAULT_N_STEPS,
-    tacc_integration_min=T_BIRTH_MIN,
-    tobs_loop="scan",
-    tform_loop="sum",
-)
-
-_sfh_galpop_kern = build_sfh_from_mah_kernel(
-    n_steps=DEFAULT_N_STEPS,
-    tacc_integration_min=T_BIRTH_MIN,
-    tobs_loop="scan",
-    galpop_loop="vmap",
-    tform_loop="sum",
-)
 
 _cumulative_mstar_formed_vmap = jjit(vmap(cumulative_mstar_formed, in_axes=(None, 0)))
 
@@ -41,13 +27,15 @@ def calc_sfh_singlegal(
     sfh_params : namedtuple, length 2
         DiffstarParams = ms_params, q_params
             ms_params and q_params are tuples of floats
-            ms_params = lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, tau_dep
+            ms_params = lgmcrit, lgy_at_mcrit, indx_lo, indx_hi
             q_params = lg_qt, qlglgdt, lg_drop, lg_rejuv
 
 
     mah_params : namedtuple, length 5
         mah_params is a tuple of floats
         DiffmahParams = logmp, logtc, early_index, late_index, t_peak
+
+    t_peak : float
 
     tarr : ndarray, shape (nt, )
 
@@ -77,7 +65,7 @@ def calc_sfh_singlegal(
 
     """
     ms_params, q_params = sfh_params
-    args = (tarr, *mah_params, *ms_params, *q_params, lgt0, fb)
+    args = (tarr, mah_params, ms_params, q_params, lgt0, fb)
     sfh = _sfh_singlegal_kern(*args)
     if return_smh:
         smh = cumulative_mstar_formed(tarr, sfh)
@@ -95,12 +83,14 @@ def calc_sfh_galpop(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB, return_smh=F
     sfh_params : namedtuple, length 2
         DiffstarParams = ms_params, q_params
             ms_params and q_params are tuples of ndarrays of shape (ngals, )
-            ms_params = lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, tau_dep
+            ms_params = lgmcrit, lgy_at_mcrit, indx_lo, indx_hi
             q_params = lg_qt, qlglgdt, lg_drop, lg_rejuv
 
     mah_params : namedtuple, length 5
         mah_params is a tuple of ndarrays of shape (ngals, )
         DiffmahParams = logmp, logtc, early_index, late_index, t_peak
+
+    t_peak : ndarray, shape (ngals, )
 
     tarr : ndarray, shape (nt, )
 
@@ -130,7 +120,14 @@ def calc_sfh_galpop(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB, return_smh=F
 
     """
     ms_params, q_params = sfh_params
-    args = (tarr, *mah_params, *ms_params, *q_params, lgt0, fb)
+    args = (
+        tarr,
+        jnp.array(mah_params).T,
+        jnp.array(ms_params).T,
+        jnp.array(q_params).T,
+        lgt0,
+        fb,
+    )
     sfh = _sfh_galpop_kern(*args)
     if return_smh:
         smh = _cumulative_mstar_formed_vmap(tarr, sfh)

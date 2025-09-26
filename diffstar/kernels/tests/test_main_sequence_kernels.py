@@ -3,7 +3,7 @@
 import numpy as np
 import jax.numpy as jnp
 
-from ..main_sequence_kernels_mgash import (
+from ..main_sequence_kernels import (
     DEFAULT_MS_PARAMS,
     DEFAULT_U_MS_PARAMS,
     DEFAULT_MS_PDICT,

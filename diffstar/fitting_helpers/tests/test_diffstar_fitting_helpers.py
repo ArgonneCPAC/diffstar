@@ -4,12 +4,12 @@ import numpy as np
 from diffmah.defaults import DEFAULT_MAH_PARAMS
 from jax import random as jran
 
-from ... import calc_sfh_singlegal
 from ...defaults import (
     DEFAULT_DIFFSTAR_U_PARAMS,
     T_TABLE_MIN,
     get_bounded_diffstar_params,
 )
+from ...sfh_model import calc_sfh_singlegal
 from ...utils import cumulative_mstar_formed
 from .. import diffstar_fitting_helpers as dfh
 
@@ -155,7 +155,6 @@ def test_get_loss_data_default():
             weight,
             weight_fstar,
             lgt_fstar_max,
-            u_fixed_hi,
             lgt0,
             fb,
         ) = loss_data
