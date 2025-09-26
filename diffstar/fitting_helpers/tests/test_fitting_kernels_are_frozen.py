@@ -1,5 +1,4 @@
-"""Unit tests enforcing that the behavior of Diffstar on the default params is frozen.
-"""
+"""Unit tests enforcing that the behavior of Diffstar on the default params is frozen."""
 
 import os
 

@@ -1,5 +1,5 @@
-"""
-"""
+""" """
+
 import numpy as np
 
 from ..defaults import DEFAULT_U_Q_PARAMS

@@ -1,4 +1,5 @@
 """Script to fit Bolshoi or Multidark MAHs with a smooth model."""
+
 import argparse
 import os
 import subprocess

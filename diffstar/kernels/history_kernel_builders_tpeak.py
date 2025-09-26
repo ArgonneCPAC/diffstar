@@ -1,5 +1,4 @@
-"""
-"""
+""" """
 
 from diffmah.diffmah_kernels import DEFAULT_MAH_PARAMS
 from jax import jit as jjit

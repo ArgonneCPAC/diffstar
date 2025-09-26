@@ -3,8 +3,8 @@
 import numpy as np
 import pytest
 
-from .. import defaults
-from ..kernels.main_sequence_kernels_tpeak import (
+from .. import defaults_mgash_model as defaults
+from ..kernels.main_sequence_kernels_mgash import (
     DEFAULT_MS_PDICT,
     DEFAULT_U_MS_PDICT,
     _get_bounded_sfr_params,
@@ -122,7 +122,7 @@ def test_get_bounded_diffstar_params():
 
 def test_default_ms_params_are_frozen():
     p = defaults.DEFAULT_MS_PARAMS
-    frozen_defaults = np.array((12.0, -1.0, 1.0, -1.0, 2.0))
+    frozen_defaults = np.array((12.0, -10.0, 1.0, -1.0))
     assert np.allclose(p, frozen_defaults)
 
 
@@ -216,11 +216,7 @@ def test_default_q_params_unquenched():
 @pytest.mark.skipif(not HAS_DSPS, reason=MSG_HAS_DSPS)
 def test_consistency_with_dsps_defaults():
     assert np.allclose(defaults.SFR_MIN, dsps.constants.SFR_MIN)
-    assert np.allclose(defaults.T_BIRTH_MIN, dsps.constants.T_BIRTH_MIN)
     assert np.allclose(defaults.T_TABLE_MIN, dsps.constants.T_TABLE_MIN)
-    assert np.allclose(
-        defaults.N_T_LGSM_INTEGRATION, dsps.constants.N_T_LGSM_INTEGRATION
-    )
 
 
 def test_consistency_with_diffmah_defaults():

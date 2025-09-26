@@ -1,5 +1,4 @@
-"""
-"""
+""" """
 
 from collections import namedtuple
 
@@ -43,7 +42,7 @@ def tdata_generator_dithertarr(
     logm0_sample,
     n_sfh_table=N_SFH_TABLE,
     logsm0_min=LGSM0_MIN,
-    n_epochs=float("inf")
+    n_epochs=float("inf"),
 ):
     """
     Same as tdata_generator, but for each generation, a new t_table_min value
@@ -57,18 +56,11 @@ def tdata_generator_dithertarr(
     batchnum = 0
     while batchnum < n_epochs:
         ran_key, batch_key, *dither_keys = jran.split(ran_key, 4)
-        dither1, dither2 = jran.uniform(
-            dither_keys[0], (2,), maxval=max_dither_t
-        )
+        dither1, dither2 = jran.uniform(dither_keys[0], (2,), maxval=max_dither_t)
         tarr = np.linspace(T_TABLE_MIN + dither1, T0 - dither2, n_sfh_table)
-        dither1, dither2 = jran.uniform(
-            dither_keys[1], (2,), maxval=max_dither_m
-        )
+        dither1, dither2 = jran.uniform(dither_keys[1], (2,), maxval=max_dither_m)
         logm0_new = np.linspace(min_m0 + dither1, max_m0 - dither2, num_m0)
-        tdata = _compute_tdata(
-            batch_key, logm0_new, n_sfh_table, logsm0_min,
-            tarr=tarr
-        )
+        tdata = _compute_tdata(batch_key, logm0_new, n_sfh_table, logsm0_min, tarr=tarr)
         yield tdata
         batchnum += 1
 
@@ -113,7 +105,10 @@ def tdata_generator(
 
 
 def _compute_tdata(
-    ran_key, logm0_sample, n_sfh_table=N_SFH_TABLE, logsm0_min=LGSM0_MIN,
+    ran_key,
+    logm0_sample,
+    n_sfh_table=N_SFH_TABLE,
+    logsm0_min=LGSM0_MIN,
     tarr=None,
 ):
     """"""
@@ -236,7 +231,7 @@ def _compute_tdata(
         sfh_params_noq_nolag_out,
         sfh_noq_nolag_out,
         smh_noq_nolag_out,
-        tarr
+        tarr,
     )
 
 

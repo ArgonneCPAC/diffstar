@@ -1,5 +1,4 @@
-"""Calculate mass of gas available for star formation from the freshly accreted gas.
-"""
+"""Calculate mass of gas available for star formation from the freshly accreted gas."""
 
 from jax import jit as jjit
 from jax import lax
