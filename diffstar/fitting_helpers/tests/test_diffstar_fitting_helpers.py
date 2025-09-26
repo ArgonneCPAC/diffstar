@@ -4,14 +4,14 @@ import numpy as np
 from diffmah.defaults import DEFAULT_MAH_PARAMS
 from jax import random as jran
 
-from ...sfh_model_mgash import calc_sfh_singlegal
 from ...defaults import (
     DEFAULT_DIFFSTAR_U_PARAMS,
     T_TABLE_MIN,
     get_bounded_diffstar_params,
 )
+from ...sfh_model import calc_sfh_singlegal
 from ...utils import cumulative_mstar_formed
-from .. import diffstar_fitting_helpers_mgash as dfh
+from .. import diffstar_fitting_helpers as dfh
 
 LOSS_TOL = 0.1
 

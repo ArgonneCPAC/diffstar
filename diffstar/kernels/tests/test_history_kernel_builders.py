@@ -7,12 +7,12 @@ from diffmah.diffmah_kernels import DEFAULT_MAH_PARAMS
 
 # === Adjust these imports to your real module paths ===
 from ...defaults import SFR_MIN
-from ..main_sequence_kernels_mgash import DEFAULT_MS_PARAMS
+from ..main_sequence_kernels import DEFAULT_MS_PARAMS
 from ..quenching_kernels import (
     DEFAULT_Q_PARAMS,
     DEFAULT_Q_PARAMS_UNQUENCHED,
 )
-from ..history_kernel_builders_mgash import (
+from ..history_kernel_builders import (
     _sfh_singlegal_scalar,
     _sfh_singlegal_kern,
     _sfh_galpop_kern,

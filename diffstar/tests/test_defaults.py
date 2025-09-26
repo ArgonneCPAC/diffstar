@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from .. import defaults as defaults
-from ..kernels.main_sequence_kernels_mgash import (
+from ..kernels.main_sequence_kernels import (
     DEFAULT_MS_PDICT,
     DEFAULT_U_MS_PDICT,
     _get_bounded_sfr_params,

@@ -8,7 +8,7 @@ from jax import grad
 from jax import jit as jjit
 from jax import numpy as jnp
 
-from ..sfh_model_mgash import calc_sfh_singlegal
+from ..sfh_model import calc_sfh_singlegal
 from ..defaults import (
     DEFAULT_DIFFSTAR_U_PARAMS,
     DEFAULT_MS_PARAMS,
@@ -19,7 +19,7 @@ from ..defaults import (
     SFR_MIN,
     get_bounded_diffstar_params,
 )
-from ..kernels.main_sequence_kernels_mgash import _get_unbounded_sfr_params
+from ..kernels.main_sequence_kernels import _get_unbounded_sfr_params
 from ..kernels.quenching_kernels import _get_unbounded_q_params
 from ..utils import _sigmoid, compute_fstar, cumulative_mstar_formed
 from .utils import minimizer_wrapper

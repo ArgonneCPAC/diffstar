@@ -7,13 +7,9 @@ import numpy as np
 from diffmah.diffmah_kernels import DiffmahParams
 from mpi4py import MPI
 
-import diffstar.fitting_helpers.diffstar_fitting_helpers_mgash as dfh
-from diffstar.data_loaders.load_smah_data import (
-    load_tng_data,
-    FB_TNG,
-)
+import diffstar.fitting_helpers.diffstar_fitting_helpers as dfh
 from diffstar.data_loaders import load_precomputed_diffmah_fits
-from diffstar.fitting_helpers.utils import minimizer_wrapper
+from diffstar.data_loaders.load_smah_data import FB_TNG, load_tng_data
 
 BEBOP_TNG = "/lcrc/project/halotools/alarcon/data/"
 BEBOP_TNG_MAH = "/lcrc/project/halotools/alarcon/results/tng_diffmah_tpeak/"

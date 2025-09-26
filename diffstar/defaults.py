@@ -19,7 +19,7 @@ T_BIRTH_MIN = 0.001
 DEFAULT_N_STEPS = 50
 
 
-from .kernels.main_sequence_kernels_mgash import (
+from .kernels.main_sequence_kernels import (
     DEFAULT_MS_PARAMS,
     DEFAULT_MS_PDICT,
     DEFAULT_U_MS_PARAMS,

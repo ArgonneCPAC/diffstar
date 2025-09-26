@@ -7,7 +7,7 @@ from jax import numpy as jnp
 from jax import vmap
 
 from ..defaults import SFR_MIN
-from .main_sequence_kernels_mgash import sfh_ms_kernel
+from .main_sequence_kernels import sfh_ms_kernel
 from .quenching_kernels import _quenching_kern
 
 

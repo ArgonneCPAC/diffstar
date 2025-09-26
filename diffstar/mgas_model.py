@@ -5,7 +5,7 @@ from jax import jit as jjit
 from jax import vmap
 
 from .defaults import FB, LGT0
-from .kernels.history_kernel_builders_mgash import _sfh_galpop_kern, _sfh_singlegal_kern
+from .kernels.history_kernel_builders import _sfh_galpop_kern, _sfh_singlegal_kern
 from .utils import _jax_get_dt_array, cumulative_mstar_formed
 
 _cumulative_mstar_formed_vmap = jjit(vmap(cumulative_mstar_formed, in_axes=(None, 0)))

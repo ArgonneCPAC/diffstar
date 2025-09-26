@@ -15,7 +15,7 @@ from ..defaults import (
     QUParams,
     get_bounded_diffstar_params,
 )
-from ..sfh_model_mgash import calc_sfh_singlegal, calc_sfh_galpop
+from ..sfh_model import calc_sfh_singlegal, calc_sfh_galpop
 from diffmah.diffmah_kernels import DEFAULT_MAH_PARAMS
 
 
