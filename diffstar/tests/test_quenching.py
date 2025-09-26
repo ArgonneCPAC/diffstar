@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from ..defaults import DEFAULT_U_Q_PARAMS
+from ..defaults_mgash_model import DEFAULT_U_Q_PARAMS
 from ..kernels.quenching_kernels import _quenching_kern_u_params
 
 

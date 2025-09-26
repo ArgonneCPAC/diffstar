@@ -15,6 +15,7 @@ FB = 0.156
 # Constants related to SFH integrals
 SFR_MIN = 1e-14
 T_TABLE_MIN = 0.01
+T_BIRTH_MIN = 0.001
 
 
 from .kernels.main_sequence_kernels_mgash import (

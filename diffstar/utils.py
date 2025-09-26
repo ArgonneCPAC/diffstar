@@ -7,7 +7,7 @@ from jax import numpy as jnp
 from jax import vmap
 from jax.lax import scan
 
-from .defaults import SFR_MIN, T_BIRTH_MIN
+from .defaults_mgash_model import SFR_MIN, T_BIRTH_MIN
 
 YEAR_PER_GYR = 1e9
 

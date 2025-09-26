@@ -2,12 +2,16 @@
 
 import numpy as np
 
-from ...defaults import DEFAULT_Q_PARAMS, DEFAULT_U_Q_PARAMS, Q_PARAM_BOUNDS_PDICT
+from ...defaults_mgash_model import (
+    DEFAULT_Q_PARAMS,
+    DEFAULT_U_Q_PARAMS,
+    Q_PARAM_BOUNDS_PDICT,
+)
 from ..quenching_kernels import (
     DEFAULT_Q_PARAMS_UNQUENCHED,
+    DEFAULT_Q_PDICT,
     DEFAULT_Q_U_PARAMS_UNQUENCHED,
     DEFAULT_U_Q_PDICT,
-    DEFAULT_Q_PDICT,
     _get_bounded_q_params,
     _get_unbounded_q_params,
     _quenching_kern,
