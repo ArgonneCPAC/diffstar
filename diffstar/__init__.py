@@ -2,7 +2,7 @@
 
 # flake8: noqa
 from ._version import __version__
-from .defaults_mgash_model import (
+from .defaults import (
     DEFAULT_DIFFSTAR_PARAMS,
     DEFAULT_DIFFSTAR_U_PARAMS,
     DiffstarParams,

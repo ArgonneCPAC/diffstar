@@ -4,7 +4,7 @@ import numpy as np
 from diffmah.diffmah_kernels import DEFAULT_MAH_PARAMS
 from jax import random as jran
 
-from ..defaults_mgash_model import (
+from ..defaults import (
     DEFAULT_MS_PARAMS,
     DEFAULT_Q_PARAMS,
     DEFAULT_U_MS_PARAMS,

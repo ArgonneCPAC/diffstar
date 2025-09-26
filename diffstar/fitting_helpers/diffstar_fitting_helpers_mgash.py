@@ -9,7 +9,7 @@ from jax import jit as jjit
 from jax import numpy as jnp
 
 from ..sfh_model_mgash import calc_sfh_singlegal
-from ..defaults_mgash_model import (
+from ..defaults import (
     DEFAULT_DIFFSTAR_U_PARAMS,
     DEFAULT_MS_PARAMS,
     DEFAULT_Q_PARAMS,

@@ -5,7 +5,7 @@ import pytest
 from jax import random as jran
 
 from .. import utils
-from ..defaults_mgash_model import T_TABLE_MIN
+from ..defaults import T_TABLE_MIN
 
 try:
     import dsps

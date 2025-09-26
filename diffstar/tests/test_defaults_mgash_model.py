@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from .. import defaults_mgash_model as defaults
+from .. import defaults as defaults
 from ..kernels.main_sequence_kernels_mgash import (
     DEFAULT_MS_PDICT,
     DEFAULT_U_MS_PDICT,

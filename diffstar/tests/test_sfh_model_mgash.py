@@ -3,7 +3,7 @@
 import numpy as np
 from jax import random as jran
 from jax import numpy as jnp
-from ..defaults_mgash_model import (
+from ..defaults import (
     DEFAULT_MS_PARAMS,
     DEFAULT_Q_PARAMS,
     DEFAULT_U_MS_PARAMS,

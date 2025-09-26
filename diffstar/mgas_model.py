@@ -4,7 +4,7 @@ from diffmah.diffmah_kernels import mah_halopop, mah_singlehalo
 from jax import jit as jjit
 from jax import vmap
 
-from .defaults_mgash_model import FB, LGT0
+from .defaults import FB, LGT0
 from .kernels.history_kernel_builders_mgash import _sfh_galpop_kern, _sfh_singlegal_kern
 from .utils import _jax_get_dt_array, cumulative_mstar_formed
 

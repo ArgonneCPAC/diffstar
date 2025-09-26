@@ -5,7 +5,7 @@ from diffmah.defaults import DEFAULT_MAH_PARAMS
 from jax import random as jran
 
 from ...sfh_model_mgash import calc_sfh_singlegal
-from ...defaults_mgash_model import (
+from ...defaults import (
     DEFAULT_DIFFSTAR_U_PARAMS,
     T_TABLE_MIN,
     get_bounded_diffstar_params,

@@ -6,7 +6,7 @@ import jax.numpy as jnp
 from diffmah.diffmah_kernels import DEFAULT_MAH_PARAMS
 
 # === Adjust these imports to your real module paths ===
-from ...defaults_mgash_model import SFR_MIN
+from ...defaults import SFR_MIN
 from ..main_sequence_kernels_mgash import DEFAULT_MS_PARAMS
 from ..quenching_kernels import (
     DEFAULT_Q_PARAMS,
