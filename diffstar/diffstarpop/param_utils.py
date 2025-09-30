@@ -3,7 +3,7 @@
 from jax import jit as jjit
 from jax import numpy as jnp
 
-from ..defaults import DEFAULT_DIFFSTAR_PARAMS, DEFAULT_MS_PARAMS, DEFAULT_Q_PARAMS
+from ..defaults import DEFAULT_DIFFSTAR_PARAMS
 from .defaults import DEFAULT_DIFFSTARPOP_U_PARAMS
 
 
