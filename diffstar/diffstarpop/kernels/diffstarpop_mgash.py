@@ -11,6 +11,7 @@ from diffstar.defaults import (
     QUParams,
 )
 
+from .defaults_mgash import DEFAULT_SATQUENCHPOP_PARAMS, SFH_PDF_QUENCH_PARAMS
 from .satquenchpop_model import get_qprob_sat
 from .sfh_pdf_mgash import _sfh_pdf_scalar_kernel
 
@@ -90,18 +91,18 @@ def mc_diffstar_u_params_singlegal_kernel(
 def _diffstarpop_means_covs(
     diffstarpop_params, logmp0, tpeak, lgmu_infall, logmhost_infall, gyr_since_infall
 ):
-    means_covs = _sfh_pdf_scalar_kernel(
-        diffstarpop_params.sfh_pdf_cens_params, logmp0, tpeak
+    sfh_pdf_cens_params = SFH_PDF_QUENCH_PARAMS._make(
+        [getattr(diffstarpop_params, x) for x in SFH_PDF_QUENCH_PARAMS._fields]
     )
+    means_covs = _sfh_pdf_scalar_kernel(sfh_pdf_cens_params, logmp0, tpeak)
 
     # Modify frac_q for satellites
     frac_q = means_covs[0]
+    satquench_params = DEFAULT_SATQUENCHPOP_PARAMS._make(
+        [getattr(diffstarpop_params, x) for x in DEFAULT_SATQUENCHPOP_PARAMS._fields]
+    )
     frac_q = get_qprob_sat(
-        diffstarpop_params.satquench_params,
-        lgmu_infall,
-        logmhost_infall,
-        gyr_since_infall,
-        frac_q,
+        satquench_params, lgmu_infall, logmhost_infall, gyr_since_infall, frac_q
     )
     means_covs = (frac_q, *means_covs[1:])
     return means_covs
@@ -109,9 +110,10 @@ def _diffstarpop_means_covs(
 
 @jjit
 def _diffstarpop_means_covs_cen(diffstarpop_params, logmp0, tpeak):
-    means_covs = _sfh_pdf_scalar_kernel(
-        diffstarpop_params.sfh_pdf_cens_params, logmp0, tpeak
+    sfh_pdf_cens_params = SFH_PDF_QUENCH_PARAMS._make(
+        [getattr(diffstarpop_params, x) for x in SFH_PDF_QUENCH_PARAMS._fields]
     )
+    means_covs = _sfh_pdf_scalar_kernel(sfh_pdf_cens_params, logmp0, tpeak)
 
     return means_covs
 

@@ -2,43 +2,50 @@
 
 # flake8: noqa
 
-import typing
-from collections import namedtuple, OrderedDict
-
-
-# SMDPL
-from .params_diffstarfits_mgash_smdpl_dr1_nomerging import (
-    DIFFSTARFITS_SMDPL_DIFFSTARPOP_PARAMS as DIFFSTARFITS_SMDPL_DIFFSTARPOP_PARAMS_mgash,
-    DIFFSTARFITS_SMDPL_DIFFSTARPOP_U_PARAMS as DIFFSTARFITS_SMDPL_DIFFSTARPOP_U_PARAMS_mgash,
-)
-
-# SMDPL DR1
-
-from .params_diffstarfits_mgash_smdpl_dr1 import (
-    DIFFSTARFITS_SMDPL_DR1_DIFFSTARPOP_PARAMS as DIFFSTARFITS_SMDPL_DR1_DIFFSTARPOP_PARAMS_mgash,
-    DIFFSTARFITS_SMDPL_DR1_DIFFSTARPOP_U_PARAMS as DIFFSTARFITS_SMDPL_DR1_DIFFSTARPOP_U_PARAMS_mgash,
-)
-
-# TNG
-
-from .params_diffstarfits_mgash_tng import (
-    DIFFSTARFITS_TNG_DIFFSTARPOP_PARAMS as DIFFSTARFITS_TNG_DIFFSTARPOP_PARAMS_mgash,
-    DIFFSTARFITS_TNG_DIFFSTARPOP_U_PARAMS as DIFFSTARFITS_TNG_DIFFSTARPOP_U_PARAMS_mgash,
-)
-
-
-# Glacticus in situ
-
-from .params_diffstarfits_mgash_galacticus_in_situ import (
-    DIFFSTARFITS_GALACTICUS_IN_DIFFSTARPOP_PARAMS as DIFFSTARFITS_GALACTICUS_IN_DIFFSTARPOP_PARAMS_mgash,
-    DIFFSTARFITS_GALACTICUS_IN_DIFFSTARPOP_U_PARAMS as DIFFSTARFITS_GALACTICUS_IN_DIFFSTARPOP_U_PARAMS_mgash,
-)
+from collections import OrderedDict
 
 # Glacticus in plus ex situ
 from .params_diffstarfits_mgash_galacticus_in_plus_ex_situ import (
     DIFFSTARFITS_GALACTICUS_INPLUSEX_DIFFSTARPOP_PARAMS as DIFFSTARFITS_GALACTICUS_INPLUSEX_DIFFSTARPOP_PARAMS_mgash,
+)
+from .params_diffstarfits_mgash_galacticus_in_plus_ex_situ import (
     DIFFSTARFITS_GALACTICUS_INPLUSEX_DIFFSTARPOP_U_PARAMS as DIFFSTARFITS_GALACTICUS_INPLUSEX_DIFFSTARPOP_U_PARAMS_mgash,
 )
+from .params_diffstarfits_mgash_galacticus_in_situ import (
+    DIFFSTARFITS_GALACTICUS_IN_DIFFSTARPOP_PARAMS as DIFFSTARFITS_GALACTICUS_IN_DIFFSTARPOP_PARAMS_mgash,
+)
+from .params_diffstarfits_mgash_galacticus_in_situ import (
+    DIFFSTARFITS_GALACTICUS_IN_DIFFSTARPOP_U_PARAMS as DIFFSTARFITS_GALACTICUS_IN_DIFFSTARPOP_U_PARAMS_mgash,
+)
+from .params_diffstarfits_mgash_smdpl_dr1 import (
+    DIFFSTARFITS_SMDPL_DR1_DIFFSTARPOP_PARAMS as DIFFSTARFITS_SMDPL_DR1_DIFFSTARPOP_PARAMS_mgash,
+)
+from .params_diffstarfits_mgash_smdpl_dr1 import (
+    DIFFSTARFITS_SMDPL_DR1_DIFFSTARPOP_U_PARAMS as DIFFSTARFITS_SMDPL_DR1_DIFFSTARPOP_U_PARAMS_mgash,
+)
+
+# SMDPL
+from .params_diffstarfits_mgash_smdpl_dr1_nomerging import (
+    DIFFSTARFITS_SMDPL_DIFFSTARPOP_PARAMS as DIFFSTARFITS_SMDPL_DIFFSTARPOP_PARAMS_mgash,
+)
+from .params_diffstarfits_mgash_smdpl_dr1_nomerging import (
+    DIFFSTARFITS_SMDPL_DIFFSTARPOP_U_PARAMS as DIFFSTARFITS_SMDPL_DIFFSTARPOP_U_PARAMS_mgash,
+)
+from .params_diffstarfits_mgash_tng import (
+    DIFFSTARFITS_TNG_DIFFSTARPOP_PARAMS as DIFFSTARFITS_TNG_DIFFSTARPOP_PARAMS_mgash,
+)
+from .params_diffstarfits_mgash_tng import (
+    DIFFSTARFITS_TNG_DIFFSTARPOP_U_PARAMS as DIFFSTARFITS_TNG_DIFFSTARPOP_U_PARAMS_mgash,
+)
+
+# SMDPL DR1
+
+
+# TNG
+
+
+# Glacticus in situ
+
 
 sim_name_list = [
     "smdpl_dr1_nomerging",

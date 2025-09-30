@@ -1,12 +1,7 @@
 from collections import OrderedDict, namedtuple
 
-import typing
-from jax import numpy as jnp
-
-from ..satquenchpop_model import (
-    DEFAULT_SATQUENCHPOP_PARAMS,
-)
-from ..defaults_mgash import get_unbounded_diffstarpop_params
+from ..defaults_mgash import DiffstarPopParams, get_unbounded_diffstarpop_params
+from ..satquenchpop_model import DEFAULT_SATQUENCHPOP_PARAMS
 
 SFH_PDF_QUENCH_MU_PDICT = OrderedDict(
     [
@@ -118,14 +113,8 @@ _UPNAMES = ["u_" + key for key in QseqParams._fields]
 QseqUParams = namedtuple("QseqUParams", _UPNAMES)
 
 
-# Define a namedtuple container for the params of each component
-class DiffstarPopParams(typing.NamedTuple):
-    sfh_pdf_cens_params: jnp.array
-    satquench_params: jnp.array
-
-
 DIFFSTARPOP_FITS_TNG_DIFFSTARPOP_PARAMS = DiffstarPopParams(
-    SFH_PDF_QUENCH_PARAMS, DEFAULT_SATQUENCHPOP_PARAMS
+    *SFH_PDF_QUENCH_PARAMS, *DEFAULT_SATQUENCHPOP_PARAMS
 )
 
 _U_PNAMES = ["u_" + key for key in DIFFSTARPOP_FITS_TNG_DIFFSTARPOP_PARAMS._fields]
