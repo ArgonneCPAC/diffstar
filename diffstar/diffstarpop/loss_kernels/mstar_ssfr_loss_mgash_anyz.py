@@ -9,22 +9,17 @@ from jax import numpy as jnp
 from jax import value_and_grad, vmap
 
 from ..kernels.defaults_mgash import (
+    DEFAULT_DIFFSTARPOP_PARAMS,
     DEFAULT_DIFFSTARPOP_U_PARAMS,
     get_bounded_diffstarpop_params,
 )
 from ..mc_diffstarpop_mgash import mc_diffstar_sfh_galpop
-from .namedtuple_utils_mgash import (
-    array_to_tuple_new_diffstarpop_tpeak,
-    tuple_to_jax_array,
-)
+
 
 N_TIMES = 20
 
 _A = (None, 0)
 cumulative_mstar_formed_halopop = jjit(vmap(cumulative_mstar_formed, in_axes=_A))
-
-unbound_params_dict = OrderedDict(diffstarpop_u_params=DEFAULT_DIFFSTARPOP_U_PARAMS)
-UnboundParams = namedtuple("UnboundParams", list(unbound_params_dict.keys()))
 
 
 @jjit
@@ -129,7 +124,7 @@ def mstar_kern_tobs(u_params, loss_data):
         target_mstar_pdf,
     ) = loss_data
 
-    diffstarpop_params = get_bounded_diffstarpop_params(u_params.diffstarpop_u_params)
+    diffstarpop_params = get_bounded_diffstarpop_params(u_params)
 
     _res = mc_diffstar_sfh_galpop_vmap(
         diffstarpop_params,
@@ -175,27 +170,21 @@ def loss_mstar_kern_tobs(u_params, loss_data):
     return _mse(pred_mstar_pdf, target_mstar_pdf) * 1000
 
 
-loss_mstar_kern_tobs_grad_kern = jjit(
-    value_and_grad(loss_mstar_kern_tobs, argnums=(0,))
-)
+loss_mstar_kern_tobs_grad_kern = jjit(value_and_grad(loss_mstar_kern_tobs, argnums=0))
 
 
 def loss_mstar_kern_tobs_grad_wrapper(flat_uparams, loss_data):
 
-    namedtuple_uparams = array_to_tuple_new_diffstarpop_tpeak(
-        flat_uparams, UnboundParams
-    )
+    namedtuple_uparams = DEFAULT_DIFFSTARPOP_U_PARAMS._make(flat_uparams)
     loss, grads = loss_mstar_kern_tobs_grad_kern(namedtuple_uparams, loss_data)
-    grads = tuple_to_jax_array(grads)
+    grads = jnp.array(grads)
 
     return loss, grads
 
 
 def get_pred_mstar_data_wrapper(flat_uparams, loss_data):
 
-    namedtuple_uparams = array_to_tuple_new_diffstarpop_tpeak(
-        flat_uparams, UnboundParams
-    )
+    namedtuple_uparams = DEFAULT_DIFFSTARPOP_U_PARAMS._make(flat_uparams)
     pred_mstar_pdf = mstar_kern_tobs(namedtuple_uparams, loss_data)
 
     return pred_mstar_pdf
@@ -257,7 +246,7 @@ def mstar_ssfr_kern_tobs(u_params, loss_data):
         target_data,
     ) = loss_data
 
-    diffstarpop_params = get_bounded_diffstarpop_params(u_params.diffstarpop_u_params)
+    diffstarpop_params = get_bounded_diffstarpop_params(u_params)
 
     _res = mc_diffstar_sfh_galpop_vmap(
         diffstarpop_params,
@@ -324,26 +313,22 @@ def loss_mstar_ssfr_kern_tobs(u_params, loss_data):
 
 
 loss_mstar_ssfr_kern_tobs_grad_kern = jjit(
-    value_and_grad(loss_mstar_ssfr_kern_tobs, argnums=(0,))
+    value_and_grad(loss_mstar_ssfr_kern_tobs, argnums=0)
 )
 
 
 def loss_mstar_ssfr_kern_tobs_grad_wrapper(flat_uparams, loss_data):
 
-    namedtuple_uparams = array_to_tuple_new_diffstarpop_tpeak(
-        flat_uparams, UnboundParams
-    )
+    namedtuple_uparams = DEFAULT_DIFFSTARPOP_U_PARAMS._make(flat_uparams)
     loss, grads = loss_mstar_ssfr_kern_tobs_grad_kern(namedtuple_uparams, loss_data)
-    grads = tuple_to_jax_array(grads)
+    grads = jnp.array(grads)
 
     return loss, grads
 
 
 def get_pred_mstar_ssfr_data_wrapper(flat_uparams, loss_data):
 
-    namedtuple_uparams = array_to_tuple_new_diffstarpop_tpeak(
-        flat_uparams, UnboundParams
-    )
+    namedtuple_uparams = DEFAULT_DIFFSTARPOP_U_PARAMS._make(flat_uparams)
     pred_mstar_pdf = mstar_ssfr_kern_tobs(namedtuple_uparams, loss_data)
 
     return pred_mstar_pdf
@@ -375,7 +360,7 @@ def mstar_ssfr_sat_kern_tobs(u_params, loss_data):
         target_data,
     ) = loss_data
 
-    diffstarpop_params = get_bounded_diffstarpop_params(u_params.diffstarpop_u_params)
+    diffstarpop_params = get_bounded_diffstarpop_params(u_params)
 
     _res = mc_diffstar_sfh_galpop_vmap(
         diffstarpop_params,
@@ -442,26 +427,22 @@ def loss_mstar_ssfr_sat_kern_tobs(u_params, loss_data):
 
 
 loss_mstar_ssfr_sat_kern_tobs_grad_kern = jjit(
-    value_and_grad(loss_mstar_ssfr_sat_kern_tobs, argnums=(0,))
+    value_and_grad(loss_mstar_ssfr_sat_kern_tobs, argnums=0)
 )
 
 
 def loss_mstar_ssfr_sat_kern_tobs_grad_wrapper(flat_uparams, loss_data):
 
-    namedtuple_uparams = array_to_tuple_new_diffstarpop_tpeak(
-        flat_uparams, UnboundParams
-    )
+    namedtuple_uparams = DEFAULT_DIFFSTARPOP_U_PARAMS._make(flat_uparams)
     loss, grads = loss_mstar_ssfr_sat_kern_tobs_grad_kern(namedtuple_uparams, loss_data)
-    grads = tuple_to_jax_array(grads)
+    grads = jnp.array(grads)
 
     return loss, grads
 
 
 def get_pred_mstar_ssfr_sat_data_wrapper(flat_uparams, loss_data):
 
-    namedtuple_uparams = array_to_tuple_new_diffstarpop_tpeak(
-        flat_uparams, UnboundParams
-    )
+    namedtuple_uparams = DEFAULT_DIFFSTARPOP_U_PARAMS._make(flat_uparams)
     pred_mstar_pdf = mstar_ssfr_sat_kern_tobs(namedtuple_uparams, loss_data)
 
     return pred_mstar_pdf
@@ -480,18 +461,16 @@ def loss_combined_kern(u_params, loss_data_mstar, loss_data_ssfr_cen):
     return loss_mstar_ssfr_val_cen + loss_mstar_val
 
 
-loss_combined_grad_kern = jjit(value_and_grad(loss_combined_kern, argnums=(0,)))
+loss_combined_grad_kern = jjit(value_and_grad(loss_combined_kern, argnums=0))
 
 
 def loss_combined_wrapper(flat_uparams, loss_data_mstar, loss_data_ssfr_cen):
 
-    namedtuple_uparams = array_to_tuple_new_diffstarpop_tpeak(
-        flat_uparams, UnboundParams
-    )
+    namedtuple_uparams = DEFAULT_DIFFSTARPOP_U_PARAMS._make(flat_uparams)
     loss, grads = loss_combined_grad_kern(
         namedtuple_uparams, loss_data_mstar, loss_data_ssfr_cen
     )
-    grads = tuple_to_jax_array(grads)
+    grads = jnp.array(grads)
 
     return loss, grads
 
@@ -510,7 +489,7 @@ def loss_combined_3loss_kern(
 
 
 loss_combined_3loss_grad_kern = jjit(
-    value_and_grad(loss_combined_3loss_kern, argnums=(0,))
+    value_and_grad(loss_combined_3loss_kern, argnums=0)
 )
 
 
@@ -518,12 +497,10 @@ def loss_combined_3loss_wrapper(
     flat_uparams, loss_data_mstar, loss_data_ssfr_cen, loss_data_ssfr_sat
 ):
 
-    namedtuple_uparams = array_to_tuple_new_diffstarpop_tpeak(
-        flat_uparams, UnboundParams
-    )
+    namedtuple_uparams = DEFAULT_DIFFSTARPOP_U_PARAMS._make(flat_uparams)
     loss, grads = loss_combined_3loss_grad_kern(
         namedtuple_uparams, loss_data_mstar, loss_data_ssfr_cen, loss_data_ssfr_sat
     )
-    grads = tuple_to_jax_array(grads)
+    grads = jnp.array(grads)
 
     return loss, grads
