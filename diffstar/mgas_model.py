@@ -1,28 +1,12 @@
 from collections import namedtuple
 
+from diffmah.diffmah_kernels import mah_halopop, mah_singlehalo
 from jax import jit as jjit
 from jax import vmap
 
-from diffstar.defaults import DEFAULT_N_STEPS, FB, LGT0, T_BIRTH_MIN
-from diffstar.kernels.history_kernel_builders_tpeak import build_sfh_from_mah_kernel
-from diffstar.utils import cumulative_mstar_formed, _jax_get_dt_array
-
-from diffmah.diffmah_kernels import mah_singlehalo, mah_halopop
-
-_sfh_singlegal_kern = build_sfh_from_mah_kernel(
-    n_steps=DEFAULT_N_STEPS,
-    tacc_integration_min=T_BIRTH_MIN,
-    tobs_loop="scan",
-    tform_loop="sum",
-)
-
-_sfh_galpop_kern = build_sfh_from_mah_kernel(
-    n_steps=DEFAULT_N_STEPS,
-    tacc_integration_min=T_BIRTH_MIN,
-    tobs_loop="scan",
-    galpop_loop="vmap",
-    tform_loop="sum",
-)
+from .defaults import FB, LGT0
+from .kernels.history_kernel_builders import _sfh_galpop_kern, _sfh_singlegal_kern
+from .utils import _jax_get_dt_array, cumulative_mstar_formed
 
 _cumulative_mstar_formed_vmap = jjit(vmap(cumulative_mstar_formed, in_axes=(None, 0)))
 _jax_get_dt_array_vmap = jjit(vmap(_jax_get_dt_array, in_axes=(0)))
@@ -36,12 +20,9 @@ def calc_mgas_singlegal(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB):
 
     Parameters
     ----------
-    sfh_params : namedtuple, length 2
-        DiffstarParams = ms_params, q_params
-            ms_params and q_params are tuples of floats
-            ms_params = lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, tau_dep
-            q_params = lg_qt, qlglgdt, lg_drop, lg_rejuv
-
+    sfh_params : namedtuple, length 8
+        sfh_params is a tuple of floats
+        lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, lg_qt, qlglgdt, lg_drop, lg_rejuv
 
     mah_params : namedtuple, length 4
         mah_params is a tuple of floats
@@ -79,8 +60,8 @@ def calc_mgas_singlegal(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB):
             Total remaining gas mass in units of Msun
 
     """
-    ms_params, q_params = sfh_params
-    args = (tarr, *mah_params, *ms_params, *q_params, lgt0, fb)
+    ms_params, q_params = sfh_params[:4], sfh_params[4:]
+    args = (tarr, mah_params, ms_params, q_params, lgt0, fb)
     sfh = _sfh_singlegal_kern(*args)
 
     dmhdt, log_mah = mah_singlehalo(mah_params, tarr, lgt0)
@@ -102,15 +83,12 @@ def calc_mgas_galpop(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB):
 
     Parameters
     ----------
-    sfh_params : namedtuple, length 2
-        DiffstarParams = ms_params, q_params
-            ms_params and q_params are tuples of floats
-            ms_params = lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, tau_dep
-            q_params = lg_qt, qlglgdt, lg_drop, lg_rejuv
-
+    sfh_params : namedtuple, length 8
+        sfh_params is a tuple of ndarrays of shape (ngals, )
+        lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, lg_qt, qlglgdt, lg_drop, lg_rejuv
 
     mah_params : namedtuple, length 4
-        mah_params is a tuple of floats
+        mah_params is a tuple of ndarrays of shape (ngals, )
         DiffmahParams = logmp, logtc, early_index, late_index
 
     t_peak : float
@@ -144,8 +122,8 @@ def calc_mgas_galpop(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB):
             Total remaining gas mass in units of Msun
 
     """
-    ms_params, q_params = sfh_params
-    args = (tarr, *mah_params, *ms_params, *q_params, lgt0, fb)
+    ms_params, q_params = sfh_params[:4], sfh_params[4:]
+    args = (tarr, mah_params, ms_params, q_params, lgt0, fb)
     sfh = _sfh_galpop_kern(*args)
 
     dmhdt, log_mah = mah_halopop(mah_params, tarr, lgt0)

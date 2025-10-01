@@ -8,19 +8,17 @@ from jax import grad
 from jax import jit as jjit
 from jax import numpy as jnp
 
-from .. import calc_sfh_singlegal
 from ..defaults import (
     DEFAULT_DIFFSTAR_U_PARAMS,
     DEFAULT_MS_PARAMS,
     DEFAULT_Q_PARAMS,
-    DEFAULT_U_MS_PARAMS,
-    DEFAULT_U_Q_PARAMS,
     FB,
     SFR_MIN,
     get_bounded_diffstar_params,
 )
-from ..kernels.main_sequence_kernels_tpeak import _get_unbounded_sfr_params
+from ..kernels.main_sequence_kernels import _get_unbounded_sfr_params
 from ..kernels.quenching_kernels import _get_unbounded_q_params
+from ..sfh_model import calc_sfh_singlegal
 from ..utils import _sigmoid, compute_fstar, cumulative_mstar_formed
 from .utils import minimizer_wrapper
 
@@ -68,11 +66,7 @@ def diffstar_fitter(
     varied_u_p_best, loss_best, success = _res
 
     # Transform varied_u_p_best into p_best
-    u_indx_hi = DEFAULT_DIFFSTAR_U_PARAMS.u_ms_params.u_indx_hi
-    u_p_best = (*varied_u_p_best[:3], u_indx_hi, *varied_u_p_best[3:])
-    u_ms_params = DEFAULT_MS_PARAMS._make(u_p_best[:5])
-    u_q_params = DEFAULT_Q_PARAMS._make(u_p_best[5:])
-    u_p_best = DEFAULT_DIFFSTAR_U_PARAMS._make((u_ms_params, u_q_params))
+    u_p_best = DEFAULT_DIFFSTAR_U_PARAMS._make((varied_u_p_best))
     p_best = get_bounded_diffstar_params(u_p_best)
 
     return p_best, loss_best, success
@@ -124,18 +118,12 @@ def get_loss_data_default(
 
     ms_params = np.array(DEFAULT_MS_PARAMS)
     ms_params[0] = np.clip(0.3 * (logmp0 - 11.0) + 11.4, 11.0, 13.0)
-    ms_params[1] = np.clip(0.2 * (logmp0 - 11.0) - 0.7, -1.5, -0.2)
+    ms_params[1] = np.clip(0.2 * (logmp0 - 11.0) - 9.7, -10.5, -9.2)
     ms_params[2] = np.clip(0.7 * (logmp0 - 11.0) - 0.3, 0.2, 3.0)
-    ms_params[4] = np.clip(-8.0 * (logmp0 - 11.0) + 15, 2.0, 15.0)
     ms_params = DEFAULT_MS_PARAMS._make(ms_params)
-    u_ms_params = np.array(_get_unbounded_sfr_params(*ms_params))
+    varied_u_ms_params = np.array(_get_unbounded_sfr_params(*ms_params))
 
-    varied_u_ms_params = np.zeros(4)
-    varied_u_ms_params[0:3] = u_ms_params[0:3]
-    varied_u_ms_params[3] = u_ms_params[4]
-    u_fixed_hi = u_ms_params[3]
-
-    u_ms_params_err = np.array([0.5, 0.5, 1.0, 3.0])
+    u_ms_params_err = np.array([0.5, 0.5, 1.0, 1.0])
 
     varied_q_params = np.array(DEFAULT_Q_PARAMS)
     varied_q_params[0] = np.clip(-0.5 * (logmp0 - 11.0) + 1.5, 0.7, 1.5)
@@ -156,7 +144,6 @@ def get_loss_data_default(
         weight,
         weight_fstar,
         lgt_fstar_max,
-        u_fixed_hi,
         lgt0,
         fb,
     )
@@ -216,24 +203,19 @@ def loss_default_clipssfrh(u_params, loss_data):
         weight,
         weight_fstar,
         lgt_fstar_max,
-        u_fixed_hi,
         lgt0,
         fb,
     ) = loss_data
 
-    u_ms_params = [*u_params[0:3], u_fixed_hi, u_params[3]]
-    u_ms_params = DEFAULT_U_MS_PARAMS._make(u_ms_params)
-    u_q_params = u_params[4:8]
-    u_q_params = DEFAULT_U_Q_PARAMS._make(u_q_params)
-
-    sfh_u_params = DEFAULT_DIFFSTAR_U_PARAMS._make((u_ms_params, u_q_params))
+    sfh_u_params = DEFAULT_DIFFSTAR_U_PARAMS._make((u_params))
     sfh_params = get_bounded_diffstar_params(sfh_u_params)
     sfh_table, mstar_table = calc_sfh_singlegal(
         sfh_params, mah_params, t_table, lgt0=lgt0, fb=fb, return_smh=True
     )
 
     fstar = compute_fstar(t_table, mstar_table, fstar_tdelay)
-    fstar = jnp.clip(fstar, mstar_table * ssfrh_floor, jnp.inf)
+    fstar = jnp.clip(fstar, mstar_table * (ssfrh_floor / 10.0), jnp.inf)
+    sfh_table = jnp.clip(sfh_table, mstar_table * (ssfrh_floor / 10.0), jnp.inf)
     log_fstar = jnp.log10(fstar)
 
     logsm_table = jnp.log10(mstar_table)
@@ -241,14 +223,15 @@ def loss_default_clipssfrh(u_params, loss_data):
     sfr_res = 1e8 * (sfh_table - sfh_target) / sm_target
     sfr_res = jnp.clip(sfr_res, -1.0, 1.0)
 
-    loss = jnp.mean(((logsm_table - log_sm_target) / weight) ** 2)
+    loss = 30 * jnp.mean(((logsm_table - log_sm_target) / weight) ** 2)
     loss += jnp.mean(((log_fstar - log_fstar_target) / weight_fstar) ** 2)
     loss += jnp.mean((sfr_res / weight) ** 2)
+    loss += 0.5 * (log_fstar - log_fstar_target)[-1] ** 2
 
     # Compute ridge terms
-    loss += _sigmoid(sfh_params.q_params.lg_qt - lgt_fstar_max, 0.0, 50.0, 100.0, 0.0)
-    loss += _sigmoid(sfh_params.ms_params.indx_lo, 0.0, 10.0, 1.0, 0.0)
-    loss += _sigmoid(sfh_params.ms_params.lgy_at_mcrit, 0.0, 20.0, 0.0, 1.0)
+    loss += _sigmoid(sfh_params.lg_qt - lgt_fstar_max, 0.0, 50.0, 100.0, 0.0)
+    # loss += _sigmoid(sfh_params.indx_lo, 0.0, 10.0, 1.0, 0.0)
+    # loss += _sigmoid(sfh_params.lgy_at_mcrit, 0.0, 20.0, 0.0, 1.0)
     return loss
 
 
@@ -271,7 +254,7 @@ def get_header():
 
 def get_outline(halo_id, p_best, loss_best, success):
     """Return the string storing fitting results that will be written to disk"""
-    _d = np.array((*p_best.ms_params, *p_best.q_params)).astype("f4")
+    _d = np.array((p_best)).astype("f4")
     data_out = (*_d, float(loss_best))
     out = str(halo_id) + " " + " ".join(["{:.5e}".format(x) for x in data_out])
     out = out + " " + str(success)
