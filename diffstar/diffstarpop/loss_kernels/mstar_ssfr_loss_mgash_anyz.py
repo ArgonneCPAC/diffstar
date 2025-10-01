@@ -1,7 +1,5 @@
 """ """
 
-from collections import OrderedDict, namedtuple
-
 from diffsky.diffndhist import tw_ndhist_weighted
 from diffstar.utils import cumulative_mstar_formed
 from jax import jit as jjit
@@ -9,7 +7,6 @@ from jax import numpy as jnp
 from jax import value_and_grad, vmap
 
 from ..kernels.defaults_mgash import (
-    DEFAULT_DIFFSTARPOP_PARAMS,
     DEFAULT_DIFFSTARPOP_U_PARAMS,
     get_bounded_diffstarpop_params,
 )
