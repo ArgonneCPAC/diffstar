@@ -1,3 +1,10 @@
+1.0.0 (2025-10-01)
+------------------
+- Add new formulation of diffstar.
+- Include diffstarpop as a sub-package of diffstar.
+- See PR notes for details https://github.com/ArgonneCPAC/diffstar/pull/97.
+
+
 0.3.5 (2025-09-26)
 ------------------
 - Add modules and fitting scripts of new formulation of diffstar (https://github.com/ArgonneCPAC/diffstar/pull/89)
