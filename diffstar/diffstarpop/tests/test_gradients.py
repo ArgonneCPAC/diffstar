@@ -14,9 +14,12 @@ from .. import get_bounded_diffstarpop_params, mc_diffstar_sfh_galpop
 from ..defaults import (
     DEFAULT_DIFFSTARPOP_PARAMS,
     DEFAULT_DIFFSTARPOP_U_PARAMS,
-    DiffstarPopUParams,
 )
 from ..kernels.diffstarpop_mgash import _diffstarpop_means_covs
+from ..kernels.satquenchpop_model import (
+    SatQuenchPopUParams,
+    DEFAULT_SATQUENCHPOP_U_PARAMS,
+)
 
 
 @jjit
@@ -26,14 +29,10 @@ def _mse(pred, target):
 
 
 def get_random_dpp_params(ran_key, dp=0.1):
-    collector = []
-    ran_keys = jran.split(ran_key, len(DEFAULT_DIFFSTARPOP_U_PARAMS))
-    for key, params in zip(ran_keys, DEFAULT_DIFFSTARPOP_U_PARAMS):
-        u = jran.uniform(key, minval=-dp, maxval=dp, shape=(len(params),))
-        ran_u_params = np.array(params) + u
-        collector.append(params._make(ran_u_params))
-
-    dpp_u_params = DiffstarPopUParams(*collector)
+    u_params = jnp.array(DEFAULT_DIFFSTARPOP_U_PARAMS)
+    u = jran.uniform(ran_key, minval=-dp, maxval=dp, shape=(len(u_params),))
+    ran_u_params = np.array(u_params) + u
+    dpp_u_params = DEFAULT_DIFFSTARPOP_U_PARAMS._make(ran_u_params)
     dpp_params = get_bounded_diffstarpop_params(dpp_u_params)
     return dpp_params, dpp_u_params
 
@@ -48,11 +47,8 @@ def _check_grads_are_nonzero(grads):
 
 
 def _enforce_nonzero_grads(grads):
-    assert np.all(np.isfinite(grads.u_sfh_pdf_cens_params))
-    assert np.all(np.isfinite(grads.u_satquench_params))
-
-    _check_grads_are_nonzero(grads.u_sfh_pdf_cens_params)
-    _check_grads_are_nonzero(grads.u_satquench_params)
+    assert np.all(np.isfinite(grads))
+    _check_grads_are_nonzero(grads)
 
 
 def test_all_diffstarpop_u_param_gradients_are_nonzero():
@@ -250,4 +246,7 @@ def test_gradients_of_diffstarpop_pdf_satquench_params_are_nonzero():
     frac_q_loss, frac_q_grads = value_and_grad(_loss)(alt_dpp_u_params)
     assert np.isfinite(frac_q_loss)
     assert frac_q_loss > 1e-6
-    _check_grads_are_nonzero(frac_q_grads.u_satquench_params)
+    frac_q_grads_satquench = SatQuenchPopUParams(
+        **{f: getattr(frac_q_grads, f) for f in DEFAULT_SATQUENCHPOP_U_PARAMS._fields}
+    )
+    _check_grads_are_nonzero(frac_q_grads_satquench)
