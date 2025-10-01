@@ -5,9 +5,6 @@ import pytest
 from ...kernels.defaults_mgash import (
     DEFAULT_DIFFSTARPOP_U_PARAMS,
 )
-from ..namedtuple_utils_mgash import (
-    tuple_to_array,
-)
 
 from .. import mstar_ssfr_loss_mgash_anyz as mod
 from .load_loss_data import load_loss_data_h5
@@ -19,7 +16,7 @@ H5_PATH = DATA_DIR / "loss_kernels_testing_data_10halos.h5"
 
 @pytest.fixture(scope="session")
 def flat_u_params():
-    return jnp.asarray(tuple_to_array(DEFAULT_DIFFSTARPOP_U_PARAMS))
+    return jnp.asarray(DEFAULT_DIFFSTARPOP_U_PARAMS)
 
 
 def _require_file(path: Path):

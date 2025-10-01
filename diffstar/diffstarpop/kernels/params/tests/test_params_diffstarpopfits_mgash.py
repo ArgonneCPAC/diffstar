@@ -1,8 +1,5 @@
 import numpy as np
 from jax import numpy as jnp, jit as jjit, grad
-from ....loss_kernels.namedtuple_utils_mgash import (
-    tuple_to_array,
-)
 
 from ...defaults_mgash import (
     get_unbounded_diffstarpop_params,
@@ -48,18 +45,18 @@ from ..params_diffstarpopfits_mgash import (
 
 
 def _test_onesim(params, uparams):
-    arr_params = tuple_to_array(params)
-    arr_u_params = tuple_to_array(uparams)
+    arr_params = jnp.asarray(params)
+    arr_u_params = jnp.asarray(uparams)
 
     assert np.all(np.isfinite(arr_params)), params
     assert np.all(np.isfinite(arr_u_params)), uparams
 
     arr_u_params_bound = get_bounded_diffstarpop_params(uparams)
-    arr_u_params_bound = tuple_to_array(arr_u_params_bound)
+    arr_u_params_bound = jnp.asarray(arr_u_params_bound)
     assert np.allclose(arr_params, arr_u_params_bound, rtol=1e-4, atol=1e-4)
 
     arr_params_unbound = get_unbounded_diffstarpop_params(params)
-    arr_params_unbound = tuple_to_array(arr_params_unbound)
+    arr_params_unbound = jnp.asarray(arr_params_unbound)
     assert np.allclose(arr_u_params, arr_params_unbound, rtol=1e-4, atol=1e-4)
 
     grad_val = _add_params_grad(arr_u_params)
@@ -81,18 +78,18 @@ _add_params_grad = jjit(grad(_add_params, argnums=0))
 
 
 def test_smdpl():
-    arr_params = tuple_to_array(PARAMS_SMDPL)
-    arr_u_params = tuple_to_array(U_PARAMS_SMDPL)
+    arr_params = jnp.asarray(PARAMS_SMDPL)
+    arr_u_params = jnp.asarray(U_PARAMS_SMDPL)
 
     assert np.all(np.isfinite(arr_params))
     assert np.all(np.isfinite(arr_u_params))
 
     arr_u_params_bound = get_bounded_diffstarpop_params(U_PARAMS_SMDPL)
-    arr_u_params_bound = tuple_to_array(arr_u_params_bound)
+    arr_u_params_bound = jnp.asarray(arr_u_params_bound)
     assert np.allclose(arr_params, arr_u_params_bound, rtol=1e-4, atol=1e-4)
 
     arr_params_unbound = get_unbounded_diffstarpop_params(PARAMS_SMDPL)
-    arr_params_unbound = tuple_to_array(arr_params_unbound)
+    arr_params_unbound = jnp.asarray(arr_params_unbound)
     assert np.allclose(arr_u_params, arr_params_unbound, rtol=1e-4, atol=1e-4)
 
     grad_val = _add_params_grad(arr_u_params)
@@ -100,18 +97,18 @@ def test_smdpl():
 
 
 def test_smdpl_dr1():
-    arr_params = tuple_to_array(PARAMS_SMDPL_DR1)
-    arr_u_params = tuple_to_array(U_PARAMS_SMDPL_DR1)
+    arr_params = jnp.asarray(PARAMS_SMDPL_DR1)
+    arr_u_params = jnp.asarray(U_PARAMS_SMDPL_DR1)
 
     assert np.all(np.isfinite(arr_params))
     assert np.all(np.isfinite(arr_u_params))
 
     arr_u_params_bound = get_bounded_diffstarpop_params(U_PARAMS_SMDPL_DR1)
-    arr_u_params_bound = tuple_to_array(arr_u_params_bound)
+    arr_u_params_bound = jnp.asarray(arr_u_params_bound)
     assert np.allclose(arr_params, arr_u_params_bound, rtol=1e-4, atol=1e-4)
 
     arr_params_unbound = get_unbounded_diffstarpop_params(PARAMS_SMDPL_DR1)
-    arr_params_unbound = tuple_to_array(arr_params_unbound)
+    arr_params_unbound = jnp.asarray(arr_params_unbound)
     assert np.allclose(arr_u_params, arr_params_unbound, rtol=1e-4, atol=1e-4)
 
     grad_val = _add_params_grad(arr_u_params)
@@ -119,18 +116,18 @@ def test_smdpl_dr1():
 
 
 def test_tng():
-    arr_params = tuple_to_array(PARAMS_TNG)
-    arr_u_params = tuple_to_array(U_PARAMS_TNG)
+    arr_params = jnp.asarray(PARAMS_TNG)
+    arr_u_params = jnp.asarray(U_PARAMS_TNG)
 
     assert np.all(np.isfinite(arr_params))
     assert np.all(np.isfinite(arr_u_params))
 
     arr_u_params_bound = get_bounded_diffstarpop_params(U_PARAMS_TNG)
-    arr_u_params_bound = tuple_to_array(arr_u_params_bound)
+    arr_u_params_bound = jnp.asarray(arr_u_params_bound)
     assert np.allclose(arr_params, arr_u_params_bound, rtol=1e-4, atol=1e-4)
 
     arr_params_unbound = get_unbounded_diffstarpop_params(PARAMS_TNG)
-    arr_params_unbound = tuple_to_array(arr_params_unbound)
+    arr_params_unbound = jnp.asarray(arr_params_unbound)
     assert np.allclose(arr_u_params, arr_params_unbound, rtol=1e-4, atol=1e-4)
 
     grad_val = _add_params_grad(arr_u_params)
@@ -138,18 +135,18 @@ def test_tng():
 
 
 def test_galacticus_in():
-    arr_params = tuple_to_array(PARAMS_GALACTICUS_IN)
-    arr_u_params = tuple_to_array(U_PARAMS_GALACTICUS_IN)
+    arr_params = jnp.asarray(PARAMS_GALACTICUS_IN)
+    arr_u_params = jnp.asarray(U_PARAMS_GALACTICUS_IN)
 
     assert np.all(np.isfinite(arr_params))
     assert np.all(np.isfinite(arr_u_params))
 
     arr_u_params_bound = get_bounded_diffstarpop_params(U_PARAMS_GALACTICUS_IN)
-    arr_u_params_bound = tuple_to_array(arr_u_params_bound)
+    arr_u_params_bound = jnp.asarray(arr_u_params_bound)
     assert np.allclose(arr_params, arr_u_params_bound, rtol=1e-4, atol=1e-4)
 
     arr_params_unbound = get_unbounded_diffstarpop_params(PARAMS_GALACTICUS_IN)
-    arr_params_unbound = tuple_to_array(arr_params_unbound)
+    arr_params_unbound = jnp.asarray(arr_params_unbound)
     assert np.allclose(arr_u_params, arr_params_unbound, rtol=1e-4, atol=1e-4)
 
     grad_val = _add_params_grad(arr_u_params)
@@ -157,18 +154,18 @@ def test_galacticus_in():
 
 
 def test_galacticus_inplusex():
-    arr_params = tuple_to_array(PARAMS_GALACTICUS_INPLUSEX)
-    arr_u_params = tuple_to_array(U_PARAMS_GALACTICUS_INPLUSEX)
+    arr_params = jnp.asarray(PARAMS_GALACTICUS_INPLUSEX)
+    arr_u_params = jnp.asarray(U_PARAMS_GALACTICUS_INPLUSEX)
 
     assert np.all(np.isfinite(arr_params))
     assert np.all(np.isfinite(arr_u_params))
 
     arr_u_params_bound = get_bounded_diffstarpop_params(U_PARAMS_GALACTICUS_INPLUSEX)
-    arr_u_params_bound = tuple_to_array(arr_u_params_bound)
+    arr_u_params_bound = jnp.asarray(arr_u_params_bound)
     assert np.allclose(arr_params, arr_u_params_bound, rtol=1e-4, atol=1e-4)
 
     arr_params_unbound = get_unbounded_diffstarpop_params(PARAMS_GALACTICUS_INPLUSEX)
-    arr_params_unbound = tuple_to_array(arr_params_unbound)
+    arr_params_unbound = jnp.asarray(arr_params_unbound)
     assert np.allclose(arr_u_params, arr_params_unbound, rtol=1e-4, atol=1e-4)
 
     grad_val = _add_params_grad(arr_u_params)
