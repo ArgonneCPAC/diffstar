@@ -94,8 +94,9 @@ def compute_diff_histograms_mstar_atmobs_z(
     ndbins_hi = logmstar_bins[1:].reshape((-1, 1))
 
     wcounts = tw_ndhist_weighted(nddata, ndsig, weight, ndbins_lo, ndbins_hi)
-
-    wcounts = wcounts / jnp.sum(wcounts)
+    _norm_sum = jnp.sum(wcounts)
+    _norm_sum = jnp.where(_norm_sum == 0.0, jnp.ones_like(_norm_sum), _norm_sum)
+    wcounts = wcounts / _norm_sum
 
     return wcounts
 
@@ -210,8 +211,9 @@ def compute_diff_histograms_mstar_ssfr_atz(
     nddata = jnp.array([log_smh_table, log_ssfr_table]).T
 
     wcounts = tw_ndhist_weighted(nddata, ndsig, weight, ndbins_lo, ndbins_hi)
-
-    wcounts = wcounts / jnp.sum(wcounts)
+    _norm_sum = jnp.sum(wcounts)
+    _norm_sum = jnp.where(_norm_sum == 0.0, jnp.ones_like(_norm_sum), _norm_sum)
+    wcounts = wcounts / _norm_sum
 
     return wcounts
 
@@ -296,7 +298,9 @@ def mstar_ssfr_kern_tobs(u_params, loss_data):
     pdfs = jnp.take(pred_mstar_ssfr_pdf, indx_pdf, axis=0)
     pdfs = jnp.einsum("zmab,zm->zab", pdfs, nmhalo_pdf)
     pdfs = jnp.take(pdfs, target_mstar_ids, axis=1)
-    pred_data = pdfs / jnp.sum(pdfs, axis=2, keepdims=True)
+    _norm_sum = jnp.sum(pdfs, axis=2, keepdims=True)
+    _norm_sum = jnp.where(_norm_sum == 0.0, jnp.ones_like(_norm_sum), _norm_sum)
+    pred_data = pdfs / _norm_sum
     return pred_data
 
 
@@ -410,7 +414,9 @@ def mstar_ssfr_sat_kern_tobs(u_params, loss_data):
     pdfs = jnp.take(pred_mstar_ssfr_pdf, indx_pdf, axis=0)
     pdfs = jnp.einsum("zmab,zm->zab", pdfs, nmhalo_pdf)
     pdfs = jnp.take(pdfs, target_mstar_ids, axis=1)
-    pred_data = pdfs / jnp.sum(pdfs, axis=2, keepdims=True)
+    _norm_sum = jnp.sum(pdfs, axis=2, keepdims=True)
+    _norm_sum = jnp.where(_norm_sum == 0.0, jnp.ones_like(_norm_sum), _norm_sum)
+    pred_data = pdfs / _norm_sum
     return pred_data
 
 
