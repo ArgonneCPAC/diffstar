@@ -193,9 +193,7 @@ if __name__ == "__main__":
     best_fit_u_params = params_arr[argmin_best]
 
     def return_params_from_result(best_fit_u_params):
-        bestfit_u_tuple = DEFAULT_DIFFSTARPOP_U_PARAMS._make(
-            best_fit_u_params, UnboundParams
-        )
+        bestfit_u_tuple = DEFAULT_DIFFSTARPOP_U_PARAMS._make(best_fit_u_params)
         diffstarpop_params = get_bounded_diffstarpop_params(bestfit_u_tuple)
         return diffstarpop_params
 
