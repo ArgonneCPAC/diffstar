@@ -597,9 +597,10 @@ def get_loss_data_pdfs_ssfr_central(indir, nhalos):
     )
     for i in range(len(age_targets)):
         for j, jval in enumerate(target_mstar_ids):
-            target_data[i, j] = (
-                mstar_ssfr_pdfs_cent[i, jval] / mstar_ssfr_pdfs_cent[i, jval].sum()
-            )
+            if mstar_ssfr_pdfs_cent[i, jval].sum() > 0.0:
+                target_data[i, j] = (
+                    mstar_ssfr_pdfs_cent[i, jval] / mstar_ssfr_pdfs_cent[i, jval].sum()
+                )
 
     mah_params_data = np.array(mah_params_data)
     logmp0_data = np.array(logmp0_data)
@@ -784,9 +785,10 @@ def get_loss_data_pdfs_ssfr_satellite(indir, nhalos):
     )
     for i in range(len(age_targets)):
         for j, jval in enumerate(target_mstar_ids):
-            target_data_sat[i, j] = (
-                mstar_ssfr_pdfs_sat[i, jval] / mstar_ssfr_pdfs_sat[i, jval].sum()
-            )
+            if mstar_ssfr_pdfs_sat[i, jval].sum() > 0.0:
+                target_data_sat[i, j] = (
+                    mstar_ssfr_pdfs_sat[i, jval] / mstar_ssfr_pdfs_sat[i, jval].sum()
+                )
 
     mah_params_data = np.array(mah_params_data)
     logmp0_data = np.array(logmp0_data)
