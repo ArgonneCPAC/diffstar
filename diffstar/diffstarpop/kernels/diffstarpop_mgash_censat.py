@@ -49,7 +49,7 @@ def mc_diffstar_u_params_singlegal_kernel(
 
     frac_quench = jnp.where(upid == -1, frac_quench_cen, frac_quench_sat)
     mu_mseq = jnp.where(
-        upid == -1, jnp.asaray(mu_cen_ms_block), jnp.asaray(mu_sat_ms_block)
+        upid == -1, jnp.asarray(mu_cen_ms_block), jnp.asarray(mu_sat_ms_block)
     )
     cov_mseq = jnp.where(upid == -1, cov_cen_ms_block, cov_sat_ms_block)
 
