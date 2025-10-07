@@ -94,9 +94,7 @@ if __name__ == "__main__":
     # Define params ---------------------------------------------
     diffstarpop_u_params = DEFAULT_DIFFSTARPOP_U_PARAMS._make(all_u_params)
 
-    diffstarpop_params = get_bounded_diffstarpop_params(
-        diffstarpop_u_params.diffstarpop_u_params
-    )
+    diffstarpop_params = get_bounded_diffstarpop_params(diffstarpop_u_params)
 
     # Load SMHM data ---------------------------------------------
     nhalos = 10
@@ -242,7 +240,9 @@ if __name__ == "__main__":
             mstar_counts_pred[i, j] = _mstar_counts_pred[ij]
             ij += 1
 
-    fig, ax = plt.subplots(5, 1, figsize=(12, 16 * len(age_targets) / 5), sharex=False)
+    fig, ax = plt.subplots(
+        len(age_targets), 1, figsize=(12, 16 * len(age_targets) / 5), sharex=False
+    )
 
     colors_mstar = plt.get_cmap("viridis")(np.linspace(0, 1, 11))
 
