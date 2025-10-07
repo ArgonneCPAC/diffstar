@@ -84,3 +84,24 @@ def mc_diffstar_u_params_singlegal_kernel(
     mc_is_quenched_sequence = uran < frac_quench
 
     return u_params_ms, u_params_q, frac_quench, mc_is_quenched_sequence
+
+
+@jjit
+def _diffstarpop_means_covs(
+    diffstarpop_params, logmp0, tpeak, lgmu_infall, logmhost_infall, gyr_since_infall
+):
+    sfh_pdf_cens_params = SFH_PDF_QUENCH_PARAMS._make(
+        [getattr(diffstarpop_params, x) for x in SFH_PDF_QUENCH_PARAMS._fields]
+    )
+    means_covs = _sfh_pdf_scalar_kernel(sfh_pdf_cens_params, logmp0, tpeak)
+
+    # Modify frac_q for satellites
+    frac_q = means_covs[0]
+    satquench_params = DEFAULT_SATQUENCHPOP_PARAMS._make(
+        [getattr(diffstarpop_params, x) for x in DEFAULT_SATQUENCHPOP_PARAMS._fields]
+    )
+    frac_q = get_qprob_sat(
+        satquench_params, lgmu_infall, logmhost_infall, gyr_since_infall, frac_q
+    )
+    means_covs = (frac_q, *means_covs[1:])
+    return means_covs
