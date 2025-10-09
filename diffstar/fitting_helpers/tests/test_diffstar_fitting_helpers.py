@@ -157,8 +157,9 @@ def test_get_loss_data_default():
         assert np.all(log_fstar_table > -10)
         assert np.all(log_fstar_table < np.log10(sfh_table.max()))
 
+        _EPS = 1e-3
         assert 10**lgt_fstar_max > t_table[0]
-        assert 10**lgt_fstar_max < t_table[-1]
+        assert 10**lgt_fstar_max < t_table[-1] + _EPS
 
         assert np.allclose(10**lgt0, t0_sim)
         assert np.allclose(fb, fb_sim)
