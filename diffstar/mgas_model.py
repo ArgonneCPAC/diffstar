@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from diffmah.diffmah_kernels import mah_halopop, mah_singlehalo
+from diffmah.diffmah_kernels import _log_mah_kern, mah_halopop, mah_singlehalo
 from jax import jit as jjit
 from jax import vmap
 
@@ -69,6 +69,23 @@ def calc_mgas_singlegal(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB):
     dmgasdt_inst = fb * dmhdt
     smh = cumulative_mstar_formed(tarr, sfh)
     mgas_inst = cumulative_mstar_formed(tarr, dmgasdt_inst)
+    mgas = mgas_inst - smh
+
+    dt = _jax_get_dt_array(tarr)
+    dmgas_dt = _jax_get_dt_array(mgas) / dt / 1e9
+
+    return GalHistory(sfh, smh, dmgas_dt, mgas)
+
+
+@jjit
+def calc_mgas_singlegal2(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB):
+    log_mah = _log_mah_kern(mah_params, tarr, lgt0)
+    mgas_inst = fb * 10**log_mah
+
+    ms_params, q_params = sfh_params[:4], sfh_params[4:]
+    sfh = _sfh_singlegal_kern(tarr, mah_params, ms_params, q_params, lgt0, fb)
+    smh = cumulative_mstar_formed(tarr, sfh)
+
     mgas = mgas_inst - smh
 
     dt = _jax_get_dt_array(tarr)

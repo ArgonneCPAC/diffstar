@@ -16,7 +16,7 @@ from ..defaults import (
     QUParams,
     get_bounded_diffstar_params,
 )
-from ..mgas_model import calc_mgas_galpop, calc_mgas_singlegal
+from ..mgas_model import calc_mgas_galpop, calc_mgas_singlegal, calc_mgas_singlegal2
 
 
 def _get_all_default_params():
@@ -85,3 +85,26 @@ def test_calc_mgas_galpop_evaluates():
     assert np.all(gal_history.sfh > 0)
     assert np.all(gal_history.smh > 0)
     assert np.all(gal_history.mgash > 0)
+
+
+def test_calc_mgas_singlegal2():
+    lgt0, mah_params, u_ms_params_init, u_q_params_init = _get_all_default_u_params()
+    u_sfh_init = np.array((*u_ms_params_init, *u_q_params_init))
+
+    n_t = 2_000
+    tarr = np.linspace(0.1, 10**lgt0, n_t)
+
+    ran_key = jran.PRNGKey(0)
+    ntests = 20
+    ran_keys = jran.split(ran_key, ntests)
+    for test_key in ran_keys:
+
+        u_ms_params = jran.normal(test_key, shape=(8,)) + np.array(u_sfh_init)
+        sfh_u_params = DiffstarUParams(*u_ms_params)
+        sfh_params = get_bounded_diffstar_params(sfh_u_params)
+        res = calc_mgas_singlegal(sfh_params, mah_params, tarr, lgt0=lgt0, fb=FB)
+        res2 = calc_mgas_singlegal2(sfh_params, mah_params, tarr, lgt0=lgt0, fb=FB)
+
+        t_min_compare = 0.5  # Gyr
+        msk_t_min = tarr > t_min_compare
+        assert np.allclose(res.mgash[msk_t_min], res2.mgash[msk_t_min], rtol=0.02)
