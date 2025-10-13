@@ -18,6 +18,7 @@ from ..defaults import (
 )
 from ..mgas_model import (
     calc_mgas_galpop,
+    calc_mgas_galpop3,
     calc_mgas_singlegal,
     calc_mgas_singlegal2,
     calc_mgas_singlegal3,
@@ -143,3 +144,22 @@ def test_calc_mgas_singlegal3():
         msk_compare = msk_t_min & msk_mgas_below_peak
 
         assert np.allclose(res.mgash[msk_compare], res2.mgash[msk_compare], rtol=0.1)
+
+
+def test_calc_mgas_galpop3_evaluates():
+    n_gals = 50
+    ZZ = np.zeros(n_gals)
+    ms_params = DEFAULT_MS_PARAMS._make([ZZ + x for x in DEFAULT_MS_PARAMS])
+    q_params = DEFAULT_Q_PARAMS._make([ZZ + x for x in DEFAULT_Q_PARAMS])
+    sfh_params = DiffstarUParams(*ms_params, *q_params)
+    mah_params = DEFAULT_MAH_PARAMS._make([ZZ + x for x in DEFAULT_MAH_PARAMS])
+    tarr = np.linspace(0.1, 13.8, 30)
+    gal_history3 = calc_mgas_galpop3(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB)
+
+    assert gal_history3._fields == ("sfh", "smh", "dmgash", "mgash")
+    for x in gal_history3:
+        assert np.all(np.isfinite(x))
+
+    assert np.all(gal_history3.sfh > 0)
+    assert np.all(gal_history3.smh > 0)
+    assert np.all(gal_history3.mgash > 0)

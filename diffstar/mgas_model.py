@@ -152,6 +152,17 @@ def calc_mgas_singlegal3(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB):
     return GalHistory(sfh, smh, dmgas_dt, mgash)
 
 
+_GPOP = (0, 0, None, None, None)
+_calc_mgas_and_dmgas_dt_galpop = jjit(vmap(_calc_mgas_and_dmgas_dt_vmap, in_axes=_GPOP))
+
+
+@jjit
+def calc_mgas_galpop3(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB):
+    _res = _calc_mgas_and_dmgas_dt_galpop(sfh_params, mah_params, tarr, lgt0, fb)
+    sfh, smh, dmgas_dt, mgash = _res
+    return GalHistory(sfh, smh, dmgas_dt, mgash)
+
+
 @jjit
 def calc_mgas_galpop(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB):
     """Calculate the Diffstar SFH and Mgas for a single galaxy
