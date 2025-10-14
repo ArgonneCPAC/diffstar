@@ -15,7 +15,7 @@ _jax_get_dt_array_vmap = jjit(vmap(_jax_get_dt_array, in_axes=(0)))
 
 GalHistory = namedtuple("GalHistory", ("sfh", "smh", "dmgash", "mgash"))
 
-N_INT_STEPS = 50
+N_INT_STEPS = 20
 
 
 @jjit
