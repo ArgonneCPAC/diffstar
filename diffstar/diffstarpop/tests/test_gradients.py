@@ -3,22 +3,33 @@
 import numpy as np
 from diffmah.diffmah_kernels import mah_halopop
 from diffsky.mass_functions.mc_diffmah_tpeak import mc_subhalos
-from diffstar.defaults import LGT0
 from dsps.constants import T_TABLE_MIN
 from jax import jit as jjit
 from jax import numpy as jnp
 from jax import random as jran
 from jax import value_and_grad
 
+from diffstar.defaults import LGT0
+
 from .. import get_bounded_diffstarpop_params, mc_diffstar_sfh_galpop
-from ..defaults import (
-    DEFAULT_DIFFSTARPOP_PARAMS,
-    DEFAULT_DIFFSTARPOP_U_PARAMS,
-)
+from ..defaults import DEFAULT_DIFFSTARPOP_PARAMS, DEFAULT_DIFFSTARPOP_U_PARAMS
 from ..kernels.diffstarpop_mgash import _diffstarpop_means_covs
+from ..kernels.params.params_diffstarpopfits_mgash import (
+    DiffstarPop_Params_Diffstarpopfits_mgash,
+    DiffstarPop_UParams_Diffstarpopfits_mgash,
+)
 from ..kernels.satquenchpop_model import (
-    SatQuenchPopUParams,
     DEFAULT_SATQUENCHPOP_U_PARAMS,
+    SatQuenchPopUParams,
+)
+
+# sim_name_list = ["smdpl_dr1_nomerging", "smdpl_dr1", "tng", "galacticus_in_situ",  "galacticus_in_plus_ex_situ"]
+MODEL_NAME = "smdpl_dr1_nomerging"
+TESTING_PARAMS = DEFAULT_DIFFSTARPOP_PARAMS._replace(
+    **DiffstarPop_Params_Diffstarpopfits_mgash[MODEL_NAME]._asdict()
+)
+TESTING_U_PARAMS = DEFAULT_DIFFSTARPOP_U_PARAMS._replace(
+    **DiffstarPop_UParams_Diffstarpopfits_mgash[MODEL_NAME]._asdict()
 )
 
 
@@ -29,10 +40,10 @@ def _mse(pred, target):
 
 
 def get_random_dpp_params(ran_key, dp=0.1):
-    u_params = jnp.array(DEFAULT_DIFFSTARPOP_U_PARAMS)
+    u_params = jnp.array(TESTING_U_PARAMS)
     u = jran.uniform(ran_key, minval=-dp, maxval=dp, shape=(len(u_params),))
     ran_u_params = np.array(u_params) + u
-    dpp_u_params = DEFAULT_DIFFSTARPOP_U_PARAMS._make(ran_u_params)
+    dpp_u_params = TESTING_U_PARAMS._make(ran_u_params)
     dpp_params = get_bounded_diffstarpop_params(dpp_u_params)
     return dpp_params, dpp_u_params
 
@@ -76,7 +87,7 @@ def test_all_diffstarpop_u_param_gradients_are_nonzero():
 
     # compute SFHs for the default galaxy population
     args = (
-        DEFAULT_DIFFSTARPOP_PARAMS,
+        TESTING_PARAMS,
         subcat.mah_params,
         subcat.logmp0,
         subcat.upids,
@@ -180,7 +191,7 @@ def test_gradients_of_diffstarpop_pdf_satquench_params_are_nonzero():
     logmhost = 13.5
     gyr_since_infall = 1.0
     args = (
-        DEFAULT_DIFFSTARPOP_PARAMS,
+        TESTING_PARAMS,
         logmp0,
         tpeak,
         lgmu_infall,
