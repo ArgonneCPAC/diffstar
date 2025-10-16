@@ -1,5 +1,4 @@
-"""
-"""
+""" """
 
 from collections import OrderedDict, namedtuple
 
@@ -11,7 +10,7 @@ from ..utils import _inverse_sigmoid, _sigmoid
 
 DEFAULT_Q_SPEED = 5.0
 DEFAULT_LGMH_K = 5.0
-LGMU_SPEED = 10.0
+LGMU_SPEED = 2.0
 
 DEFAULT_SATQUENCH_PDICT = OrderedDict(t_delay=1.0, qprob_hi=0.75)
 SatQuenchParams = namedtuple("SatQuenchParams", DEFAULT_SATQUENCH_PDICT.keys())
