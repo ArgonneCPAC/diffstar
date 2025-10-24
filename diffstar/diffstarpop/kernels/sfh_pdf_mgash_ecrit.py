@@ -315,11 +315,12 @@ def _get_mean_u_params_mseq(params, logmp0):
         params.mean_ulgm_mseq_hi,
     )
 
-    ulgy = line_model(
+    ulgy = Mcrit_model(
         logmp0,
-        params.mean_ulgy_mseq_int,
-        params.mean_ulgy_mseq_slp,
-        *BOUNDING_VALS.mean_ulgy,
+        params.mean_ulgy_mseq_xtp,
+        params.mean_ulgy_mseq_ytp,
+        params.mean_ulgy_mseq_lo,
+        params.mean_ulgy_mseq_hi,
     )
 
     ul = line_model(
@@ -350,11 +351,12 @@ def _get_mean_u_params_qseq(params, logmp0, tpeak):
         params.mean_ulgm_qseq_hi,
     )
 
-    ulgy = line_model(
+    ulgy = Mcrit_model(
         logmp0,
-        params.mean_ulgy_qseq_int,
-        params.mean_ulgy_qseq_slp,
-        *BOUNDING_VALS.mean_ulgy,
+        params.mean_ulgy_qseq_xtp,
+        params.mean_ulgy_qseq_ytp,
+        params.mean_ulgy_qseq_lo,
+        params.mean_ulgy_qseq_hi,
     )
 
     ul = line_model(
