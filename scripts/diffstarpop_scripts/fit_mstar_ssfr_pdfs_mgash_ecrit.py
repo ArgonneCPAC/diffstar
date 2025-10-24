@@ -128,7 +128,7 @@ if __name__ == "__main__":
     elif params_path.startswith("diffstarfits"):
         sim_name = params_path.split("_")[1:]
         sim_name = ("_").join(sim_name)
-        params_tuple = DiffstarPop_UParams_Diffstarfits_mgash[sim_name]
+        params_tuple = DiffstarPop_UParams_Diffstarfits_mgash_ecrit[sim_name]
         all_u_params = jnp.asarray(params_tuple)
     else:
         params = np.load(params_path)
