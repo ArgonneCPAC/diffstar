@@ -168,6 +168,25 @@ if __name__ == "__main__":
         no_nan_params = np.all(np.isfinite(p))
         no_nan_loss = np.isfinite(loss)
         no_nan_grads = np.all(np.isfinite(grads))
+        if ~no_nan_loss:
+            print("NaN in loss, trying to take extra gradient step")
+            opt_state2 = opt_update(istep, current_grads, opt_state)
+            p2 = np.array(get_params(opt_state2))
+            loss2, grads2 = loss_kernel(p2, *loss_data)
+            no_nan_params2 = np.all(np.isfinite(p2))
+            no_nan_loss2 = np.isfinite(loss2)
+            no_nan_grads2 = np.all(np.isfinite(grads2))
+            if ~no_nan_params2 | ~no_nan_loss2 | ~no_nan_grads2:
+                print("Extra step failed")
+                continue
+            else:
+                p = p2.copy()
+                loss = loss2.copy()
+                grads = grads2.copy()
+                no_nan_params = np.all(np.isfinite(p))
+                no_nan_loss = np.isfinite(loss)
+                no_nan_grads = np.all(np.isfinite(grads))
+
         if ~no_nan_params | ~no_nan_loss | ~no_nan_grads:
             # break
             if istep > 0:
@@ -181,6 +200,8 @@ if __name__ == "__main__":
             params_arr[istep, :] = p
             loss_arr[istep] = loss
             opt_state = opt_update(istep, grads, opt_state)
+
+        current_grads = grads.copy()
 
         no_nan_grads_arr[istep] = ~no_nan_grads
         end = time()
