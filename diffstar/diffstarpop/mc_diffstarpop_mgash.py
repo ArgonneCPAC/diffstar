@@ -469,4 +469,6 @@ def mc_diffstar_sfh_galpop(
     diffstar_params_ms, diffstar_params_q, frac_q, mc_is_q = _res
     sfh_ms = calc_sfh_galpop(diffstar_params_ms, mah_params, tarr, lgt0=lgt0, fb=fb)
     sfh_q = calc_sfh_galpop(diffstar_params_q, mah_params, tarr, lgt0=lgt0, fb=fb)
-    return diffstar_params_ms, diffstar_params_q, sfh_ms, sfh_q, frac_q, mc_is_q
+    return MCDiffstar(
+        diffstar_params_ms, diffstar_params_q, sfh_ms, sfh_q, frac_q, mc_is_q
+    )
