@@ -24,40 +24,42 @@ LGMCRIT_K = 4.0
 BOUNDING_K = 0.1
 
 SFH_PDF_QUENCH_MU_PDICT = OrderedDict(
-    mean_ulgm_mseq_xtp=12.027,
-    mean_ulgm_mseq_ytp=12.030,
-    mean_ulgm_mseq_lo=0.901,
-    mean_ulgm_mseq_hi=0.104,
-    mean_ulgy_mseq_xtp=12.027,
-    mean_ulgy_mseq_ytp=-9.5,
-    mean_ulgy_mseq_lo=0.901,
-    mean_ulgy_mseq_hi=0.304,
-    mean_ul_mseq_int=-0.75,
-    mean_ul_mseq_slp=0.80,
-    mean_uh_mseq_int=-2.04,
-    mean_uh_mseq_slp=-3.04,
-    mean_ulgm_qseq_xtp=12.246,
-    mean_ulgm_qseq_ytp=12.200,
-    mean_ulgm_qseq_lo=0.812,
-    mean_ulgm_qseq_hi=0.094,
-    mean_ulgy_qseq_xtp=12.027,
-    mean_ulgy_qseq_ytp=-9.5,
-    mean_ulgy_qseq_lo=0.901,
-    mean_ulgy_qseq_hi=0.304,
-    mean_ul_qseq_int=-0.75,
-    mean_ul_qseq_slp=0.80,
-    mean_uh_qseq_int=-2.04,
-    mean_uh_qseq_slp=-3.04,
-    mean_uqt_xtp=12.027,
-    mean_uqt_ytp=0.96,
-    mean_uqt_lo=-0.2,
-    mean_uqt_hi=-0.5,
-    mean_uqs_int=-0.16,
-    mean_uqs_slp=0.47,
-    mean_udrop_int=-2.05,
-    mean_udrop_slp=0.18,
-    mean_urej_int=-0.97,
-    mean_urej_slp=-0.06,
+    [
+        ("mean_ulgm_mseq_xtp", 12.900),
+        ("mean_ulgm_mseq_ytp", 12.526),
+        ("mean_ulgm_mseq_lo", 0.745),
+        ("mean_ulgm_mseq_hi", -0.061),
+        ("mean_ulgy_mseq_xtp", 11.885),
+        ("mean_ulgy_mseq_ytp", -10.536),
+        ("mean_ulgy_mseq_lo", 1.644),
+        ("mean_ulgy_mseq_hi", 0.461),
+        ("mean_ul_mseq_int", -2.806),
+        ("mean_ul_mseq_slp", -0.321),
+        ("mean_uh_mseq_int", -4.995),
+        ("mean_uh_mseq_slp", 1.479),
+        ("mean_ulgm_qseq_xtp", 13.349),
+        ("mean_ulgm_qseq_ytp", 12.240),
+        ("mean_ulgm_qseq_lo", 0.345),
+        ("mean_ulgm_qseq_hi", -0.122),
+        ("mean_ulgy_qseq_xtp", 11.938),
+        ("mean_ulgy_qseq_ytp", -9.896),
+        ("mean_ulgy_qseq_lo", 0.922),
+        ("mean_ulgy_qseq_hi", 0.450),
+        ("mean_ul_qseq_int", -0.597),
+        ("mean_ul_qseq_slp", 0.255),
+        ("mean_uh_qseq_int", -1.440),
+        ("mean_uh_qseq_slp", -0.799),
+        ("mean_uqt_xtp", 11.305),
+        ("mean_uqt_ytp", 1.181),
+        ("mean_uqt_lo", -0.001),
+        ("mean_uqt_hi", -0.445),
+        ("mean_uqs_int", 0.665),
+        ("mean_uqs_slp", 0.073),
+        ("mean_udrop_int", -2.997),
+        ("mean_udrop_slp", 0.960),
+        ("mean_urej_int", -4.668),
+        ("mean_urej_slp", 2.971),
+    ]
 )
 SFH_PDF_QUENCH_MU_BOUNDS_PDICT = OrderedDict(
     mean_ulgm_mseq_xtp=(11.0, 14.0),
@@ -97,22 +99,24 @@ SFH_PDF_QUENCH_MU_BOUNDS_PDICT = OrderedDict(
 )
 
 SFH_PDF_QUENCH_COV_MS_BLOCK_PDICT = OrderedDict(
-    std_ulgm_mseq_int=0.325,
-    std_ulgm_mseq_slp=-0.028,
-    std_ulgy_mseq_int=0.238,
-    std_ulgy_mseq_slp=-0.004,
-    std_ul_mseq_int=0.345,
-    std_ul_mseq_slp=0.008,
-    std_uh_mseq_int=0.345,
-    std_uh_mseq_slp=0.008,
-    std_ulgm_qseq_int=0.243,
-    std_ulgm_qseq_slp=-0.037,
-    std_ulgy_qseq_int=0.327,
-    std_ulgy_qseq_slp=-0.082,
-    std_ul_qseq_int=0.210,
-    std_ul_qseq_slp=0.271,
-    std_uh_qseq_int=0.210,
-    std_uh_qseq_slp=0.271,
+    [
+        ("std_ulgm_mseq_int", 0.063),
+        ("std_ulgm_mseq_slp", -0.058),
+        ("std_ulgy_mseq_int", 0.057),
+        ("std_ulgy_mseq_slp", 0.246),
+        ("std_ul_mseq_int", 0.871),
+        ("std_ul_mseq_slp", -0.999),
+        ("std_uh_mseq_int", 0.011),
+        ("std_uh_mseq_slp", 0.014),
+        ("std_ulgm_qseq_int", 0.440),
+        ("std_ulgm_qseq_slp", -0.309),
+        ("std_ulgy_qseq_int", 0.045),
+        ("std_ulgy_qseq_slp", 0.119),
+        ("std_ul_qseq_int", 0.762),
+        ("std_ul_qseq_slp", 0.636),
+        ("std_uh_qseq_int", 0.011),
+        ("std_uh_qseq_slp", 0.001),
+    ]
 )
 SFH_PDF_QUENCH_COV_MS_BLOCK_BOUNDS_PDICT = OrderedDict(
     std_ulgm_mseq_int=(0.01, 1.0),
@@ -134,14 +138,16 @@ SFH_PDF_QUENCH_COV_MS_BLOCK_BOUNDS_PDICT = OrderedDict(
 )
 
 SFH_PDF_QUENCH_COV_Q_BLOCK_PDICT = OrderedDict(
-    std_uqt_int=0.070,
-    std_uqt_slp=-0.045,
-    std_uqs_int=0.444,
-    std_uqs_slp=-0.300,
-    std_udrop_int=0.779,
-    std_udrop_slp=-0.166,
-    std_urej_int=1.538,
-    std_urej_slp=-0.018,
+    [
+        ("std_uqt_int", 0.054),
+        ("std_uqt_slp", 0.021),
+        ("std_uqs_int", 0.077),
+        ("std_uqs_slp", 0.074),
+        ("std_udrop_int", 0.288),
+        ("std_udrop_slp", -0.999),
+        ("std_urej_int", 0.965),
+        ("std_urej_slp", -0.998),
+    ]
 )
 SFH_PDF_QUENCH_COV_Q_BLOCK_BOUNDS_PDICT = OrderedDict(
     std_uqt_int=(0.01, 0.5),
@@ -155,22 +161,24 @@ SFH_PDF_QUENCH_COV_Q_BLOCK_BOUNDS_PDICT = OrderedDict(
 )
 
 SFH_PDF_FRAC_QUENCH_PDICT = OrderedDict(
-    frac_quench_cen_x0_tpeak=7.0,
-    frac_quench_cen_k_tpeak=2.0,
-    frac_quench_cen_x0_ylotpeak=13.0,
-    frac_quench_cen_x0_yhitpeak=12.0,
-    frac_quench_cen_ylo_ylotpeak=0.65,
-    frac_quench_cen_ylo_yhitpeak=0.05,
-    frac_quench_cen_k=3.848,
-    frac_quench_cen_yhi=0.971,
-    frac_quench_sat_x0_tpeak=7.0,
-    frac_quench_sat_k_tpeak=2.0,
-    frac_quench_sat_x0_ylotpeak=13.0,
-    frac_quench_sat_x0_yhitpeak=12.0,
-    frac_quench_sat_ylo_ylotpeak=0.65,
-    frac_quench_sat_ylo_yhitpeak=0.05,
-    frac_quench_sat_k=3.848,
-    frac_quench_sat_yhi=0.971,
+    [
+        ("frac_quench_cen_x0_tpeak", 9.731),
+        ("frac_quench_cen_k_tpeak", 9.989),
+        ("frac_quench_cen_x0_ylotpeak", 13.998),
+        ("frac_quench_cen_x0_yhitpeak", 13.654),
+        ("frac_quench_cen_ylo_ylotpeak", 0.999),
+        ("frac_quench_cen_ylo_yhitpeak", 0.302),
+        ("frac_quench_cen_k", 2.169),
+        ("frac_quench_cen_yhi", 0.999),
+        ("frac_quench_sat_x0_tpeak", 9.464),
+        ("frac_quench_sat_k_tpeak", 0.587),
+        ("frac_quench_sat_x0_ylotpeak", 11.097),
+        ("frac_quench_sat_x0_yhitpeak", 13.986),
+        ("frac_quench_sat_ylo_ylotpeak", 0.501),
+        ("frac_quench_sat_ylo_yhitpeak", 0.001),
+        ("frac_quench_sat_k", 4.995),
+        ("frac_quench_sat_yhi", 0.999),
+    ]
 )
 SFH_PDF_FRAC_QUENCH_BOUNDS_PDICT = OrderedDict(
     frac_quench_cen_x0_tpeak=(1.0, 14.0),
@@ -213,11 +221,13 @@ BOUNDING_STD_VALS_PDICT = OrderedDict(
 )
 
 DELTA_UQT_PDICT = OrderedDict(
-    delta_uqt_x0=5.0,
-    delta_uqt_k=1.0,
-    delta_uqt_ylo=-0.4,
-    delta_uqt_yhi=0.1,
-    delta_uqt_slope=0.01,
+    [
+        ("delta_uqt_x0", 1.001),
+        ("delta_uqt_k", 0.578),
+        ("delta_uqt_ylo", -0.569),
+        ("delta_uqt_yhi", 0.309),
+        ("delta_uqt_slope", 0.098),
+    ]
 )
 DELTA_UQT_BOUNDS_PDICT = OrderedDict(
     delta_uqt_x0=(1.0, 14.0),
