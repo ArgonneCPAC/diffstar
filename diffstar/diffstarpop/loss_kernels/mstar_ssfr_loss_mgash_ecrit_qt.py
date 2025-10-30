@@ -6,11 +6,11 @@ from jax import jit as jjit
 from jax import numpy as jnp
 from jax import value_and_grad, vmap
 
-from ..kernels.defaults_mgash import (
+from ..kernels.defaults_mgash_ecrit_qt import (
     DEFAULT_DIFFSTARPOP_U_PARAMS,
     get_bounded_diffstarpop_params,
 )
-from ..mc_diffstarpop_mgash import mc_diffstar_sfh_galpop
+from ..mc_diffstarpop_mgash_ecrit_qt import mc_diffstar_sfh_galpop
 
 
 N_TIMES = 20
