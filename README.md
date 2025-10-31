@@ -26,9 +26,17 @@ $ conda create -c conda-forge -n diffit python=3.11 numpy numba flake8 pytest ja
 Data for this project can be found [at this URL](https://portal.nersc.gov/project/hacc/aphearin/diffstar_data/).
 
 ## Scripts and demo notebooks
+
+The `demo_diffstar_sfh.ipynb` notebook in the `docs` folder illustrates how to use the Diffstar model for individual SFH, and how to generate the SFH of a population of galaxies using DiffstarPop.
+
+The `demo_diffmahpop_diffstarpop_sfh.ipynb` notebook illustrates how to generate a subhalo catalog, and how to generate SFHs for each halo using parameters that reproduce UniverseMachine, IllustrisTNG or Galacticus.
+
+See `diffstar_fitting_script_umachine_mgash.py` for an example of how to fit the SFHs of a large number of simulated galaxies in parallel with mpi4py.
+
 The `diffstar_fitter_demo.ipynb` notebook demonstrates how to fit the SFH of a simulated galaxy with a diffstar approximation.
 
-See `history_fitting_script.py` for an example of how to fit the SFHs of a large number of simulated galaxies in parallel with mpi4py.
+
+See `fit_mstar_ssfr_pdfs_mgash.py` for an example of how to use DiffstarPop to fit a set of Mstar and sSFR PDFs, and `measure_smhm_smdpl_script_mpi_mgash.py` for an example of how to generate the target data from a set of Diffstar fits.
 
 ## Citing diffstar
 [The Diffstar paper](https://arxiv.org/abs/2205.04273) has been published in [Monthly Notices of the Royal Astronomical Society](https://academic.oup.com/mnras/article-abstract/518/1/562/6795944?redirectedFrom=fulltext). Citation information for the paper can be found at [this ADS link](https://ui.adsabs.harvard.edu/abs/2023MNRAS.518..562A/abstract), copied below for convenience:

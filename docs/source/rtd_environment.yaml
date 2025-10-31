@@ -16,3 +16,5 @@ dependencies:
   - jaxlib
   - diffmah>=0.7.0
   - h5py
+  - dsps
+  - diffsky

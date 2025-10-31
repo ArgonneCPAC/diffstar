@@ -20,6 +20,7 @@ User Guide
 
    installation.rst
    demo_diffstar_sfh.ipynb
+   demo_diffmahpop_diffstarpop_sfh.ipynb
    reference.rst
 
 See :ref:`Citation Information <cite_info>` for how to acknowledge Diffstar.
