@@ -15,3 +15,9 @@ python:
   install:
     - method: pip
       path: .
+
+git:
+  allow_vcs:
+    branches:
+      - main
+      - final_model 
