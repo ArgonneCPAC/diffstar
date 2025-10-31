@@ -29,6 +29,8 @@ Data for this project can be found [at this URL](https://portal.nersc.gov/projec
 
 The `demo_diffstar_sfh.ipynb` notebook in the `docs` folder illustrates how to use the Diffstar model for individual SFH, and how to generate the SFH of a population of galaxies using DiffstarPop.
 
+The `demo_diffmahpop_diffstarpop_sfh.ipynb` notebook illustrates how to generate a subhalo catalog, and how to generate SFHs for each halo using parameters that reproduce UniverseMachine, IllustrisTNG or Galacticus.
+
 See `diffstar_fitting_script_umachine_mgash.py` for an example of how to fit the SFHs of a large number of simulated galaxies in parallel with mpi4py.
 
 The `diffstar_fitter_demo.ipynb` notebook demonstrates how to fit the SFH of a simulated galaxy with a diffstar approximation.
