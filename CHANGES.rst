@@ -1,3 +1,8 @@
+1.0.1 (2025-11-02)
+------------------
+- Update scaling relations and recalibrate default parameters (https://github.com/ArgonneCPAC/diffstar/pull/106)
+
+
 1.0.0 (2025-10-01)
 ------------------
 - Add new formulation of diffstar.
