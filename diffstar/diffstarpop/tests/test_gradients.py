@@ -105,7 +105,7 @@ def test_all_diffstarpop_u_param_gradients_are_nonzero():
         default_sfh_q,
         frac_q,
         mc_is_q,
-    ) = mc_diffstar_sfh_galpop(*args)
+    ) = mc_diffstar_sfh_galpop(*args, lgt0=1.14, fb=0.156)
 
     assert default_sfh_q.shape == (n_halos, ntimes)
     assert np.all(np.isfinite(default_sfh_q))
@@ -140,7 +140,7 @@ def test_all_diffstarpop_u_param_gradients_are_nonzero():
         alt_sfh_q,
         alt_frac_q,
         mc_is_q,
-    ) = mc_diffstar_sfh_galpop(*args)
+    ) = mc_diffstar_sfh_galpop(*args, lgt0=1.14, fb=0.156)
     assert alt_sfh_q.shape == (n_halos, ntimes)
     assert np.all(np.isfinite(alt_sfh_q))
 
@@ -167,7 +167,7 @@ def test_all_diffstarpop_u_param_gradients_are_nonzero():
             pred_sfh_q,
             pred_frac_q,
             mc_is_q,
-        ) = mc_diffstar_sfh_galpop(*args)
+        ) = mc_diffstar_sfh_galpop(*args, lgt0=1.14, fb=0.156)
         pred_mean_sfh_total = jnp.mean(
             pred_frac_q[:, None] * pred_sfh_q
             + (1.0 - pred_frac_q[:, None]) * pred_sfh_ms,

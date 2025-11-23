@@ -1,17 +1,17 @@
 """ """
 
 from diffsky.diffndhist import tw_ndhist_weighted
-from diffstar.utils import cumulative_mstar_formed
 from jax import jit as jjit
 from jax import numpy as jnp
 from jax import value_and_grad, vmap
+
+from diffstar.utils import cumulative_mstar_formed
 
 from ..kernels.defaults_mgash import (
     DEFAULT_DIFFSTARPOP_U_PARAMS,
     get_bounded_diffstarpop_params,
 )
 from ..mc_diffstarpop_mgash import mc_diffstar_sfh_galpop
-
 
 N_TIMES = 20
 
@@ -51,6 +51,8 @@ def _mc_diffstar_sfh_galpop_vmap_kern(
     gyr_since_infall,
     ran_key,
     tobs_target,
+    lgt0,
+    fb,
 ):
     tarr = jnp.logspace(-1, jnp.log10(tobs_target), N_TIMES)
     res = mc_diffstar_sfh_galpop(
@@ -63,11 +65,13 @@ def _mc_diffstar_sfh_galpop_vmap_kern(
         gyr_since_infall,
         ran_key,
         tarr,
+        lgt0=lgt0,
+        fb=fb,
     )
     return res
 
 
-_U = (None, *[0] * 8)
+_U = (None, *[0] * 8, None, None)
 mc_diffstar_sfh_galpop_vmap = jjit(vmap(_mc_diffstar_sfh_galpop_vmap_kern, in_axes=_U))
 
 
@@ -133,6 +137,8 @@ def mstar_kern_tobs(u_params, loss_data):
         gyr_since_infall,
         ran_key,
         tobs_target,
+        lgt0,
+        fb,
     )
     diffstar_params_ms, diffstar_params_q, sfh_ms, sfh_q, frac_q, mc_is_q = _res
 
@@ -255,6 +261,8 @@ def mstar_ssfr_kern_tobs(u_params, loss_data):
         gyr_since_infall,
         ran_key,
         tobs_target,
+        lgt0,
+        fb,
     )
     diffstar_params_ms, diffstar_params_q, sfh_ms, sfh_q, frac_q, mc_is_q = _res
 
@@ -369,6 +377,8 @@ def mstar_ssfr_sat_kern_tobs(u_params, loss_data):
         gyr_since_infall,
         ran_key,
         tobs_target,
+        lgt0,
+        fb,
     )
     diffstar_params_ms, diffstar_params_q, sfh_ms, sfh_q, frac_q, mc_is_q = _res
 

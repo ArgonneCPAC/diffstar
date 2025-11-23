@@ -6,7 +6,7 @@ from jax import jit as jjit
 from jax import random as jran
 from jax import vmap
 
-from ..defaults import FB, LGT0, get_bounded_diffstar_params
+from ..defaults import get_bounded_diffstar_params
 from ..sfh_model import calc_sfh_galpop, calc_sfh_singlegal
 from .kernels.diffstarpop_mgash import mc_diffstar_u_params_singlegal_kernel
 
@@ -35,8 +35,9 @@ def mc_diffstar_sfh_singlegal(
     gyr_since_infall,
     ran_key,
     tarr,
-    lgt0=LGT0,
-    fb=FB,
+    *,
+    lgt0,
+    fb,
 ):
     """Monte Carlo realization of a single point in Diffstar parameter space,
     along with the computation of SFH for this point.
@@ -376,8 +377,9 @@ def mc_diffstar_sfh_galpop(
     gyr_since_infall,
     ran_key,
     tarr,
-    lgt0=LGT0,
-    fb=FB,
+    *,
+    lgt0,
+    fb,
 ):
     """Monte Carlo realization of a single point in Diffstar parameter space,
     along with the computation of SFH for this point.
