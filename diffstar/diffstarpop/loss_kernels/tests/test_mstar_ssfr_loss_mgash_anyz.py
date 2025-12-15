@@ -91,6 +91,8 @@ def test_h5_data_shapes_and_sanity(loss_data_mstar, loss_data_ssfr, loss_data_ss
         gyr_since_infall_data,
         ran_key_data,
         t_obs_targets,
+        lgt0,
+        fb,
         logmstar_bins_pdf,
         mstar_counts_target,
     ) = loss_data_mstar
@@ -122,6 +124,8 @@ def test_h5_data_shapes_and_sanity(loss_data_mstar, loss_data_ssfr, loss_data_ss
         _,
         _,
         _,
+        _,
+        _,
         ndbins_lo,
         ndbins_hi,
         logmstar_bins_pdf2,
@@ -140,6 +144,8 @@ def test_h5_data_shapes_and_sanity(loss_data_mstar, loss_data_ssfr, loss_data_ss
 
     # SSFR (satellites)
     (
+        _,
+        _,
         _,
         _,
         _,

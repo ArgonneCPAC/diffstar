@@ -4,12 +4,12 @@ import os
 import h5py
 import numpy as np
 from diffmah.diffmah_kernels import DiffmahParams, mah_halopop
-from diffstar.defaults import LGT0
+from diffstar.defaults import LGT0, FB
 from jax import random as jran
 from jax import numpy as jnp
 
 
-def get_loss_data_smhm(indir, nhalos):
+def get_loss_data_smhm(indir, nhalos, lgt0=LGT0, fb=FB):
     # Load SMHM data ---------------------------------------------
     print("Loading SMHM data...")
 
@@ -61,7 +61,7 @@ def get_loss_data_smhm(indir, nhalos):
     t_obs_targets = []
     smhm_targets = []
 
-    tarr_logm0 = np.logspace(-1, LGT0, 50)
+    tarr_logm0 = np.logspace(-1, lgt0, 50)
 
     for i in range(len(age_targets)):
         t_target = age_targets[i]
@@ -81,7 +81,7 @@ def get_loss_data_smhm(indir, nhalos):
             t_obs_targets.append(t_target)
             smhm_targets.append(smhm[i, j])
             mah_pars_ntuple = DiffmahParams(*mah_params_samp[:, arange_sel])
-            dmhdt_fit, log_mah_fit = mah_halopop(mah_pars_ntuple, tarr_logm0, LGT0)
+            dmhdt_fit, log_mah_fit = mah_halopop(mah_pars_ntuple, tarr_logm0, lgt0)
             logmp0_data.append(log_mah_fit[:, -1])
 
     mah_params_data = np.array(mah_params_data)
@@ -124,7 +124,7 @@ def get_loss_data_smhm(indir, nhalos):
     return loss_data, plot_data
 
 
-def get_loss_data_pdfs_mstar(indir, nhalos):
+def get_loss_data_pdfs_mstar(indir, nhalos, lgt0=LGT0, fb=FB):
     # Load PDF data ---------------------------------------------
     print("Loading PDF Mstar data...")
 
@@ -195,7 +195,7 @@ def get_loss_data_pdfs_mstar(indir, nhalos):
     t_obs_targets = []
     mstar_counts_target = []
 
-    tarr_logm0 = np.logspace(-1, LGT0, 50)
+    tarr_logm0 = np.logspace(-1, lgt0, 50)
 
     for i in range(len(age_targets)):
         t_target = age_targets[i]
@@ -216,7 +216,7 @@ def get_loss_data_pdfs_mstar(indir, nhalos):
             t_obs_targets.append(t_target)
             mstar_counts_target.append(mstar_wcounts[i, j] / mstar_wcounts[i, j].sum())
             mah_pars_ntuple = DiffmahParams(*mah_params_samp[:, arange_sel])
-            dmhdt_fit, log_mah_fit = mah_halopop(mah_pars_ntuple, tarr_logm0, LGT0)
+            dmhdt_fit, log_mah_fit = mah_halopop(mah_pars_ntuple, tarr_logm0, lgt0)
             logmp0_data.append(log_mah_fit[:, -1])
         # break
 
@@ -239,6 +239,8 @@ def get_loss_data_pdfs_mstar(indir, nhalos):
         gyr_since_infall_data,
         ran_key_data,
         t_obs_targets,
+        lgt0,
+        fb,
         logmstar_bins_pdf,
         mstar_counts_target,
     )
@@ -261,7 +263,7 @@ def get_loss_data_pdfs_mstar(indir, nhalos):
     t_obs_targets = []
     mstar_counts_target = []
 
-    tarr_logm0 = np.logspace(-1, LGT0, 50)
+    tarr_logm0 = np.logspace(-1, lgt0, 50)
 
     for i in range(len(age_targets)):
         t_target = age_targets[i]
@@ -282,7 +284,7 @@ def get_loss_data_pdfs_mstar(indir, nhalos):
             t_obs_targets.append(t_target)
             mstar_counts_target.append(mstar_wcounts[i, j] / mstar_wcounts[i, j].sum())
             mah_pars_ntuple = DiffmahParams(*mah_params_samp[:, arange_sel])
-            dmhdt_fit, log_mah_fit = mah_halopop(mah_pars_ntuple, tarr_logm0, LGT0)
+            dmhdt_fit, log_mah_fit = mah_halopop(mah_pars_ntuple, tarr_logm0, lgt0)
             logmp0_data.append(log_mah_fit[:, -1])
         # break
 
@@ -305,6 +307,8 @@ def get_loss_data_pdfs_mstar(indir, nhalos):
         gyr_since_infall_data,
         ran_key_data,
         t_obs_targets,
+        lgt0,
+        fb,
         logmstar_bins_pdf,
         mstar_counts_target,
     )
@@ -344,7 +348,7 @@ def prepare_ragged(indx_pdf, nmhalo_pdf, index_mhalo):
     return idx, w  # shapes: (nz, Mmax), (nz, Mmax)
 
 
-def get_loss_data_pdfs_ssfr_central(indir, nhalos):
+def get_loss_data_pdfs_ssfr_central(indir, nhalos, lgt0=LGT0, fb=FB):
 
     print("Loading PDF Mstar data...")
 
@@ -431,7 +435,7 @@ def get_loss_data_pdfs_ssfr_central(indir, nhalos):
         "zmab,zm->zab", mstar_ssfr_pdfs_cent, mhalo_pdf_cen
     )
 
-    tarr_logm0 = np.logspace(-1, LGT0, 50)
+    tarr_logm0 = np.logspace(-1, lgt0, 50)
 
     index_mhalo = []
     indx_pdf = []
@@ -456,7 +460,7 @@ def get_loss_data_pdfs_ssfr_central(indir, nhalos):
             gyr_since_infall_data.append(np.ones(len(arange_sel)) * gyr_since_infall)
             t_obs_targets.append(t_target)
             mah_pars_ntuple = DiffmahParams(*mah_params_samp[:, arange_sel])
-            dmhdt_fit, log_mah_fit = mah_halopop(mah_pars_ntuple, tarr_logm0, LGT0)
+            dmhdt_fit, log_mah_fit = mah_halopop(mah_pars_ntuple, tarr_logm0, lgt0)
             logmp0_data.append(log_mah_fit[:, -1])
 
             index_mhalo_atz.append(j)
@@ -514,6 +518,8 @@ def get_loss_data_pdfs_ssfr_central(indir, nhalos):
         gyr_since_infall_data,
         ran_key_data,
         t_obs_targets,
+        lgt0,
+        fb,
         ndbins_lo,
         ndbins_hi,
         logmstar_bins_pdf,
@@ -577,7 +583,7 @@ def get_loss_data_pdfs_ssfr_central(indir, nhalos):
             gyr_since_infall_data.append(np.ones(len(arange_sel)) * gyr_since_infall)
             t_obs_targets.append(t_target)
             mah_pars_ntuple = DiffmahParams(*mah_params_samp[:, arange_sel])
-            dmhdt_fit, log_mah_fit = mah_halopop(mah_pars_ntuple, tarr_logm0, LGT0)
+            dmhdt_fit, log_mah_fit = mah_halopop(mah_pars_ntuple, tarr_logm0, lgt0)
             logmp0_data.append(log_mah_fit[:, -1])
 
             index_mhalo_atz.append(j)
@@ -635,6 +641,8 @@ def get_loss_data_pdfs_ssfr_central(indir, nhalos):
         gyr_since_infall_data,
         ran_key_data,
         t_obs_targets,
+        lgt0,
+        fb,
         ndbins_lo,
         ndbins_hi,
         logmstar_bins_pdf,
@@ -655,7 +663,7 @@ def get_loss_data_pdfs_ssfr_central(indir, nhalos):
     return loss_data_ssfr, plot_data
 
 
-def get_loss_data_pdfs_ssfr_satellite(indir, nhalos):
+def get_loss_data_pdfs_ssfr_satellite(indir, nhalos, lgt0=LGT0, fb=FB):
 
     print("Loading PDF Mstar data...")
 
@@ -743,7 +751,7 @@ def get_loss_data_pdfs_ssfr_satellite(indir, nhalos):
     indx_pdf = []
     _run_indx = 0
 
-    tarr_logm0 = np.logspace(-1, LGT0, 50)
+    tarr_logm0 = np.logspace(-1, lgt0, 50)
     for i in range(len(age_targets)):
         t_target = age_targets[i]
         index_mhalo_atz = []
@@ -764,7 +772,7 @@ def get_loss_data_pdfs_ssfr_satellite(indir, nhalos):
             gyr_since_infall_data.append(np.ones(len(arange_sel)) * gyr_since_infall)
             t_obs_targets.append(t_target)
             mah_pars_ntuple = DiffmahParams(*mah_params_samp[:, arange_sel])
-            dmhdt_fit, log_mah_fit = mah_halopop(mah_pars_ntuple, tarr_logm0, LGT0)
+            dmhdt_fit, log_mah_fit = mah_halopop(mah_pars_ntuple, tarr_logm0, lgt0)
             logmp0_data.append(log_mah_fit[:, -1])
 
             index_mhalo_atz.append(j)
@@ -823,6 +831,8 @@ def get_loss_data_pdfs_ssfr_satellite(indir, nhalos):
         gyr_since_infall_data,
         ran_key_data,
         t_obs_targets,
+        lgt0,
+        fb,
         ndbins_lo,
         ndbins_hi,
         logmstar_bins_pdf,
@@ -884,7 +894,7 @@ def get_loss_data_pdfs_ssfr_satellite(indir, nhalos):
             gyr_since_infall_data.append(np.ones(len(arange_sel)) * gyr_since_infall)
             t_obs_targets.append(t_target)
             mah_pars_ntuple = DiffmahParams(*mah_params_samp[:, arange_sel])
-            dmhdt_fit, log_mah_fit = mah_halopop(mah_pars_ntuple, tarr_logm0, LGT0)
+            dmhdt_fit, log_mah_fit = mah_halopop(mah_pars_ntuple, tarr_logm0, lgt0)
             logmp0_data.append(log_mah_fit[:, -1])
 
             index_mhalo_atz.append(j)
@@ -942,6 +952,8 @@ def get_loss_data_pdfs_ssfr_satellite(indir, nhalos):
         gyr_since_infall_data,
         ran_key_data,
         t_obs_targets,
+        lgt0,
+        fb,
         ndbins_lo,
         ndbins_hi,
         logmstar_bins_pdf,
@@ -962,7 +974,7 @@ def get_loss_data_pdfs_ssfr_satellite(indir, nhalos):
     return loss_data_ssfr_sat, plot_data
 
 
-def get_loss_data_pdfs_mstar_cen(indir, nhalos):
+def get_loss_data_pdfs_mstar_cen(indir, nhalos, lgt0=LGT0, fb=FB):
     # Load PDF data ---------------------------------------------
     print("Loading PDF Mstar for centrals data...")
 
@@ -1037,7 +1049,7 @@ def get_loss_data_pdfs_mstar_cen(indir, nhalos):
     t_obs_targets = []
     mstar_counts_target = []
 
-    tarr_logm0 = np.logspace(-1, LGT0, 50)
+    tarr_logm0 = np.logspace(-1, lgt0, 50)
 
     for i in range(len(age_targets)):
         t_target = age_targets[i]
@@ -1060,7 +1072,7 @@ def get_loss_data_pdfs_mstar_cen(indir, nhalos):
                 mstar_wcounts_cen[i, j] / mstar_wcounts_cen[i, j].sum()
             )
             mah_pars_ntuple = DiffmahParams(*mah_params_samp[:, arange_sel])
-            dmhdt_fit, log_mah_fit = mah_halopop(mah_pars_ntuple, tarr_logm0, LGT0)
+            dmhdt_fit, log_mah_fit = mah_halopop(mah_pars_ntuple, tarr_logm0, lgt0)
             logmp0_data.append(log_mah_fit[:, -1])
         # break
 
@@ -1083,6 +1095,8 @@ def get_loss_data_pdfs_mstar_cen(indir, nhalos):
         gyr_since_infall_data,
         ran_key_data,
         t_obs_targets,
+        lgt0,
+        fb,
         logmstar_bins_pdf,
         mstar_counts_target,
     )
@@ -1105,7 +1119,7 @@ def get_loss_data_pdfs_mstar_cen(indir, nhalos):
     t_obs_targets = []
     mstar_counts_target = []
 
-    tarr_logm0 = np.logspace(-1, LGT0, 50)
+    tarr_logm0 = np.logspace(-1, lgt0, 50)
 
     for i in range(len(age_targets)):
         t_target = age_targets[i]
@@ -1128,7 +1142,7 @@ def get_loss_data_pdfs_mstar_cen(indir, nhalos):
                 mstar_wcounts_cen[i, j] / mstar_wcounts_cen[i, j].sum()
             )
             mah_pars_ntuple = DiffmahParams(*mah_params_samp[:, arange_sel])
-            dmhdt_fit, log_mah_fit = mah_halopop(mah_pars_ntuple, tarr_logm0, LGT0)
+            dmhdt_fit, log_mah_fit = mah_halopop(mah_pars_ntuple, tarr_logm0, lgt0)
             logmp0_data.append(log_mah_fit[:, -1])
         # break
 
@@ -1151,6 +1165,8 @@ def get_loss_data_pdfs_mstar_cen(indir, nhalos):
         gyr_since_infall_data,
         ran_key_data,
         t_obs_targets,
+        lgt0,
+        fb,
         logmstar_bins_pdf,
         mstar_counts_target,
     )
@@ -1168,7 +1184,7 @@ def get_loss_data_pdfs_mstar_cen(indir, nhalos):
     return loss_data_mstar, plot_data
 
 
-def get_loss_data_pdfs_mstar_sat(indir, nhalos):
+def get_loss_data_pdfs_mstar_sat(indir, nhalos, lgt0=LGT0, fb=FB):
     # Load PDF data ---------------------------------------------
     print("Loading PDF Mstar for satellites data...")
 
@@ -1243,7 +1259,7 @@ def get_loss_data_pdfs_mstar_sat(indir, nhalos):
     t_obs_targets = []
     mstar_counts_target = []
 
-    tarr_logm0 = np.logspace(-1, LGT0, 50)
+    tarr_logm0 = np.logspace(-1, lgt0, 50)
 
     for i in range(len(age_targets)):
         t_target = age_targets[i]
@@ -1266,7 +1282,7 @@ def get_loss_data_pdfs_mstar_sat(indir, nhalos):
                 mstar_wcounts_sat[i, j] / mstar_wcounts_sat[i, j].sum()
             )
             mah_pars_ntuple = DiffmahParams(*mah_params_samp[:, arange_sel])
-            dmhdt_fit, log_mah_fit = mah_halopop(mah_pars_ntuple, tarr_logm0, LGT0)
+            dmhdt_fit, log_mah_fit = mah_halopop(mah_pars_ntuple, tarr_logm0, lgt0)
             logmp0_data.append(log_mah_fit[:, -1])
         # break
 
@@ -1289,6 +1305,8 @@ def get_loss_data_pdfs_mstar_sat(indir, nhalos):
         gyr_since_infall_data,
         ran_key_data,
         t_obs_targets,
+        lgt0,
+        fb,
         logmstar_bins_pdf,
         mstar_counts_target,
     )
@@ -1311,7 +1329,7 @@ def get_loss_data_pdfs_mstar_sat(indir, nhalos):
     t_obs_targets = []
     mstar_counts_target = []
 
-    tarr_logm0 = np.logspace(-1, LGT0, 50)
+    tarr_logm0 = np.logspace(-1, lgt0, 50)
 
     for i in range(len(age_targets)):
         t_target = age_targets[i]
@@ -1334,7 +1352,7 @@ def get_loss_data_pdfs_mstar_sat(indir, nhalos):
                 mstar_wcounts_sat[i, j] / mstar_wcounts_sat[i, j].sum()
             )
             mah_pars_ntuple = DiffmahParams(*mah_params_samp[:, arange_sel])
-            dmhdt_fit, log_mah_fit = mah_halopop(mah_pars_ntuple, tarr_logm0, LGT0)
+            dmhdt_fit, log_mah_fit = mah_halopop(mah_pars_ntuple, tarr_logm0, lgt0)
             logmp0_data.append(log_mah_fit[:, -1])
         # break
 
@@ -1357,6 +1375,8 @@ def get_loss_data_pdfs_mstar_sat(indir, nhalos):
         gyr_since_infall_data,
         ran_key_data,
         t_obs_targets,
+        lgt0,
+        fb,
         logmstar_bins_pdf,
         mstar_counts_target,
     )
