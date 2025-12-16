@@ -1,3 +1,8 @@
+1.0.2 (unreleased)
+------------------
+- Monte Carlo SFH generators now have required kwargs lgt0 and fb (https://github.com/ArgonneCPAC/diffstar/pull/108)
+
+
 1.0.1 (2025-11-02)
 ------------------
 - Update scaling relations and recalibrate default parameters (https://github.com/ArgonneCPAC/diffstar/pull/106)

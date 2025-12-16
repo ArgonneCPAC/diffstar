@@ -7,7 +7,6 @@ from jax import jit as jjit
 from jax import numpy as jnp
 from jax import vmap
 
-from .defaults import FB, LGT0
 from .kernels.history_kernel_builders import _sfh_galpop_kern, _sfh_singlegal_kern
 from .utils import cumulative_mstar_formed
 
@@ -18,7 +17,13 @@ GalHistory = namedtuple("GalHistory", ("sfh", "smh"))
 
 @partial(jjit, static_argnames="return_smh")
 def calc_sfh_singlegal(
-    sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB, return_smh=False
+    sfh_params,
+    mah_params,
+    tarr,
+    *,
+    lgt0,
+    fb,
+    return_smh=False,
 ):
     """Calculate the Diffstar SFH for a single galaxy
 
@@ -72,7 +77,15 @@ def calc_sfh_singlegal(
 
 
 @partial(jjit, static_argnames="return_smh")
-def calc_sfh_galpop(sfh_params, mah_params, tarr, lgt0=LGT0, fb=FB, return_smh=False):
+def calc_sfh_galpop(
+    sfh_params,
+    mah_params,
+    tarr,
+    *,
+    lgt0,
+    fb,
+    return_smh=False,
+):
     """Calculate the Diffstar SFH for a single galaxy
 
     Parameters

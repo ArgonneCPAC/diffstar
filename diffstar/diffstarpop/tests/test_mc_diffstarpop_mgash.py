@@ -55,7 +55,7 @@ def test_mc_diffstar_sfh_singlegal_evaluates():
         ran_key,
         tarr,
     )
-    _res = mcdsp.mc_diffstar_sfh_singlegal(*args)
+    _res = mcdsp.mc_diffstar_sfh_singlegal(*args, lgt0=1.14, fb=0.156)
     params_ms, params_q, sfh_ms, sfh_q, frac_q, mc_is_q = _res
     assert np.all(frac_q >= 0)
     assert np.all(frac_q <= 1)
@@ -147,6 +147,8 @@ def test_mc_diffstar_sfh_galpop():
         gyr_since_infall,
         ran_key,
         t_table,
+        lgt0=1.14,
+        fb=0.156,
     )
     sfh_q, sfh_ms, frac_q = _res[2:5]
 
