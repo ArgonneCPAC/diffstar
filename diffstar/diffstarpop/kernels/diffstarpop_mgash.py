@@ -4,13 +4,12 @@ from jax import jit as jjit
 from jax import numpy as jnp
 from jax import random as jran
 
-from diffstar.defaults import (
+from ...defaults import (
     DEFAULT_Q_U_PARAMS_UNQUENCHED,
     DiffstarUParams,
     MSUParams,
     QUParams,
 )
-
 from .defaults_mgash import DEFAULT_SATQUENCHPOP_PARAMS, SFH_PDF_QUENCH_PARAMS
 from .satquenchpop_model import get_qprob_sat
 from .sfh_pdf_mgash import _sfh_pdf_scalar_kernel

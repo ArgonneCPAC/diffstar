@@ -1,16 +1,14 @@
 """Test that mc_diffstar_sfh_galpop has non-zero gradients w/r/t all its parameters"""
 
 import numpy as np
+import pytest
 from diffmah.diffmah_kernels import mah_halopop
-from diffsky.mass_functions.mc_diffmah_tpeak import mc_subhalos
-from dsps.constants import T_TABLE_MIN
 from jax import jit as jjit
 from jax import numpy as jnp
 from jax import random as jran
 from jax import value_and_grad
 
-from diffstar.defaults import LGT0
-
+from ...defaults import LGT0, T_TABLE_MIN
 from .. import get_bounded_diffstarpop_params, mc_diffstar_sfh_galpop
 from ..defaults import DEFAULT_DIFFSTARPOP_PARAMS, DEFAULT_DIFFSTARPOP_U_PARAMS
 from ..kernels.diffstarpop_mgash import _diffstarpop_means_covs
@@ -64,6 +62,11 @@ def _enforce_nonzero_grads(grads):
 
 def test_all_diffstarpop_u_param_gradients_are_nonzero():
     """Verify that <SFH(t)> has nonzero gradient w/r/t all u_params"""
+
+    try:
+        from diffsky.mass_functions.mc_diffmah_tpeak import mc_subhalos
+    except ImportError:
+        pytest.skip("diffsky not installed")
 
     ran_key = jran.PRNGKey(0)
 
