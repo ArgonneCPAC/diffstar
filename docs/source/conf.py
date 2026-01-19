@@ -1,12 +1,10 @@
-# Configuration file for the Sphinx documentation builder.
-#
-"""
-"""
-from pkg_resources import DistributionNotFound, get_distribution
+""" """
+
+import importlib.metadata
 
 try:
-    __version__ = get_distribution("diffstar").version
-except DistributionNotFound:
+    __version__ = importlib.metadata.version("diffstar")
+except importlib.metadata.PackageNotFoundError:
     __version__ = "unknown version"
 
 
