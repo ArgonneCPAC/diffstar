@@ -5,8 +5,7 @@ from copy import deepcopy
 
 import numpy as np
 
-from diffstar.defaults import DEFAULT_DIFFSTAR_PARAMS
-
+from ...defaults import DEFAULT_DIFFSTAR_PARAMS
 from ..defaults import DEFAULT_DIFFSTARPOP_U_PARAMS
 from ..kernels.defaults_mgash import SFH_PDF_QUENCH_U_PARAMS
 from ..param_utils import get_all_diffstarpop_u_params, mc_select_diffstar_params

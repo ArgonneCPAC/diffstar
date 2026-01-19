@@ -1,17 +1,22 @@
 """ """
 
-from diffsky.diffndhist import tw_ndhist_weighted
 from jax import jit as jjit
 from jax import numpy as jnp
 from jax import value_and_grad, vmap
 
-from diffstar.utils import cumulative_mstar_formed
-
+from ...utils import cumulative_mstar_formed
 from ..kernels.defaults_mgash import (
     DEFAULT_DIFFSTARPOP_U_PARAMS,
     get_bounded_diffstarpop_params,
 )
 from ..mc_diffstarpop_mgash import mc_diffstar_sfh_galpop
+
+try:
+    from diffsky.diffndhist import tw_ndhist_weighted
+
+    HAS_DIFFSKY = True
+except ImportError:
+    HAS_DIFFSKY = False
 
 N_TIMES = 20
 
@@ -217,6 +222,7 @@ def compute_diff_histograms_mstar_ssfr_atz(
     ndsig = jnp.array([sigma_mstar, sigma_ssfr]).T
     nddata = jnp.array([log_smh_table, log_ssfr_table]).T
 
+    assert HAS_DIFFSKY, "Must have diffsky installed to use this function"
     wcounts = tw_ndhist_weighted(nddata, ndsig, weight, ndbins_lo, ndbins_hi)
 
     wcounts = wcounts / jnp.sum(wcounts)
