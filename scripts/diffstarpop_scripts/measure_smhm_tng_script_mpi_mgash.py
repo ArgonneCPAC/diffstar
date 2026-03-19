@@ -204,8 +204,8 @@ if __name__ == "__main__":
             hdfout["logmh_id"] = logmh_id
             hdfout["logmh_val"] = logmh_val
             hdfout["mah_params_samp"] = mah_params_samp
-            hdfout["ms_params_samp"] = ms_params_samp
-            hdfout["q_params_samp"] = q_params_samp
+            hdfout["ms_params_samp"] = ms_params_samp.T
+            hdfout["q_params_samp"] = q_params_samp.T
             hdfout["upid_samp"] = upid_samp
             hdfout["tobs_id"] = tobs_id
             hdfout["tobs_val"] = tobs_val
