@@ -6,8 +6,8 @@ import h5py
 import numpy as np
 from diffmah.diffmah_kernels import DEFAULT_MAH_PARAMS, mah_halopop
 from diffsky.diffndhist import tw_ndhist_weighted
-from diffstar.defaults_mgash_model import DEFAULT_DIFFSTAR_PARAMS, LGT0, T_TABLE_MIN
-from diffstar.sfh_model_mgash import calc_sfh_galpop
+from diffstar.defaults import DEFAULT_DIFFSTAR_PARAMS, LGT0, T_TABLE_MIN
+from diffstar.sfh_model import calc_sfh_galpop
 from diffstar.data_loaders.load_galacticus_sfh import load_galacticus_diffstar_data
 from scipy.stats import binned_statistic
 from astropy.cosmology import Planck13
