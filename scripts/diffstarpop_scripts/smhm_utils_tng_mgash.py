@@ -390,8 +390,8 @@ def concatenate_samples_haloes(data):
     logmh_id = np.concatenate(logmh_id)
     logmh_val = np.concatenate(logmh_val)
     mah_params_samp = np.concatenate(mah_params_samp)
-    ms_params_samp = np.concatenate(ms_params_samp)
-    q_params_samp = np.concatenate(q_params_samp)
+    ms_params_samp = np.concatenate(ms_params_samp).T
+    q_params_samp = np.concatenate(q_params_samp).T
     upid_samp = np.concatenate(upid_samp)
     tobs_id = np.concatenate(tobs_id)
     tobs_val = np.concatenate(tobs_val)
