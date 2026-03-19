@@ -327,6 +327,7 @@ def load_tng_data(data_drn=BEBOP):
     log_smahs = np.log10(mstarh)
 
     log_mahs = halos["mpeakh"]
+    log_mahs = log_mahs - np.log10(H_TNG)
     log_mahs = np.maximum.accumulate(log_mahs, axis=1)
     logmp0 = log_mahs[:, -1]
 
