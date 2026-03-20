@@ -51,10 +51,10 @@ jnp_interp_vmap = jjit(vmap(_jnp_interp_vmap, in_axes=(None, None, 0)))
 
 
 def calculate_plot_smdpl_nomerging(mpeak_bins):
-    diffmah_drn = smdpl_smhm_utils_mgash.LCRC_NOMERGING_DIFFMAH_DRN
-    diffstar_drn = smdpl_smhm_utils_mgash.LCRC_NOMERGING_DIFFSTAR_DRN
-    binaries_drn = smdpl_smhm_utils_mgash.LCRC_NOMERGING_BINARIES_DRN
-    diffstar_bnpat = smdpl_smhm_utils_mgash.LCRC_NOMERGING_diffstar_bnpat
+    diffmah_drn = smhm_utils_smdpl_mgash.LCRC_NOMERGING_DIFFMAH_DRN
+    diffstar_drn = smhm_utils_smdpl_mgash.LCRC_NOMERGING_DIFFSTAR_DRN
+    binaries_drn = smhm_utils_smdpl_mgash.LCRC_NOMERGING_BINARIES_DRN
+    diffstar_bnpat = smhm_utils_smdpl_mgash.LCRC_NOMERGING_diffstar_bnpat
     sim_name = "DR1_nomerging"
 
     regex_str = re.escape(diffstar_bnpat).replace(r"\{\}", r"(\d{1,3})")
@@ -78,7 +78,7 @@ def calculate_plot_smdpl_nomerging(mpeak_bins):
 
         print(subvol)
 
-        out = smdpl_smhm_utils_mgash.load_diffstar_sfh_tables(
+        out = smhm_utils_smdpl_mgash.load_diffstar_sfh_tables(
             subvol,
             sim_name,
             n_subvol_smdpl,
@@ -92,8 +92,7 @@ def calculate_plot_smdpl_nomerging(mpeak_bins):
             log_smh_table,
             log_ssfrh_table,
             mah_params,
-            ms_params,
-            q_params,
+            sfh_params,
             has_fit,
         ) = out
 
@@ -155,10 +154,10 @@ def calculate_plot_smdpl_nomerging(mpeak_bins):
 
 
 def calculate_plot_smdpl_dr1(mpeak_bins):
-    diffmah_drn = smdpl_smhm_utils_mgash.LCRC_DR1_DIFFMAH_DRN
-    diffstar_drn = smdpl_smhm_utils_mgash.LCRC_DR1_DIFFSTAR_DRN
-    binaries_drn = smdpl_smhm_utils_mgash.LCRC_DR1_BINARIES_DRN
-    diffstar_bnpat = smdpl_smhm_utils_mgash.LCRC_DR1_diffstar_bnpat
+    diffmah_drn = smhm_utils_smdpl_mgash.LCRC_DR1_DIFFMAH_DRN
+    diffstar_drn = smhm_utils_smdpl_mgash.LCRC_DR1_DIFFSTAR_DRN
+    binaries_drn = smhm_utils_smdpl_mgash.LCRC_DR1_BINARIES_DRN
+    diffstar_bnpat = smhm_utils_smdpl_mgash.LCRC_DR1_diffstar_bnpat
     sim_name = "DR1"
 
     regex_str = re.escape(diffstar_bnpat).replace(r"\{\}", r"(\d{1,3})")
@@ -184,7 +183,7 @@ def calculate_plot_smdpl_dr1(mpeak_bins):
 
         print(subvol)
 
-        out = smdpl_smhm_utils_mgash.load_diffstar_sfh_tables(
+        out = smhm_utils_smdpl_mgash.load_diffstar_sfh_tables(
             subvol,
             sim_name,
             n_subvol_smdpl,
@@ -198,8 +197,7 @@ def calculate_plot_smdpl_dr1(mpeak_bins):
             log_smh_table,
             log_ssfrh_table,
             mah_params,
-            ms_params,
-            q_params,
+            sfh_params,
             has_fit,
         ) = out
 
@@ -261,9 +259,9 @@ def calculate_plot_smdpl_dr1(mpeak_bins):
 
 
 def calculate_plot_tng(mpeak_bins):
-    diffmah_drn = tng_smhm_utils_mgash.BEBOP_TNG_MAH
-    diffstar_drn = tng_smhm_utils_mgash.BEBOP_TNG_SFH
-    binaries_drn = tng_smhm_utils_mgash.BEBOP_TNG
+    diffmah_drn = smhm_utils_tng_mgash.BEBOP_TNG_MAH
+    diffstar_drn = smhm_utils_tng_mgash.BEBOP_TNG_SFH
+    binaries_drn = smhm_utils_tng_mgash.BEBOP_TNG
 
     mpeak_binsc = 0.5 * (mpeak_bins[1:] + mpeak_bins[:-1])
     out = load_tng_data(binaries_drn)
@@ -291,7 +289,7 @@ def calculate_plot_tng(mpeak_bins):
 
         indx = np.array_split(_a, n_subvol_smdpl)[subvol]
 
-        out = tng_smhm_utils_mgash.load_diffstar_sfh_tables(
+        out = smhm_utils_tng_mgash.load_diffstar_sfh_tables(
             subvol,
             diffmah_drn,
             diffstar_drn,
@@ -302,8 +300,7 @@ def calculate_plot_tng(mpeak_bins):
             log_smh_table,
             log_ssfrh_table,
             mah_params,
-            ms_params,
-            q_params,
+            sfh_params,
             has_fit,
         ) = out
 
@@ -361,8 +358,8 @@ def calculate_plot_tng(mpeak_bins):
 
 
 def calculate_plot_galcus_insitu(mpeak_bins):
-    BEBOP_GALAC = galacticus_smhm_utils_mgash.BEBOP_GALAC
-    BEBOP_GALAC_SFH = galacticus_smhm_utils_mgash.BEBOP_GALAC_SFH
+    BEBOP_GALAC = smhm_utils_galacticus_mgash.BEBOP_GALAC
+    BEBOP_GALAC_SFH = smhm_utils_galacticus_mgash.BEBOP_GALAC_SFH
 
     mpeak_binsc = 0.5 * (mpeak_bins[1:] + mpeak_bins[:-1])
 
@@ -394,7 +391,7 @@ def calculate_plot_galcus_insitu(mpeak_bins):
 
     sfh_type = "in_situ"
 
-    out = galacticus_smhm_utils_mgash.load_diffstar_sfh_tables(
+    out = smhm_utils_galacticus_mgash.load_diffstar_sfh_tables(
         sfh_type,
         BEBOP_GALAC,
         BEBOP_GALAC_SFH,
@@ -405,8 +402,7 @@ def calculate_plot_galcus_insitu(mpeak_bins):
         log_smh_table,
         log_ssfrh_table,
         mah_params,
-        ms_params,
-        q_params,
+        sfh_params,
         is_cen,
         has_fit,
     ) = out
@@ -465,8 +461,8 @@ def calculate_plot_galcus_insitu(mpeak_bins):
 
 
 def calculate_plot_galcus_inplusexsitu(mpeak_bins):
-    BEBOP_GALAC = galacticus_smhm_utils_mgash.BEBOP_GALAC
-    BEBOP_GALAC_SFH = galacticus_smhm_utils_mgash.BEBOP_GALAC_SFH
+    BEBOP_GALAC = smhm_utils_galacticus_mgash.BEBOP_GALAC
+    BEBOP_GALAC_SFH = smhm_utils_galacticus_mgash.BEBOP_GALAC_SFH
 
     mpeak_binsc = 0.5 * (mpeak_bins[1:] + mpeak_bins[:-1])
 
@@ -498,7 +494,7 @@ def calculate_plot_galcus_inplusexsitu(mpeak_bins):
 
     sfh_type = "in_plus_ex_situ"
 
-    out = galacticus_smhm_utils_mgash.load_diffstar_sfh_tables(
+    out = smhm_utils_galacticus_mgash.load_diffstar_sfh_tables(
         sfh_type,
         BEBOP_GALAC,
         BEBOP_GALAC_SFH,
@@ -509,8 +505,7 @@ def calculate_plot_galcus_inplusexsitu(mpeak_bins):
         log_smh_table,
         log_ssfrh_table,
         mah_params,
-        ms_params,
-        q_params,
+        sfh_params,
         is_cen,
         has_fit,
     ) = out
