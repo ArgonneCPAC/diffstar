@@ -18,7 +18,7 @@ from collections import OrderedDict, namedtuple
 from diffstar.defaults import TODAY, LGT0
 from diffmah.diffmah_kernels import mah_halopop
 
-from diffstar.diffstarpop.loss_kernels.mstar_ssfr_loss_mgash import (
+from diffstar.diffstarpop.loss_kernels.mstar_ssfr_loss_mgash_anyz import (
     loss_mstar_kern_tobs_grad_wrapper,
     loss_mstar_ssfr_kern_tobs_grad_wrapper,
     loss_combined_wrapper,
