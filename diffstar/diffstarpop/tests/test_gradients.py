@@ -202,15 +202,15 @@ def test_gradients_of_diffstarpop_pdf_satquench_params_are_nonzero():
         gyr_since_infall,
     )
     _res = _diffstarpop_means_covs(*args)
-    frac_quench = _res[0]
     (
+        frac_quench_cen,
         frac_quench_sat,
         mu_mseq,
         mu_qseq,
         cov_mseq_ms_block,
         cov_qseq_ms_block,
         cov_qseq_q_block,
-    ) = _res[1:]
+    ) = _res
 
     # Generate an alternate galpop at some other point in param space
     ran_params_key, ran_key = jran.split(ran_key, 2)
@@ -225,22 +225,22 @@ def test_gradients_of_diffstarpop_pdf_satquench_params_are_nonzero():
         gyr_since_infall,
     )
     _res = _diffstarpop_means_covs(*args)
-    frac_quench2 = _res[0]
     (
+        frac_quench_cen2,
         frac_quench_sat2,
         mu_mseq2,
         mu_qseq2,
         cov_mseq_ms_block2,
         cov_qseq_ms_block2,
         cov_qseq_q_block2,
-    ) = _res[1:]
+    ) = _res
 
     assert not np.allclose(mu_mseq2, mu_mseq)
     assert not np.allclose(cov_qseq_ms_block2, cov_qseq_ms_block)
     assert not np.allclose(cov_qseq_q_block2, cov_qseq_q_block)
-    assert not np.allclose(frac_quench2, frac_quench)
+    assert not np.allclose(frac_quench_sat, frac_quench_sat2)
 
-    frac_q_target = np.copy(frac_quench)
+    frac_q_target_sat = np.copy(frac_quench_sat)
 
     @jjit
     def _loss(u_params):
@@ -254,8 +254,8 @@ def test_gradients_of_diffstarpop_pdf_satquench_params_are_nonzero():
             gyr_since_infall,
         )
         _res = _diffstarpop_means_covs(*args)
-        frac_q_pred = _res[0]
-        return _mse(frac_q_pred, frac_q_target)
+        frac_q_pred_sat = _res[1]
+        return _mse(frac_q_pred_sat, frac_q_target_sat)
 
     frac_q_loss, frac_q_grads = value_and_grad(_loss)(alt_dpp_u_params)
     assert np.isfinite(frac_q_loss)
