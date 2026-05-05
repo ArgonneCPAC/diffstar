@@ -96,14 +96,21 @@ def _diffstarpop_means_covs(
     means_covs = _sfh_pdf_scalar_kernel(sfh_pdf_cens_params, logmp0, tpeak)
 
     # Modify frac_q for satellites
-    frac_q = means_covs[0]
+    (
+        frac_quench_cen,
+        frac_quench_sat,
+    ) = means_covs[:2]
     satquench_params = DEFAULT_SATQUENCHPOP_PARAMS._make(
         [getattr(diffstarpop_params, x) for x in DEFAULT_SATQUENCHPOP_PARAMS._fields]
     )
-    frac_q = get_qprob_sat(
-        satquench_params, lgmu_infall, logmhost_infall, gyr_since_infall, frac_q
+    frac_quench_sat_updated = get_qprob_sat(
+        satquench_params,
+        lgmu_infall,
+        logmhost_infall,
+        gyr_since_infall,
+        frac_quench_sat,
     )
-    means_covs = (frac_q, *means_covs[1:])
+    means_covs = (frac_quench_cen, frac_quench_sat_updated, *means_covs[2:])
     return means_covs
 
 
