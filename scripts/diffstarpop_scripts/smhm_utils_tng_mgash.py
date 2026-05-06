@@ -6,8 +6,8 @@ import h5py
 import numpy as np
 from diffmah.diffmah_kernels import DEFAULT_MAH_PARAMS, mah_halopop
 from diffsky.diffndhist import tw_ndhist_weighted
-from diffstar.defaults_mgash_model import DEFAULT_DIFFSTAR_PARAMS, LGT0, T_TABLE_MIN
-from diffstar.sfh_model_mgash import calc_sfh_galpop
+from diffstar.defaults import DEFAULT_DIFFSTAR_PARAMS, LGT0, T_TABLE_MIN, FB
+from diffstar.sfh_model import calc_sfh_galpop
 from scipy.stats import binned_statistic
 from astropy.cosmology import Planck13
 from umachine_pyio.load_mock import load_mock_from_binaries
@@ -97,19 +97,9 @@ def load_diffstar_sfh_tables(
         [diffmah_data[key][indx][has_fit] for key in DEFAULT_MAH_PARAMS._fields]
     )
 
-    ms_params = DEFAULT_DIFFSTAR_PARAMS.ms_params._make(
-        [
-            diffstar_data[key][indx][has_fit]
-            for key in DEFAULT_DIFFSTAR_PARAMS.ms_params._fields
-        ]
+    sfh_params = DEFAULT_DIFFSTAR_PARAMS._make(
+        [diffstar_data[key][indx][has_fit] for key in DEFAULT_DIFFSTAR_PARAMS._fields]
     )
-    q_params = DEFAULT_DIFFSTAR_PARAMS.q_params._make(
-        [
-            diffstar_data[key][indx][has_fit]
-            for key in DEFAULT_DIFFSTAR_PARAMS.q_params._fields
-        ]
-    )
-    sfh_params = DEFAULT_DIFFSTAR_PARAMS._make((ms_params, q_params))
 
     t_0 = 10**lgt0
     t_table = np.linspace(T_TABLE_MIN, t_0, n_times)
@@ -117,7 +107,7 @@ def load_diffstar_sfh_tables(
     __, log_mah_table = mah_halopop(mah_params, t_table, LGT0)
 
     sfh_table, smh_table = calc_sfh_galpop(
-        sfh_params, mah_params, t_table, lgt0=LGT0, return_smh=True
+        sfh_params, mah_params, t_table, lgt0=LGT0, fb=FB, return_smh=True
     )
     log_sfh_table = np.log10(sfh_table)
     log_smh_table = np.log10(smh_table)
@@ -129,8 +119,7 @@ def load_diffstar_sfh_tables(
         log_smh_table,
         log_ssfrh_table,
         mah_params,
-        ms_params,
-        q_params,
+        sfh_params,
         has_fit,
     )
 
@@ -219,8 +208,7 @@ def sample_halos(
     log_mah,
     log_smh,
     mah_params,
-    ms_params,
-    q_params,
+    sfh_params,
     upid,
 ):
     ndbins_lo = logmh_bins[:-1]
@@ -234,8 +222,9 @@ def sample_halos(
     upid_samp = []
 
     mah_params = np.array(mah_params).T
-    ms_params = np.array(ms_params).T
-    q_params = np.array(q_params).T
+    sfh_params = np.array(sfh_params).T
+    ms_params = sfh_params[:, :4]
+    q_params = sfh_params[:, 4:]
 
     for i in range(len(ndbins_lo)):
         sel = (log_mah >= ndbins_lo[i]) & (log_mah < ndbins_hi[i])
@@ -256,8 +245,6 @@ def sample_halos(
     upid_samp = np.concatenate(upid_samp)
 
     mah_params_samp = DEFAULT_MAH_PARAMS._make(mah_params_samp.T)
-    ms_params_samp = DEFAULT_DIFFSTAR_PARAMS.ms_params._make(ms_params_samp.T)
-    q_params_samp = DEFAULT_DIFFSTAR_PARAMS.q_params._make(q_params_samp.T)
     out = (
         logmh_id,
         logmh_val,
@@ -289,8 +276,7 @@ def create_target_data(
         log_smh_table,
         log_ssfrh_table,
         mah_params,
-        ms_params,
-        q_params,
+        sfh_params,
         has_fit,
     ) = _res
 
@@ -350,8 +336,7 @@ def create_target_data(
             log_mah_table[:, tid],
             log_smh_table[:, tid],
             mah_params,
-            ms_params,
-            q_params,
+            sfh_params,
             final_upid,
         )
         data.append(
@@ -395,8 +380,8 @@ def concatenate_samples_haloes(data):
         logmh_id.append(subdata[0])
         logmh_val.append(subdata[1])
         mah_params_samp.append(np.array(subdata[2]).T)
-        ms_params_samp.append(np.array(subdata[3]).T)
-        q_params_samp.append(np.array(subdata[4]).T)
+        ms_params_samp.append(subdata[3])
+        q_params_samp.append(subdata[4])
         upid_samp.append(subdata[5])
         tobs_id.append(subdata[6])
         tobs_val.append(subdata[7])
@@ -413,8 +398,6 @@ def concatenate_samples_haloes(data):
     redshift_val = np.concatenate(redshift_val)
 
     mah_params_samp = DEFAULT_MAH_PARAMS._make(mah_params_samp.T)
-    ms_params_samp = DEFAULT_DIFFSTAR_PARAMS.ms_params._make(ms_params_samp.T)
-    q_params_samp = DEFAULT_DIFFSTAR_PARAMS.q_params._make(q_params_samp.T)
 
     haloes = (
         logmh_id,
@@ -503,8 +486,7 @@ def create_pdf_target_data(
         log_smh_table,
         log_ssfrh_table,
         mah_params,
-        ms_params,
-        q_params,
+        sfh_params,
         has_fit,
     ) = _res
 
