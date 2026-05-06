@@ -1,5 +1,6 @@
-1.0.2 (unreleased)
+1.0.2 (2026-05-06)
 ------------------
+- Bug fixed in satellite-specific quenching ingredient (https://github.com/ArgonneCPAC/diffstar/pull/112)
 - Monte Carlo SFH generators now have required kwargs lgt0 and fb (https://github.com/ArgonneCPAC/diffstar/pull/108)
 
 
