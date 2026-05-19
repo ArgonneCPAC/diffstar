@@ -7,12 +7,14 @@ from jax import jit as jjit
 from .satquenchpop_model import (
     DEFAULT_SATQUENCHPOP_PARAMS,
     DEFAULT_SATQUENCHPOP_U_PARAMS,
+    SATQUENCHPOP_PBOUNDS,
     get_bounded_satquenchpop_params,
     get_unbounded_satquenchpop_params,
 )
 from .sfh_pdf_mgash import (
     SFH_PDF_QUENCH_PARAMS,
     SFH_PDF_QUENCH_U_PARAMS,
+    SFH_PDF_QUENCH_PBOUNDS,
     get_bounded_sfh_pdf_params,
     get_unbounded_sfh_pdf_params,
 )
@@ -24,6 +26,8 @@ DiffstarPopParams = namedtuple("DiffstarPopParams", list(_PDICT.keys()))
 DEFAULT_DIFFSTARPOP_PARAMS = DiffstarPopParams(
     *SFH_PDF_QUENCH_PARAMS, *DEFAULT_SATQUENCHPOP_PARAMS
 )
+
+DIFFSTARPOP_PBOUNDS = DiffstarPopParams(*SFH_PDF_QUENCH_PBOUNDS, *SATQUENCHPOP_PBOUNDS)
 
 _U_PNAMES = ["u_" + key for key in DEFAULT_DIFFSTARPOP_PARAMS._fields]
 DiffstarPopUParams = namedtuple("DiffstarPopUParams", _U_PNAMES)
