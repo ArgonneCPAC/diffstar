@@ -1,3 +1,8 @@
+1.0.3 (2026-05-26)
+------------------
+- Add DIFFSTARPOP_PBOUNDs namedtuple (https://github.com/ArgonneCPAC/diffstar/pull/117)
+
+
 1.0.2 (2026-05-06)
 ------------------
 - Bug fixed in satellite-specific quenching ingredient (https://github.com/ArgonneCPAC/diffstar/pull/112)
