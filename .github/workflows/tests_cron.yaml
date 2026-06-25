@@ -44,8 +44,11 @@ jobs:
             pip \
             setuptools \
             "setuptools_scm>=7,<8" \
-            readme_renderer \
             python-build
+
+          # needed for test of README.md
+          python -m pip install "readme_renderer[md]"
+
           pip uninstall diffmah --yes
           pip install --no-deps git+https://github.com/ArgonneCPAC/diffmah.git
           pip install --no-deps git+https://github.com/ArgonneCPAC/dsps.git
