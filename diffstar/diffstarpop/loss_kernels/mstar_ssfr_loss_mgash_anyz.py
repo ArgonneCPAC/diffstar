@@ -16,7 +16,12 @@ try:
 
     HAS_DIFFSKY = True
 except ImportError:
-    HAS_DIFFSKY = False
+    try:
+        from diffsky.diffndhist import tw_ndhist_weighted
+
+        HAS_DIFFSKY = True
+    except ImportError:
+        HAS_DIFFSKY = False
 
 N_TIMES = 20
 
