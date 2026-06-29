@@ -12,11 +12,16 @@ from ..kernels.defaults_mgash import (
 from ..mc_diffstarpop_mgash import mc_diffstar_sfh_galpop
 
 try:
-    from diffsky.diffndhist import tw_ndhist_weighted
+    from diffsky.soft_histograms.diffndhist import tw_ndhist_weighted
 
     HAS_DIFFSKY = True
 except ImportError:
-    HAS_DIFFSKY = False
+    try:
+        from diffsky.diffndhist import tw_ndhist_weighted
+
+        HAS_DIFFSKY = True
+    except ImportError:
+        HAS_DIFFSKY = False
 
 N_TIMES = 20
 
