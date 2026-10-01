@@ -87,6 +87,82 @@ def mc_diffstar_u_params_singlegal_kernel(
 
 
 @jjit
+def mc_diffstar_u_params_singlegal_kernel_from_randoms(
+    diffstarpop_params,
+    logmp0,
+    tpeak,
+    upid,
+    lgmu_infall,
+    logmhost_infall,
+    gyr_since_infall,
+    random_normal_ms_ms_block,
+    random_normal_q_ms_block,
+    random_normal_q_q_block,
+    random_uniform_mc_is_q,
+):
+    means_covs = _diffstarpop_means_covs(
+        diffstarpop_params,
+        logmp0,
+        tpeak,
+        lgmu_infall,
+        logmhost_infall,
+        gyr_since_infall,
+    )
+
+    (
+        frac_quench_cen,
+        frac_quench_sat,
+        mu_mseq,
+        mu_qseq,
+        cov_mseq_ms_block,
+        cov_qseq_ms_block,
+        cov_qseq_q_block,
+    ) = means_covs
+
+    frac_quench = jnp.where(upid == -1, frac_quench_cen, frac_quench_sat)
+    mu_qseq_ms_block = mu_qseq[:4]
+    mu_qseq_q_block = mu_qseq[4:]
+
+    # This is by default what jran.multivariate_normal does under the hood
+    u_params_mseq_ms_block = (
+        jnp.array(mu_mseq)
+        + jnp.linalg.cholesky(cov_mseq_ms_block) @ random_normal_ms_ms_block
+    )
+    u_params_qseq_ms_block = (
+        jnp.array(mu_qseq_ms_block)
+        + jnp.linalg.cholesky(cov_qseq_ms_block) @ random_normal_q_ms_block
+    )
+    u_params_qseq_q_block = (
+        jnp.array(mu_qseq_q_block)
+        + jnp.linalg.cholesky(cov_qseq_q_block) @ random_normal_q_q_block
+    )
+
+    u_params_q = jnp.array(
+        (
+            *u_params_qseq_ms_block[:4],
+            *u_params_qseq_q_block,
+        )
+    )
+    u_params_q = DiffstarUParams(
+        *MSUParams(*u_params_q[:4]), *QUParams(*u_params_q[4:])
+    )
+
+    u_params_ms = jnp.array(
+        (
+            *u_params_mseq_ms_block[:4],
+            *DEFAULT_Q_U_PARAMS_UNQUENCHED,
+        )
+    )
+    u_params_ms = DiffstarUParams(
+        *MSUParams(*u_params_ms[:4]), *QUParams(*u_params_ms[4:])
+    )
+
+    mc_is_quenched_sequence = random_uniform_mc_is_q < frac_quench
+
+    return u_params_ms, u_params_q, frac_quench, mc_is_quenched_sequence
+
+
+@jjit
 def _diffstarpop_means_covs(
     diffstarpop_params, logmp0, tpeak, lgmu_infall, logmhost_infall, gyr_since_infall
 ):
@@ -177,5 +253,68 @@ def mc_diffstar_u_params_singlegal_kernel_cen(
 
     uran = jran.uniform(frac_q_key, minval=0, maxval=1, shape=())
     mc_is_quenched_sequence = uran < frac_quench
+
+    return u_params_ms, u_params_q, frac_quench, mc_is_quenched_sequence
+
+
+@jjit
+def mc_diffstar_u_params_singlegal_kernel_cen_from_randoms(
+    diffstarpop_params,
+    logmp0,
+    tpeak,
+    random_normal_ms_ms_block,
+    random_normal_q_ms_block,
+    random_normal_q_q_block,
+    random_uniform_mc_is_q,
+):
+    means_covs = _diffstarpop_means_covs_cen(diffstarpop_params, logmp0, tpeak)
+
+    (
+        frac_quench_cen,
+        frac_quench_sat,
+        mu_mseq,
+        mu_qseq,
+        cov_mseq_ms_block,
+        cov_qseq_ms_block,
+        cov_qseq_q_block,
+    ) = means_covs
+
+    frac_quench = frac_quench_cen
+    mu_qseq_ms_block = mu_qseq[:4]
+    mu_qseq_q_block = mu_qseq[4:]
+
+    u_params_mseq_ms_block = (
+        jnp.array(mu_mseq)
+        + jnp.linalg.cholesky(cov_mseq_ms_block) @ random_normal_ms_ms_block
+    )
+    u_params_qseq_ms_block = (
+        jnp.array(mu_qseq_ms_block)
+        + jnp.linalg.cholesky(cov_qseq_ms_block) @ random_normal_q_ms_block
+    )
+    u_params_qseq_q_block = (
+        jnp.array(mu_qseq_q_block)
+        + jnp.linalg.cholesky(cov_qseq_q_block) @ random_normal_q_q_block
+    )
+    u_params_q = jnp.array(
+        (
+            *u_params_qseq_ms_block[:4],
+            *u_params_qseq_q_block,
+        )
+    )
+    u_params_q = DiffstarUParams(
+        *MSUParams(*u_params_q[:4]), *QUParams(*u_params_q[4:])
+    )
+
+    u_params_ms = jnp.array(
+        (
+            *u_params_mseq_ms_block[:4],
+            *DEFAULT_Q_U_PARAMS_UNQUENCHED,
+        )
+    )
+    u_params_ms = DiffstarUParams(
+        *MSUParams(*u_params_ms[:4]), *QUParams(*u_params_ms[4:])
+    )
+
+    mc_is_quenched_sequence = random_uniform_mc_is_q < frac_quench
 
     return u_params_ms, u_params_q, frac_quench, mc_is_quenched_sequence
