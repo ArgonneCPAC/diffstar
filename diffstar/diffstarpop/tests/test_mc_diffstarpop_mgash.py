@@ -398,3 +398,58 @@ def test_mc_diffstar_params_galpop_from_randoms():
     )
 
     assert_results_exact(res_key, res_randoms)
+
+
+def test_mc_diffstar_sfh_galpop_from_randoms():
+    n_halos = 100
+    zz = np.zeros(n_halos)
+
+    ran_key = jran.key(0)
+
+    lgmu_infall = -1.0 + zz
+    logmhost_infall = 13.0 + zz
+    gyr_since_infall = 2.0 + zz
+
+    # Include both centrals and satellites
+    upids = np.where(np.arange(n_halos) % 2 == 0, -1, 1)
+
+    t_table = np.linspace(1.0, 13.8, 100)
+
+    mah_params = DEFAULT_MAH_PARAMS._make([zz + x for x in DEFAULT_MAH_PARAMS])
+
+    logmp0 = np.linspace(11.0, 15.0, n_halos)
+    mah_params = mah_params._replace(logm0=logmp0)
+    mah_params = np.array(mah_params)
+
+    args_default = (
+        DEFAULT_DIFFSTARPOP_PARAMS,
+        mah_params,
+        logmp0,
+        upids,
+        lgmu_infall,
+        logmhost_infall,
+        gyr_since_infall,
+    )
+
+    res_key = mcdsp.mc_diffstar_sfh_galpop(
+        *args_default,
+        ran_key,
+        t_table,
+        lgt0=1.14,
+        fb=0.156,
+    )
+
+    randoms = get_randoms_galpop_from_key(
+        ran_key,
+        n_halos,
+    )
+
+    res_randoms = mcdsp.mc_diffstar_sfh_galpop_from_randoms(
+        *args_default,
+        *randoms,
+        t_table,
+        lgt0=1.14,
+        fb=0.156,
+    )
+
+    assert_results_exact(res_key, res_randoms)

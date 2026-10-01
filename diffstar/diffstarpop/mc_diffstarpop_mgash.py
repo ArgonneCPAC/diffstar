@@ -884,3 +884,132 @@ def mc_diffstar_params_galpop_from_randoms(
     diffstar_params_ms = get_bounded_diffstar_params_galpop(diffstar_u_params_ms)
     diffstar_params_q = get_bounded_diffstar_params_galpop(diffstar_u_params_q)
     return diffstar_params_ms, diffstar_params_q, frac_q, mc_is_q
+
+
+@jjit
+def mc_diffstar_sfh_galpop_from_randoms(
+    diffstarpop_params,
+    mah_params,
+    logmp0,
+    upid,
+    lgmu_infall,
+    logmhost_infall,
+    gyr_since_infall,
+    random_normal_ms_ms_block,
+    random_normal_q_ms_block,
+    random_normal_q_q_block,
+    random_uniform_mc_is_q,
+    tarr,
+    *,
+    lgt0,
+    fb,
+):
+    """Monte Carlo realization of a single point in Diffstar parameter space,
+    along with the computation of SFH for this point.
+
+    Parameters
+    ----------
+    diffstarpop_params : namedtuple
+        See defaults.DEFAULT_DIFFSTARPOP_PARAMS for an example
+
+    mah_params : namedtuple, length 5
+        mah_params is a tuple of ndarrays of shape (ngals, )
+        DiffmahParams = logmp, logtc, early_index, late_index, t_peak
+
+    logmp0 : ndarray of shape (ngals, )
+        logMhalo(t0)
+        logmp0 = logm0 when t_peak = t0
+        logmp0 < logm0 when t_peak < t0
+
+    lgmu_infall : ndarray of shape (ngals, )
+        Base-10 log of ratio Msub(t_infall)/Mhost(t_infall)
+        Set to 0.0 for centrals
+
+    logmhost_infall : ndarray of shape (ngals, )
+        Base-10 log of Mhost(t_infall)
+        Set to 0.0 for centrals
+
+    gyr_since_infall : ndarray of shape (ngals, )
+        Time since infall in Gyr
+        Set to -100.0 for centrals
+
+    random_normal_ms_ms_block : ndarray, shape (ngals,4)
+        Precomputed independent standard-normal variates drawn from N(0, 1)
+        for the main-sequence MS parameter block.
+
+    random_normal_q_ms_block : ndarray, shape (ngals,4)
+        Precomputed independent standard-normal variates drawn from N(0, 1)
+        for the quenched-sequence MS parameter block.
+
+    random_normal_q_q_block : ndarray, shape (ngals,4)
+        Precomputed independent standard-normal variates drawn from N(0, 1)
+        for the quenched-sequence quenching parameter block.
+
+    random_uniform_mc_is_q : ndarray, shape (ngals, )
+        Precomputed uniform random variate drawn from [0, 1), used to
+        determine whether the galaxy belongs to the quenched sequence.
+
+    tarr : ndarray, shape (nt, )
+
+    lgt0 : float, optional
+        Base-10 log of the z=0 age of the Universe in Gyr
+        Default is set in diffstar.defaults
+        This variable should be self-consistently set with cosmology
+
+    fb : float, optional
+        Cosmic baryon fraction Ob0/Om0
+        Default is set in diffstar.defaults
+        This variable should be self-consistently set with cosmology
+
+    Returns
+    -------
+    diffstar_params_ms : namedtuple, length 5
+        ms_params = lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, tau_dep
+
+        DiffstarParams = ms_params, q_params
+            ms_params and q_params are tuples of ndarrays of shape (ngals, )
+            diffstar_params.ms_params = lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, tau_dep
+            diffstar_params.q_params = lg_qt, qlglgdt, lg_drop, lg_rejuv
+
+    diffstar_params_q : namedtuple, length 4
+        diffstar_params_q = lg_qt, qlglgdt, lg_drop, lg_rejuv
+
+        DiffstarParams = ms_params, q_params
+            ms_params and q_params are tuples of ndarrays of shape (ngals, )
+            diffstar_params.ms_params = lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, tau_dep
+            diffstar_params.q_params = lg_qt, qlglgdt, lg_drop, lg_rejuv
+
+    sfh_ms : ndarray, shape (ngals, nt)
+        Star formation rate in units of Msun/yr for main sequence galaxy
+
+    sfh_q : ndarray, shape (ngals, nt)
+        Star formation rate in units of Msun/yr for quenched galaxy
+
+    frac_q : ndarray of shape (ngals, )
+        Quenched fraction
+
+    mc_is_q : ndarray of shape (ngals, )
+        Boolean is True for galaxies determined quenched by
+        the result of a stochastic Monte Carlo realization
+
+    """
+    tpeak = mah_params[-1]
+    _res = mc_diffstar_params_galpop_from_randoms(
+        diffstarpop_params,
+        logmp0,
+        tpeak,
+        upid,
+        lgmu_infall,
+        logmhost_infall,
+        gyr_since_infall,
+        random_normal_ms_ms_block,
+        random_normal_q_ms_block,
+        random_normal_q_q_block,
+        random_uniform_mc_is_q,
+    )
+    diffstar_params_ms, diffstar_params_q, frac_q, mc_is_q = _res
+    sfh_ms = calc_sfh_galpop(diffstar_params_ms, mah_params, tarr, lgt0=lgt0, fb=fb)
+    sfh_q = calc_sfh_galpop(diffstar_params_q, mah_params, tarr, lgt0=lgt0, fb=fb)
+    return MCDiffstar(
+        diffstar_params_ms, diffstar_params_q, sfh_ms, sfh_q, frac_q, mc_is_q
+    )
