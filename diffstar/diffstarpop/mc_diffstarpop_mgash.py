@@ -11,7 +11,6 @@ from ..sfh_model import calc_sfh_galpop, calc_sfh_singlegal
 from .kernels.diffstarpop_mgash import (
     mc_diffstar_u_params_singlegal_kernel,
     mc_diffstar_u_params_singlegal_kernel_from_randoms,
-    MCDiffstarUParams,
 )
 
 _mcdp_keys = ("diffstar_params_ms", "diffstar_params_q", "frac_q", "mc_is_q")
