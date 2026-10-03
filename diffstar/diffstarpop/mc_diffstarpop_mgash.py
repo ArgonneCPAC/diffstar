@@ -126,7 +126,7 @@ def mc_diffstar_sfh_singlegal(
         True for a quenched galaxy and False for unquenched
 
     """
-    tpeak = mah_params[-1]
+    tpeak = mah_params.t_peak
     mc_diffstar = mc_diffstar_params_singlegal(
         diffstarpop_params,
         logmp0,
@@ -479,7 +479,7 @@ def mc_diffstar_sfh_galpop(
         the result of a stochastic Monte Carlo realization
 
     """
-    tpeak = mah_params[-1]
+    tpeak = mah_params.t_peak
     _res = mc_diffstar_params_galpop(
         diffstarpop_params,
         logmp0,
@@ -604,7 +604,7 @@ def mc_diffstar_sfh_singlegal_from_randoms(
         True for a quenched galaxy and False for unquenched
 
     """
-    tpeak = mah_params[-1]
+    tpeak = mah_params.t_peak
     mc_diffstar = mc_diffstar_params_singlegal_from_randoms(
         diffstarpop_params,
         logmp0,
@@ -1022,7 +1022,7 @@ def mc_diffstar_sfh_galpop_from_randoms(
         the result of a stochastic Monte Carlo realization
 
     """
-    tpeak = mah_params[-1]
+    tpeak = mah_params.t_peak
     _res = mc_diffstar_params_galpop_from_randoms(
         diffstarpop_params,
         logmp0,
