@@ -137,7 +137,6 @@ def test_mc_diffstar_sfh_galpop():
     mah_params = DEFAULT_MAH_PARAMS._make([ZZ + x for x in DEFAULT_MAH_PARAMS])
     logmp0 = np.random.uniform(low=11.0, high=15.0, size=(n_halos))
     mah_params = mah_params._replace(logm0=logmp0)
-    mah_params = np.array(mah_params)
 
     _res = mcdsp.mc_diffstar_sfh_galpop(
         DEFAULT_DIFFSTARPOP_PARAMS,
@@ -419,7 +418,6 @@ def test_mc_diffstar_sfh_galpop_from_randoms():
 
     logmp0 = np.linspace(11.0, 15.0, n_halos)
     mah_params = mah_params._replace(logm0=logmp0)
-    mah_params = np.array(mah_params)
 
     args_default = (
         DEFAULT_DIFFSTARPOP_PARAMS,
