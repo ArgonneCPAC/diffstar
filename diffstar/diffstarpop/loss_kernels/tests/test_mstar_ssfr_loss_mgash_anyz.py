@@ -9,6 +9,7 @@ from ...kernels.defaults_mgash import (
 from .. import mstar_ssfr_loss_mgash_anyz as mod
 from .load_loss_data import load_loss_data_h5
 from pathlib import Path
+from diffmah.diffmah_kernels import DiffmahParams
 
 DATA_DIR = Path(__file__).parent / "testing_data"
 H5_PATH = DATA_DIR / "loss_kernels_testing_data_10halos.h5"
@@ -98,9 +99,12 @@ def test_h5_data_shapes_and_sanity(loss_data_mstar, loss_data_ssfr, loss_data_ss
     ) = loss_data_mstar
 
     # Basic expected shapes
-    assert mah_params_data.ndim == 3 and mah_params_data.shape[1] == 5
-    n_obs = mah_params_data.shape[0]
-    n_halo = mah_params_data.shape[2]
+    assert isinstance(mah_params_data, DiffmahParams)
+
+    n_obs, n_halo = mah_params_data.logm0.shape
+
+    for mah_param in mah_params_data:
+        assert mah_param.shape == (n_obs, n_halo)
     assert n_obs == 52
     assert n_halo == logmp0_data.shape[1] == upid_data.shape[1] == 10
     assert logmp0_data.shape == (n_obs, n_halo)
