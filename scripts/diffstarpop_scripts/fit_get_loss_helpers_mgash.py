@@ -84,7 +84,7 @@ def get_loss_data_smhm(indir, nhalos, lgt0=LGT0, fb=FB):
             dmhdt_fit, log_mah_fit = mah_halopop(mah_pars_ntuple, tarr_logm0, lgt0)
             logmp0_data.append(log_mah_fit[:, -1])
 
-    mah_params_data = np.array(mah_params_data)
+    mah_params_data = _stack_diffmah_params(mah_params_data)
     logmp0_data = np.array(logmp0_data)
     upid_data = np.array(upid_data)
     lgmu_infall_data = np.array(lgmu_infall_data)
@@ -220,7 +220,7 @@ def get_loss_data_pdfs_mstar(indir, nhalos, lgt0=LGT0, fb=FB):
             logmp0_data.append(log_mah_fit[:, -1])
         # break
 
-    mah_params_data = np.array(mah_params_data)
+    mah_params_data = _stack_diffmah_params(mah_params_data)
     logmp0_data = np.array(logmp0_data)
     upid_data = np.array(upid_data)
     lgmu_infall_data = np.array(lgmu_infall_data)
@@ -288,7 +288,7 @@ def get_loss_data_pdfs_mstar(indir, nhalos, lgt0=LGT0, fb=FB):
             logmp0_data.append(log_mah_fit[:, -1])
         # break
 
-    mah_params_data = np.array(mah_params_data)
+    mah_params_data = _stack_diffmah_params(mah_params_data)
     logmp0_data = np.array(logmp0_data)
     upid_data = np.array(upid_data)
     lgmu_infall_data = np.array(lgmu_infall_data)
@@ -486,7 +486,7 @@ def get_loss_data_pdfs_ssfr_central(indir, nhalos, lgt0=LGT0, fb=FB):
                     mstar_ssfr_pdfs_cent[i, jval] / mstar_ssfr_pdfs_cent[i, jval].sum()
                 )
 
-    mah_params_data = np.array(mah_params_data)
+    mah_params_data = _stack_diffmah_params(mah_params_data)
     logmp0_data = np.array(logmp0_data)
     upid_data = np.array(upid_data)
     lgmu_infall_data = np.array(lgmu_infall_data)
@@ -609,7 +609,7 @@ def get_loss_data_pdfs_ssfr_central(indir, nhalos, lgt0=LGT0, fb=FB):
                     mstar_ssfr_pdfs_cent[i, jval] / mstar_ssfr_pdfs_cent[i, jval].sum()
                 )
 
-    mah_params_data = np.array(mah_params_data)
+    mah_params_data = _stack_diffmah_params(mah_params_data)
     logmp0_data = np.array(logmp0_data)
     upid_data = np.array(upid_data)
     lgmu_infall_data = np.array(lgmu_infall_data)
@@ -799,7 +799,7 @@ def get_loss_data_pdfs_ssfr_satellite(indir, nhalos, lgt0=LGT0, fb=FB):
                     mstar_ssfr_pdfs_sat[i, jval] / mstar_ssfr_pdfs_sat[i, jval].sum()
                 )
 
-    mah_params_data = np.array(mah_params_data)
+    mah_params_data = _stack_diffmah_params(mah_params_data)
     logmp0_data = np.array(logmp0_data)
     upid_data = np.array(upid_data)
     lgmu_infall_data = np.array(lgmu_infall_data)
@@ -920,7 +920,7 @@ def get_loss_data_pdfs_ssfr_satellite(indir, nhalos, lgt0=LGT0, fb=FB):
                     mstar_ssfr_pdfs_sat[i, jval] / mstar_ssfr_pdfs_sat[i, jval].sum()
                 )
 
-    mah_params_data = np.array(mah_params_data)
+    mah_params_data = _stack_diffmah_params(mah_params_data)
     logmp0_data = np.array(logmp0_data)
     upid_data = np.array(upid_data)
     lgmu_infall_data = np.array(lgmu_infall_data)
@@ -1076,7 +1076,7 @@ def get_loss_data_pdfs_mstar_cen(indir, nhalos, lgt0=LGT0, fb=FB):
             logmp0_data.append(log_mah_fit[:, -1])
         # break
 
-    mah_params_data = np.array(mah_params_data)
+    mah_params_data = _stack_diffmah_params(mah_params_data)
     logmp0_data = np.array(logmp0_data)
     upid_data = np.array(upid_data)
     lgmu_infall_data = np.array(lgmu_infall_data)
@@ -1146,7 +1146,7 @@ def get_loss_data_pdfs_mstar_cen(indir, nhalos, lgt0=LGT0, fb=FB):
             logmp0_data.append(log_mah_fit[:, -1])
         # break
 
-    mah_params_data = np.array(mah_params_data)
+    mah_params_data = _stack_diffmah_params(mah_params_data)
     logmp0_data = np.array(logmp0_data)
     upid_data = np.array(upid_data)
     lgmu_infall_data = np.array(lgmu_infall_data)
@@ -1286,7 +1286,7 @@ def get_loss_data_pdfs_mstar_sat(indir, nhalos, lgt0=LGT0, fb=FB):
             logmp0_data.append(log_mah_fit[:, -1])
         # break
 
-    mah_params_data = np.array(mah_params_data)
+    mah_params_data = _stack_diffmah_params(mah_params_data)
     logmp0_data = np.array(logmp0_data)
     upid_data = np.array(upid_data)
     lgmu_infall_data = np.array(lgmu_infall_data)
@@ -1356,7 +1356,7 @@ def get_loss_data_pdfs_mstar_sat(indir, nhalos, lgt0=LGT0, fb=FB):
             logmp0_data.append(log_mah_fit[:, -1])
         # break
 
-    mah_params_data = np.array(mah_params_data)
+    mah_params_data = _stack_diffmah_params(mah_params_data)
     logmp0_data = np.array(logmp0_data)
     upid_data = np.array(upid_data)
     lgmu_infall_data = np.array(lgmu_infall_data)
@@ -1392,3 +1392,11 @@ def get_loss_data_pdfs_mstar_sat(indir, nhalos, lgt0=LGT0, fb=FB):
     )
 
     return loss_data_mstar, plot_data
+
+
+def _stack_diffmah_params(mah_params_data):
+    """Convert stacked MAH parameter arrays into a DiffmahParams pytree."""
+    mah_params_arr = np.stack(mah_params_data, axis=0)
+    # input shape: (n_samples, 5, n_halos)
+    # output fields: each has shape (n_samples, n_halos)
+    return DiffmahParams(*np.moveaxis(mah_params_arr, 1, 0))
