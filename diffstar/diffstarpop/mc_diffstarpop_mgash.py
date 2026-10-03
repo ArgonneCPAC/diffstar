@@ -11,6 +11,7 @@ from ..sfh_model import calc_sfh_galpop, calc_sfh_singlegal
 from .kernels.diffstarpop_mgash import (
     mc_diffstar_u_params_singlegal_kernel,
     mc_diffstar_u_params_singlegal_kernel_from_randoms,
+    MCDiffstarUParams,
 )
 
 _mcdp_keys = ("diffstar_params_ms", "diffstar_params_q", "frac_q", "mc_is_q")
@@ -25,15 +26,6 @@ _mcd_keys = (
     "mc_is_q",
 )
 MCDiffstar = namedtuple("MCDiffstar", _mcd_keys)
-
-
-_mcdpu_keys = (
-    "u_params_ms",
-    "u_params_q",
-    "frac_q",
-    "mc_is_q",
-)
-MCDiffstarUParams = namedtuple("MCDiffstarUParams", _mcdpu_keys)
 
 
 @jjit
@@ -227,11 +219,16 @@ def mc_diffstar_params_singlegal(
         gyr_since_infall,
         ran_key,
     )
-    u_params_ms, u_params_qseq, frac_q, mc_is_q = _res
-    diffstar_params_q = get_bounded_diffstar_params(u_params_qseq)
-    diffstar_params_ms = get_bounded_diffstar_params(u_params_ms)
 
-    return MCDiffstarParams(diffstar_params_ms, diffstar_params_q, frac_q, mc_is_q)
+    diffstar_params_q = get_bounded_diffstar_params(_res.u_params_q)
+    diffstar_params_ms = get_bounded_diffstar_params(_res.u_params_ms)
+
+    return MCDiffstarParams(
+        diffstar_params_ms,
+        diffstar_params_q,
+        _res.frac_q,
+        _res.mc_is_q,
+    )
 
 
 @jjit
@@ -247,7 +244,7 @@ def mc_diffstar_u_params_singlegal(
 ):
     """"""
 
-    _res = mc_diffstar_u_params_singlegal_kernel(
+    return mc_diffstar_u_params_singlegal_kernel(
         diffstarpop_params,
         logmp0,
         tpeak,
@@ -256,13 +253,6 @@ def mc_diffstar_u_params_singlegal(
         logmhost_infall,
         gyr_since_infall,
         ran_key,
-    )
-    u_params_ms, u_params_qseq, frac_q, mc_is_q = _res
-    return MCDiffstarUParams(
-        u_params_ms,
-        u_params_qseq,
-        frac_q,
-        mc_is_q,
     )
 
 
@@ -286,7 +276,7 @@ def mc_diffstar_u_params_galpop(
     """"""
     ngals = logmp0.size
     ran_keys = jran.split(ran_key, ngals)
-    _res = mc_diffstar_u_params_galpop_kernel(
+    return mc_diffstar_u_params_galpop_kernel(
         diffstarpop_params,
         logmp0,
         tpeak,
@@ -295,13 +285,6 @@ def mc_diffstar_u_params_galpop(
         logmhost_infall,
         gyr_since_infall,
         ran_keys,
-    )
-    diffstar_u_params_ms, diffstar_u_params_q, frac_q, mc_is_q = _res
-    return MCDiffstarUParams(
-        diffstar_u_params_ms,
-        diffstar_u_params_q,
-        frac_q,
-        mc_is_q,
     )
 
 
@@ -382,10 +365,15 @@ def mc_diffstar_params_galpop(
         gyr_since_infall,
         ran_key,
     )
-    diffstar_u_params_ms, diffstar_u_params_q, frac_q, mc_is_q = _res
-    diffstar_params_ms = get_bounded_diffstar_params_galpop(diffstar_u_params_ms)
-    diffstar_params_q = get_bounded_diffstar_params_galpop(diffstar_u_params_q)
-    return MCDiffstarParams(diffstar_params_ms, diffstar_params_q, frac_q, mc_is_q)
+    diffstar_params_ms = get_bounded_diffstar_params_galpop(_res.u_params_ms)
+    diffstar_params_q = get_bounded_diffstar_params_galpop(_res.u_params_q)
+
+    return MCDiffstarParams(
+        diffstar_params_ms,
+        diffstar_params_q,
+        _res.frac_q,
+        _res.mc_is_q,
+    )
 
 
 @jjit
@@ -490,11 +478,17 @@ def mc_diffstar_sfh_galpop(
         gyr_since_infall,
         ran_key,
     )
-    diffstar_params_ms, diffstar_params_q, frac_q, mc_is_q = _res
-    sfh_ms = calc_sfh_galpop(diffstar_params_ms, mah_params, tarr, lgt0=lgt0, fb=fb)
-    sfh_q = calc_sfh_galpop(diffstar_params_q, mah_params, tarr, lgt0=lgt0, fb=fb)
+    sfh_ms = calc_sfh_galpop(
+        _res.diffstar_params_ms, mah_params, tarr, lgt0=lgt0, fb=fb
+    )
+    sfh_q = calc_sfh_galpop(_res.diffstar_params_q, mah_params, tarr, lgt0=lgt0, fb=fb)
     return MCDiffstar(
-        diffstar_params_ms, diffstar_params_q, sfh_ms, sfh_q, frac_q, mc_is_q
+        _res.diffstar_params_ms,
+        _res.diffstar_params_q,
+        sfh_ms,
+        sfh_q,
+        _res.frac_q,
+        _res.mc_is_q,
     )
 
 
@@ -727,11 +721,15 @@ def mc_diffstar_params_singlegal_from_randoms(
         random_normal_q_q_block,
         random_uniform_mc_is_q,
     )
-    u_params_ms, u_params_qseq, frac_q, mc_is_q = _res
-    diffstar_params_q = get_bounded_diffstar_params(u_params_qseq)
-    diffstar_params_ms = get_bounded_diffstar_params(u_params_ms)
+    diffstar_params_q = get_bounded_diffstar_params(_res.u_params_q)
+    diffstar_params_ms = get_bounded_diffstar_params(_res.u_params_ms)
 
-    return MCDiffstarParams(diffstar_params_ms, diffstar_params_q, frac_q, mc_is_q)
+    return MCDiffstarParams(
+        diffstar_params_ms,
+        diffstar_params_q,
+        _res.frac_q,
+        _res.mc_is_q,
+    )
 
 
 @jjit
@@ -750,7 +748,7 @@ def mc_diffstar_u_params_singlegal_from_randoms(
 ):
     """"""
 
-    _res = mc_diffstar_u_params_singlegal_kernel_from_randoms(
+    return mc_diffstar_u_params_singlegal_kernel_from_randoms(
         diffstarpop_params,
         logmp0,
         tpeak,
@@ -762,13 +760,6 @@ def mc_diffstar_u_params_singlegal_from_randoms(
         random_normal_q_ms_block,
         random_normal_q_q_block,
         random_uniform_mc_is_q,
-    )
-    u_params_ms, u_params_qseq, frac_q, mc_is_q = _res
-    return MCDiffstarUParams(
-        u_params_ms,
-        u_params_qseq,
-        frac_q,
-        mc_is_q,
     )
 
 
@@ -794,7 +785,7 @@ def mc_diffstar_u_params_galpop_from_randoms(
 ):
     """"""
 
-    _res = mc_diffstar_u_params_galpop_kernel_from_randoms(
+    return mc_diffstar_u_params_galpop_kernel_from_randoms(
         diffstarpop_params,
         logmp0,
         tpeak,
@@ -806,13 +797,6 @@ def mc_diffstar_u_params_galpop_from_randoms(
         random_normal_q_ms_block,
         random_normal_q_q_block,
         random_uniform_mc_is_q,
-    )
-    diffstar_u_params_ms, diffstar_u_params_q, frac_q, mc_is_q = _res
-    return MCDiffstarUParams(
-        diffstar_u_params_ms,
-        diffstar_u_params_q,
-        frac_q,
-        mc_is_q,
     )
 
 
@@ -909,10 +893,11 @@ def mc_diffstar_params_galpop_from_randoms(
         random_normal_q_q_block,
         random_uniform_mc_is_q,
     )
-    diffstar_u_params_ms, diffstar_u_params_q, frac_q, mc_is_q = _res
-    diffstar_params_ms = get_bounded_diffstar_params_galpop(diffstar_u_params_ms)
-    diffstar_params_q = get_bounded_diffstar_params_galpop(diffstar_u_params_q)
-    return MCDiffstarParams(diffstar_params_ms, diffstar_params_q, frac_q, mc_is_q)
+    diffstar_params_ms = get_bounded_diffstar_params_galpop(_res.u_params_ms)
+    diffstar_params_q = get_bounded_diffstar_params_galpop(_res.u_params_q)
+    return MCDiffstarParams(
+        diffstar_params_ms, diffstar_params_q, _res.frac_q, _res.mc_is_q
+    )
 
 
 @jjit
@@ -1036,9 +1021,15 @@ def mc_diffstar_sfh_galpop_from_randoms(
         random_normal_q_q_block,
         random_uniform_mc_is_q,
     )
-    diffstar_params_ms, diffstar_params_q, frac_q, mc_is_q = _res
-    sfh_ms = calc_sfh_galpop(diffstar_params_ms, mah_params, tarr, lgt0=lgt0, fb=fb)
-    sfh_q = calc_sfh_galpop(diffstar_params_q, mah_params, tarr, lgt0=lgt0, fb=fb)
+    sfh_ms = calc_sfh_galpop(
+        _res.diffstar_params_ms, mah_params, tarr, lgt0=lgt0, fb=fb
+    )
+    sfh_q = calc_sfh_galpop(_res.diffstar_params_q, mah_params, tarr, lgt0=lgt0, fb=fb)
     return MCDiffstar(
-        diffstar_params_ms, diffstar_params_q, sfh_ms, sfh_q, frac_q, mc_is_q
+        _res.diffstar_params_ms,
+        _res.diffstar_params_q,
+        sfh_ms,
+        sfh_q,
+        _res.frac_q,
+        _res.mc_is_q,
     )

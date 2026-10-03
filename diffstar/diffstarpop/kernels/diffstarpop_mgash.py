@@ -3,6 +3,7 @@
 from jax import jit as jjit
 from jax import numpy as jnp
 from jax import random as jran
+from collections import namedtuple
 
 from ...defaults import (
     DEFAULT_Q_U_PARAMS_UNQUENCHED,
@@ -13,6 +14,14 @@ from ...defaults import (
 from .defaults_mgash import DEFAULT_SATQUENCHPOP_PARAMS, SFH_PDF_QUENCH_PARAMS
 from .satquenchpop_model import get_qprob_sat
 from .sfh_pdf_mgash import _sfh_pdf_scalar_kernel
+
+_mcdpu_keys = (
+    "u_params_ms",
+    "u_params_q",
+    "frac_q",
+    "mc_is_q",
+)
+MCDiffstarUParams = namedtuple("MCDiffstarUParams", _mcdpu_keys)
 
 
 @jjit
@@ -83,7 +92,12 @@ def mc_diffstar_u_params_singlegal_kernel(
     uran = jran.uniform(frac_q_key, minval=0, maxval=1, shape=())
     mc_is_quenched_sequence = uran < frac_quench
 
-    return u_params_ms, u_params_q, frac_quench, mc_is_quenched_sequence
+    return MCDiffstarUParams(
+        u_params_ms,
+        u_params_q,
+        frac_quench,
+        mc_is_quenched_sequence,
+    )
 
 
 @jjit
@@ -159,7 +173,12 @@ def mc_diffstar_u_params_singlegal_kernel_from_randoms(
 
     mc_is_quenched_sequence = random_uniform_mc_is_q < frac_quench
 
-    return u_params_ms, u_params_q, frac_quench, mc_is_quenched_sequence
+    return MCDiffstarUParams(
+        u_params_ms,
+        u_params_q,
+        frac_quench,
+        mc_is_quenched_sequence,
+    )
 
 
 @jjit
@@ -254,7 +273,12 @@ def mc_diffstar_u_params_singlegal_kernel_cen(
     uran = jran.uniform(frac_q_key, minval=0, maxval=1, shape=())
     mc_is_quenched_sequence = uran < frac_quench
 
-    return u_params_ms, u_params_q, frac_quench, mc_is_quenched_sequence
+    return MCDiffstarUParams(
+        u_params_ms,
+        u_params_q,
+        frac_quench,
+        mc_is_quenched_sequence,
+    )
 
 
 @jjit
@@ -317,4 +341,9 @@ def mc_diffstar_u_params_singlegal_kernel_cen_from_randoms(
 
     mc_is_quenched_sequence = random_uniform_mc_is_q < frac_quench
 
-    return u_params_ms, u_params_q, frac_quench, mc_is_quenched_sequence
+    return MCDiffstarUParams(
+        u_params_ms,
+        u_params_q,
+        frac_quench,
+        mc_is_quenched_sequence,
+    )

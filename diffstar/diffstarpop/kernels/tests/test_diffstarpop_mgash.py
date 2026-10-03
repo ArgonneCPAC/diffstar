@@ -170,6 +170,9 @@ def test_mc_diffstar_u_params_singlegal_from_randoms():
     args = tuple(args_default + randoms)
     res_randoms = dsp.mc_diffstar_u_params_singlegal_kernel_from_randoms(*args)
 
+    assert isinstance(res_key, dsp.MCDiffstarUParams)
+    assert isinstance(res_randoms, dsp.MCDiffstarUParams)
+
     for x, y in zip(res_key, res_randoms):
         np.testing.assert_allclose(x, y, rtol=1e-6, atol=1e-6)
 
@@ -190,6 +193,9 @@ def test_mc_diffstar_u_params_singlegal_kernel_cen_from_randoms():
 
     args = tuple(args_default + randoms)
     res_randoms = dsp.mc_diffstar_u_params_singlegal_kernel_cen_from_randoms(*args)
+
+    assert isinstance(res_key, dsp.MCDiffstarUParams)
+    assert isinstance(res_randoms, dsp.MCDiffstarUParams)
 
     for x, y in zip(res_key, res_randoms):
         np.testing.assert_allclose(x, y, rtol=1e-6, atol=1e-6)
