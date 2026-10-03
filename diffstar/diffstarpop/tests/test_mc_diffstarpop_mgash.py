@@ -3,6 +3,8 @@
 import numpy as np
 from diffmah.diffmah_kernels import DEFAULT_MAH_PARAMS
 from jax import random as jran
+from jax import numpy as jnp
+
 
 from .. import mc_diffstarpop_mgash as mcdsp
 from ..kernels.defaults_mgash import DEFAULT_DIFFSTARPOP_PARAMS
@@ -135,7 +137,6 @@ def test_mc_diffstar_sfh_galpop():
     mah_params = DEFAULT_MAH_PARAMS._make([ZZ + x for x in DEFAULT_MAH_PARAMS])
     logmp0 = np.random.uniform(low=11.0, high=15.0, size=(n_halos))
     mah_params = mah_params._replace(logm0=logmp0)
-    mah_params = np.array(mah_params)
 
     _res = mcdsp.mc_diffstar_sfh_galpop(
         DEFAULT_DIFFSTARPOP_PARAMS,
@@ -159,3 +160,294 @@ def test_mc_diffstar_sfh_galpop():
     assert (sfh_q >= 0.0).all()
     assert (sfh_ms >= 0.0).all()
     assert (frac_q >= 0.0).all()
+
+
+def get_randoms_from_key(ran_key):
+    (
+        ms_key_ms_block,
+        q_key_ms_block,
+        q_key_q_block,
+        frac_q_key,
+    ) = jran.split(ran_key, 4)
+
+    random_normal_ms_ms_block = jran.normal(
+        ms_key_ms_block,
+        shape=(4,),
+    )
+    random_normal_q_ms_block = jran.normal(
+        q_key_ms_block,
+        shape=(4,),
+    )
+    random_normal_q_q_block = jran.normal(
+        q_key_q_block,
+        shape=(4,),
+    )
+    random_uniform_mc_is_q = jran.uniform(
+        frac_q_key,
+        minval=0,
+        maxval=1,
+        shape=(),
+    )
+
+    return [
+        random_normal_ms_ms_block,
+        random_normal_q_ms_block,
+        random_normal_q_q_block,
+        random_uniform_mc_is_q,
+    ]
+
+
+def get_randoms_galpop_from_key(ran_key, ngals):
+    ran_keys = jran.split(ran_key, ngals)
+
+    randoms = [get_randoms_from_key(gal_key) for gal_key in ran_keys]
+
+    return [jnp.stack(x, axis=0) for x in zip(*randoms)]
+
+
+def assert_results_exact(res_key, res_randoms):
+    for x, y in zip(res_key, res_randoms):
+        np.testing.assert_allclose(x, y, rtol=1e-6, atol=1e-6)
+
+
+def test_mc_diffstar_u_params_singlegal_from_randoms():
+    logmp0 = 13.0
+    tpeak = 8.0
+    upid = -1
+    lgmu_infall = -1.0
+    logmhost_infall = 13.0
+    gyr_since_infall = 2.0
+    ran_key = jran.key(0)
+
+    args_default = (
+        DEFAULT_DIFFSTARPOP_PARAMS,
+        logmp0,
+        tpeak,
+        upid,
+        lgmu_infall,
+        logmhost_infall,
+        gyr_since_infall,
+    )
+
+    res_key = mcdsp.mc_diffstar_u_params_singlegal(
+        *args_default,
+        ran_key,
+    )
+
+    randoms = get_randoms_from_key(ran_key)
+
+    res_randoms = mcdsp.mc_diffstar_u_params_singlegal_from_randoms(
+        *args_default,
+        *randoms,
+    )
+
+    assert_results_exact(res_key, res_randoms)
+
+
+def test_mc_diffstar_params_singlegal_from_randoms():
+    logmp0 = 13.0
+    tpeak = 8.0
+    upid = -1
+    lgmu_infall = -1.0
+    logmhost_infall = 13.0
+    gyr_since_infall = 2.0
+    ran_key = jran.key(0)
+
+    args_default = (
+        DEFAULT_DIFFSTARPOP_PARAMS,
+        logmp0,
+        tpeak,
+        upid,
+        lgmu_infall,
+        logmhost_infall,
+        gyr_since_infall,
+    )
+
+    res_key = mcdsp.mc_diffstar_params_singlegal(
+        *args_default,
+        ran_key,
+    )
+
+    randoms = get_randoms_from_key(ran_key)
+
+    res_randoms = mcdsp.mc_diffstar_params_singlegal_from_randoms(
+        *args_default,
+        *randoms,
+    )
+
+    assert_results_exact(res_key, res_randoms)
+
+
+def test_mc_diffstar_sfh_singlegal_from_randoms():
+    logmp0 = 13.0
+    upid = -1
+    lgmu_infall = -1.0
+    logmhost_infall = 13.0
+    gyr_since_infall = 2.0
+    ran_key = jran.key(0)
+
+    tarr = np.linspace(0.1, 13.8, 30)
+
+    args_default = (
+        DEFAULT_DIFFSTARPOP_PARAMS,
+        DEFAULT_MAH_PARAMS,
+        logmp0,
+        upid,
+        lgmu_infall,
+        logmhost_infall,
+        gyr_since_infall,
+    )
+
+    res_key = mcdsp.mc_diffstar_sfh_singlegal(
+        *args_default,
+        ran_key,
+        tarr,
+        lgt0=1.14,
+        fb=0.156,
+    )
+
+    randoms = get_randoms_from_key(ran_key)
+
+    res_randoms = mcdsp.mc_diffstar_sfh_singlegal_from_randoms(
+        *args_default,
+        *randoms,
+        tarr,
+        lgt0=1.14,
+        fb=0.156,
+    )
+
+    assert_results_exact(res_key, res_randoms)
+
+
+def test_mc_diffstar_u_params_galpop_from_randoms():
+    ngals = 50
+    zz = np.zeros(ngals)
+
+    logmp0 = 13.0 + zz
+    tpeak = 8.0 + zz
+
+    # Exercise both central and satellite branches
+    upid = np.where(np.arange(ngals) % 2 == 0, -1, 1)
+
+    lgmu_infall = -1.0 + zz
+    logmhost_infall = 13.0 + zz
+    gyr_since_infall = 2.0 + zz
+
+    ran_key = jran.key(0)
+
+    args_default = (
+        DEFAULT_DIFFSTARPOP_PARAMS,
+        logmp0,
+        tpeak,
+        upid,
+        lgmu_infall,
+        logmhost_infall,
+        gyr_since_infall,
+    )
+
+    res_key = mcdsp.mc_diffstar_u_params_galpop(
+        *args_default,
+        ran_key,
+    )
+
+    randoms = get_randoms_galpop_from_key(ran_key, ngals)
+
+    res_randoms = mcdsp.mc_diffstar_u_params_galpop_from_randoms(
+        *args_default,
+        *randoms,
+    )
+
+    assert_results_exact(res_key, res_randoms)
+
+
+def test_mc_diffstar_params_galpop_from_randoms():
+    ngals = 50
+    zz = np.zeros(ngals)
+
+    logmp0 = 13.0 + zz
+    tpeak = 8.0 + zz
+    upid = np.where(np.arange(ngals) % 2 == 0, -1, 1)
+
+    lgmu_infall = -1.0 + zz
+    logmhost_infall = 13.0 + zz
+    gyr_since_infall = 2.0 + zz
+
+    ran_key = jran.key(0)
+
+    args_default = (
+        DEFAULT_DIFFSTARPOP_PARAMS,
+        logmp0,
+        tpeak,
+        upid,
+        lgmu_infall,
+        logmhost_infall,
+        gyr_since_infall,
+    )
+
+    res_key = mcdsp.mc_diffstar_params_galpop(
+        *args_default,
+        ran_key,
+    )
+
+    randoms = get_randoms_galpop_from_key(ran_key, ngals)
+
+    res_randoms = mcdsp.mc_diffstar_params_galpop_from_randoms(
+        *args_default,
+        *randoms,
+    )
+
+    assert_results_exact(res_key, res_randoms)
+
+
+def test_mc_diffstar_sfh_galpop_from_randoms():
+    n_halos = 100
+    zz = np.zeros(n_halos)
+
+    ran_key = jran.key(0)
+
+    lgmu_infall = -1.0 + zz
+    logmhost_infall = 13.0 + zz
+    gyr_since_infall = 2.0 + zz
+
+    # Include both centrals and satellites
+    upids = np.where(np.arange(n_halos) % 2 == 0, -1, 1)
+
+    t_table = np.linspace(1.0, 13.8, 100)
+
+    mah_params = DEFAULT_MAH_PARAMS._make([zz + x for x in DEFAULT_MAH_PARAMS])
+
+    logmp0 = np.linspace(11.0, 15.0, n_halos)
+    mah_params = mah_params._replace(logm0=logmp0)
+
+    args_default = (
+        DEFAULT_DIFFSTARPOP_PARAMS,
+        mah_params,
+        logmp0,
+        upids,
+        lgmu_infall,
+        logmhost_infall,
+        gyr_since_infall,
+    )
+
+    res_key = mcdsp.mc_diffstar_sfh_galpop(
+        *args_default,
+        ran_key,
+        t_table,
+        lgt0=1.14,
+        fb=0.156,
+    )
+
+    randoms = get_randoms_galpop_from_key(
+        ran_key,
+        n_halos,
+    )
+
+    res_randoms = mcdsp.mc_diffstar_sfh_galpop_from_randoms(
+        *args_default,
+        *randoms,
+        t_table,
+        lgt0=1.14,
+        fb=0.156,
+    )
+
+    assert_results_exact(res_key, res_randoms)

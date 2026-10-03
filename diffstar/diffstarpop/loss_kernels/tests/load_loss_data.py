@@ -1,5 +1,7 @@
 import h5py
 import json
+import numpy as np
+from diffmah.diffmah_kernels import DiffmahParams
 
 # --- Names in tuple order (so we can label datasets clearly) ---
 
@@ -104,4 +106,19 @@ def load_loss_data_h5(filename: str):
         ssfr = _load_group(f["loss_data_ssfr"], c_fields)
         ssfr_s = _load_group(f["loss_data_ssfr_sat"], s_fields)
 
+        # After changing mah_params in DiffstarPop from an ndarray to a DiffmahParams
+        # namedtuple, updating the saved testing data to use the new format.
+
+        mstar = (_stack_diffmah_params(mstar[0]), *mstar[1:])
+        ssfr = (_stack_diffmah_params(ssfr[0]), *ssfr[1:])
+        ssfr_s = (_stack_diffmah_params(ssfr_s[0]), *ssfr_s[1:])
+
     return mstar, ssfr, ssfr_s
+
+
+def _stack_diffmah_params(mah_params_data):
+    """Convert stacked MAH parameter arrays into a DiffmahParams pytree."""
+    mah_params_arr = np.stack(mah_params_data, axis=0)
+    # input shape: (n_samples, 5, n_halos)
+    # output fields: each has shape (n_samples, n_halos)
+    return DiffmahParams(*np.moveaxis(mah_params_arr, 1, 0))

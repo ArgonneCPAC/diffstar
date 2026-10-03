@@ -20,4 +20,8 @@ from .mc_diffstarpop_mgash import (
     mc_diffstar_params_singlegal,
     mc_diffstar_sfh_galpop,
     mc_diffstar_sfh_singlegal,
+    mc_diffstar_params_galpop_from_randoms,
+    mc_diffstar_params_singlegal_from_randoms,
+    mc_diffstar_sfh_galpop_from_randoms,
+    mc_diffstar_sfh_singlegal_from_randoms,
 )
